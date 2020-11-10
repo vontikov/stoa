@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package github.com.vontikov.stoa.v1;
+option go_package = ".;pb";
+
+import "common.proto";
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+message QueueEntry {
+  string name      = 1 [(validate.rules).string.min_len=1];
+  bytes value      = 2 [(validate.rules).bytes.min_len = 1];
+  int64 ttl_millis = 3;
+}
+
+message DictionaryEntry {
+  string name      = 1 [(validate.rules).string.min_len=1];
+  bytes key        = 2 [(validate.rules).bytes.min_len = 1];
+  bytes value      = 3 [(validate.rules).bytes.min_len = 1];
+  int64 ttl_millis = 4;
+}
+
+service Eviction {
+
+  rpc Queue (QueueEntry) returns (Result) {
+    option(google.api.http) = {
+      get: "/v1/queue",
+    };
+  }
+
+  rpc Dictionary (DictionaryEntry) returns (Result) {
+    option(google.api.http) = {
+      get: "/v1/dictionary",
+    };
+  }
+
+}

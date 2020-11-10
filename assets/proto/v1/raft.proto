@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package github.com.vontikov.stoa.v1;
+option go_package = ".;pb";
+
+import "stoa.proto";
+
+// Discovery contains Raft Peer information.
+message Discovery {
+  string id       = 1; // Peer ID
+  string bind_ip  = 2; // bind IP
+  int32 bind_port = 3; // bind port
+  string grpc_ip  = 4; // gRPC IP
+  int32 grpc_port = 5; // gRPC port
+  bool leader     = 6; // leader status
+}
+
+// ClusterCommand contains Raft claster log command.
+message ClusterCommand {
+  Type command         = 1;
+  bool ttl_enabled     = 2;
+  int64 ttl_millis     = 3;
+  bool barrier_enabled = 4;
+  int64 barrier_millis = 5;
+
+  oneof payload {
+    Name     name      = 6;
+    Value    value     = 7;
+    Key      key       = 8;
+    KeyValue key_value = 9;
+    Id       id        = 10;
+  }
+
+  // Type is a Raft claster command type.
+  enum Type {
+    UNKNOWN                  = 0;
+
+    QUEUE_SIZE               = 1;
+    QUEUE_CLEAR              = 2;
+    QUEUE_OFFER              = 3;
+    QUEUE_POLL               = 4;
+    QUEUE_PEEK               = 5;
+
+    DICTIONARY_SIZE          = 6;
+    DICTIONARY_CLEAR         = 7;
+    DICTIONARY_PUT_IF_ABSENT = 8;
+    DICTIONARY_PUT           = 9;
+    DICTIONARY_GET           = 10;
+    DICTIONARY_REMOVE        = 11;
+    DICTIONARY_SCAN          = 12;
+
+    MUTEX_TRY_LOCK           = 13;
+    MUTEX_UNLOCK             = 14;
+  }
+}
+

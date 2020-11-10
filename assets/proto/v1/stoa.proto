@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package github.com.vontikov.stoa.v1;
+option go_package = ".;pb";
+
+import "common.proto";
+import "google/api/annotations.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+
+// Name contains no data.
+message Name {
+  string name = 1 [(validate.rules).string.min_len=1];
+}
+
+// Id contains ID.
+message Id {
+  string name     = 1 [(validate.rules).string.min_len=1];
+  string id       = 2 [(validate.rules).string.min_len=1];
+}
+
+// Value contains an arbitrary data.
+message Value {
+  string name = 1 [(validate.rules).string.min_len=1];
+  bytes value = 2 [(validate.rules).bytes.min_len = 1];
+}
+
+// Key contains a Dictionary key.
+message Key {
+  string name = 1 [(validate.rules).string.min_len=1];
+  bytes  key  = 2 [(validate.rules).bytes.min_len = 1];
+}
+
+// KeyValue contains a Dictionary key-value pair.
+message KeyValue {
+  string name = 1 [(validate.rules).string.min_len=1];
+  bytes key   = 2 [(validate.rules).bytes.min_len = 1];
+  bytes value = 3 [(validate.rules).bytes.min_len = 1];
+}
+
+message Ping {
+  string id = 1 [(validate.rules).string.min_len=1];
+}
+
+message MutexStatus {
+  string name = 1;
+  bool locked = 2;
+}
+
+message Status {
+  oneof payload {
+    MutexStatus mutex = 1;
+  }
+}
+
+// Stoa performs the storage operations.
+service Stoa {
+
+  rpc QueueSize (Name) returns (Value) {
+    option(google.api.http) = {
+      get: "/v1/queue/size",
+    };
+  }
+
+  rpc QueueClear (Name) returns (Empty) {
+    option(google.api.http) = {
+      post: "/v1/queue/clear",
+    };
+  }
+
+  rpc QueueOffer (Value) returns (Result) {
+    option(google.api.http) = {
+      post: "/v1/queue/offer",
+      body: "*",
+    };
+  }
+
+  rpc QueuePoll (Name) returns (Value) {
+    option(google.api.http) = {
+      get: "/v1/queue/poll",
+    };
+  }
+
+  rpc QueuePeek (Name) returns (Value) {
+    option(google.api.http) = {
+      get: "/v1/queue/peek",
+    };
+  }
+
+  rpc DictionarySize (Name) returns (Value) {
+    option(google.api.http) = {
+      get: "/v1/dictionary/size",
+    };
+  }
+
+  rpc DictionaryClear (Name) returns (Empty) {
+    option(google.api.http) = {
+      post: "/v1/dictionary/clear",
+    };
+  }
+
+  rpc DictionaryPutIfAbsent (KeyValue) returns (Result) {
+    option(google.api.http) = {
+      post: "/v1/dictionary/putIfAbsent",
+      body: "*",
+    };
+  }
+
+  rpc DictionaryPut (KeyValue) returns (Value) {
+    option(google.api.http) = {
+      post: "/v1/dictionary/put",
+      body: "*",
+    };
+  }
+
+  rpc DictionaryGet (Key) returns (Value) {
+    option(google.api.http) = {
+      get: "/v1/dictionary/get/{key}",
+    };
+  }
+
+  rpc DictionaryRemove (Key) returns (Result) {
+    option(google.api.http) = {
+      post: "/storage/dictionary/delete/{key}",
+    };
+  }
+
+  rpc DictionaryScan (Name) returns (stream KeyValue) {
+    option(google.api.http) = {
+      get: "/v1/dictionary/scan",
+    };
+  }
+
+  rpc MutexTryLock (Id) returns (Result) {
+    option(google.api.http) = {
+      post: "/v1/mutex/trylock",
+    };
+  }
+
+  rpc MutexUnlock (Id) returns (Result) {
+    option(google.api.http) = {
+      post: "/v1/mutex/unlock",
+    };
+  }
+
+  rpc Keep (stream Ping) returns (stream Status) {
+  }
+}

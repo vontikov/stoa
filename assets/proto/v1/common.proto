@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package github.com.vontikov.stoa.v1;
+option go_package = ".;pb";
+
+// Empty contains no data.
+message Empty {
+}
+
+// Result contains an operation result.
+message Result {
+  bool ok = 1;
+}
