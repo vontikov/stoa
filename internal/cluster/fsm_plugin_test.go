@@ -20,7 +20,7 @@ func TestFsmPlugin(t *testing.T) {
 	//	dicts := []string{"d1", "d2", "d3"}
 	dicts := []string{"d1", "d2", "d3"}
 
-	fsm := NewFSM(context.Background())
+	f := NewFSM(context.Background())
 
 	// populate
 	for _, n := range dicts {
@@ -33,15 +33,15 @@ func TestFsmPlugin(t *testing.T) {
 			m := pb.ClusterCommand{
 				Payload: &pb.ClusterCommand_KeyValue{KeyValue: &v},
 			}
-			fsm.dictionaryPut(&m)
+			dictionaryPut(f, &m)
 		}
-		d := fsm.dictionary(n)
+		d := dictionary(f, n)
 		assert.Equal(t, max, d.Size())
 	}
 
 	// scan
 	r := make(map[string][]*pb.DictionaryEntry)
-	for e := range fsm.DictionaryScan() {
+	for e := range f.DictionaryScan() {
 		r[e.Name] = append(r[e.Name], e)
 	}
 
@@ -70,18 +70,18 @@ func TestFsmPlugin(t *testing.T) {
 			Command: pb.ClusterCommand_DICTIONARY_SIZE,
 			Payload: &pb.ClusterCommand_Name{Name: &pb.Name{Name: n}},
 		}
-		v := fsm.dictionarySize(m).(*pb.Value)
+		v := dictionarySize(f, m).(*pb.Value)
 		assert.Equal(t, uint32(max), binary.LittleEndian.Uint32(v.Value))
 	}
-	for e := range fsm.DictionaryScan() {
-		fsm.DictionaryRemove(e)
+	for e := range f.DictionaryScan() {
+		f.DictionaryRemove(e)
 	}
 	for _, n := range dicts {
 		m := &pb.ClusterCommand{
 			Command: pb.ClusterCommand_DICTIONARY_SIZE,
 			Payload: &pb.ClusterCommand_Name{Name: &pb.Name{Name: n}},
 		}
-		v := fsm.dictionarySize(m).(*pb.Value)
+		v := dictionarySize(f, m).(*pb.Value)
 		assert.Equal(t, uint32(0), binary.LittleEndian.Uint32(v.Value))
 	}
 }

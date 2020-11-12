@@ -35,6 +35,8 @@ type FSM struct {
 	mo      sync.Once
 }
 
+type fsmCommand func(*FSM, *pb.ClusterCommand) interface{}
+
 // NewFSM creates a new raft.FSM instance
 func NewFSM(ctx context.Context) *FSM {
 	return &FSM{
@@ -47,48 +49,34 @@ func NewFSM(ctx context.Context) *FSM {
 	}
 }
 
+var fsmCommands [pb.ClusterCommand_MAX_INDEX]fsmCommand
+
+func init() {
+	fsmCommands = [...]fsmCommand{
+		pb.ClusterCommand_QUEUE_SIZE:               queueSize,
+		pb.ClusterCommand_QUEUE_CLEAR:              queueClear,
+		pb.ClusterCommand_QUEUE_OFFER:              queueOffer,
+		pb.ClusterCommand_QUEUE_POLL:               queuePoll,
+		pb.ClusterCommand_QUEUE_PEEK:               queuePeek,
+		pb.ClusterCommand_DICTIONARY_SIZE:          dictionarySize,
+		pb.ClusterCommand_DICTIONARY_CLEAR:         dictionaryClear,
+		pb.ClusterCommand_DICTIONARY_PUT:           dictionaryPut,
+		pb.ClusterCommand_DICTIONARY_PUT_IF_ABSENT: dictionaryPutIfAbsent,
+		pb.ClusterCommand_DICTIONARY_GET:           dictionaryGet,
+		pb.ClusterCommand_DICTIONARY_REMOVE:        dictionaryRemove,
+		pb.ClusterCommand_DICTIONARY_SCAN:          dictionaryScan,
+		pb.ClusterCommand_MUTEX_TRY_LOCK:           mutexTryLock,
+		pb.ClusterCommand_MUTEX_UNLOCK:             mutexUnlock,
+	}
+}
+
 // Apply log is invoked once a log entry is committed.
 func (f *FSM) Apply(l *raft.Log) interface{} {
-	var m pb.ClusterCommand
-	if err := proto.Unmarshal(l.Data, &m); err != nil {
+	var c pb.ClusterCommand
+	if err := proto.Unmarshal(l.Data, &c); err != nil {
 		return err
 	}
-
-	switch m.Command {
-	case pb.ClusterCommand_QUEUE_SIZE:
-		return f.queueSize(&m)
-	case pb.ClusterCommand_QUEUE_CLEAR:
-		return f.queueClear(&m)
-	case pb.ClusterCommand_QUEUE_OFFER:
-		return f.queueOffer(&m)
-	case pb.ClusterCommand_QUEUE_POLL:
-		return f.queuePoll(&m)
-	case pb.ClusterCommand_QUEUE_PEEK:
-		return f.queuePeek(&m)
-
-	case pb.ClusterCommand_DICTIONARY_SIZE:
-		return f.dictionarySize(&m)
-	case pb.ClusterCommand_DICTIONARY_CLEAR:
-		return f.dictionaryClear(&m)
-	case pb.ClusterCommand_DICTIONARY_PUT:
-		return f.dictionaryPut(&m)
-	case pb.ClusterCommand_DICTIONARY_PUT_IF_ABSENT:
-		return f.dictionaryPutIfAbsent(&m)
-	case pb.ClusterCommand_DICTIONARY_GET:
-		return f.dictionaryGet(&m)
-	case pb.ClusterCommand_DICTIONARY_REMOVE:
-		return f.dictionaryRemove(&m)
-	case pb.ClusterCommand_DICTIONARY_SCAN:
-		return f.dictionaryScan(&m)
-
-	case pb.ClusterCommand_MUTEX_TRY_LOCK:
-		return f.mutexTryLock(&m)
-	case pb.ClusterCommand_MUTEX_UNLOCK:
-		return f.mutexUnlock(&m)
-
-	default:
-		return ErrUnknownCommand
-	}
+	return fsmCommands[c.Command](f, &c)
 }
 
 // Snapshot is used to support log compaction.

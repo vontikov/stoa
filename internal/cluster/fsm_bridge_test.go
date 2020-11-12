@@ -25,7 +25,7 @@ func TestFSMPing(t *testing.T) {
 
 	f := NewFSM(context.Background())
 
-	mx := f.mutex("name")
+	mx := mutex(f, "name")
 	assert.Equal(t, te, mx.touched)
 
 	r := mx.tryLock(id1)

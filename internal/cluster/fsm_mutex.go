@@ -69,14 +69,14 @@ func (f *FSM) startMutexWatcher() {
 			case <-f.ctx.Done():
 				return
 			case <-t.C:
-				f.checkExpiredMutexes()
+				checkExpiredMutexes(f)
 			}
 		}
 	}()
 	f.logger.Debug("Mutex watcher started")
 }
 
-func (f *FSM) mutex(n string) *mutexRecord {
+func mutex(f *FSM, n string) *mutexRecord {
 	v, ok := f.ms.ComputeIfAbsent(n, func() interface{} { return newMutexRecord() })
 	if ok {
 		f.mo.Do(f.startMutexWatcher)
@@ -84,27 +84,27 @@ func (f *FSM) mutex(n string) *mutexRecord {
 	return v.(*mutexRecord)
 }
 
-func (f *FSM) mutexTryLock(m *pb.ClusterCommand) interface{} {
+func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetId()
-	mx := f.mutex(id.Name)
+	mx := mutex(f, id.Name)
 	r := mx.tryLock(id.Id)
 	if r {
-		f.notifyMutex(id.Name, mx)
+		notifyMutex(f, id.Name, mx)
 	}
 	return &pb.Result{Ok: r}
 }
 
-func (f *FSM) mutexUnlock(m *pb.ClusterCommand) interface{} {
+func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetId()
-	mx := f.mutex(id.Name)
+	mx := mutex(f, id.Name)
 	r := mx.unlock(id.Id)
 	if r {
-		f.notifyMutex(id.Name, mx)
+		notifyMutex(f, id.Name, mx)
 	}
 	return &pb.Result{Ok: r}
 }
 
-func (f *FSM) checkExpiredMutexes() {
+func checkExpiredMutexes(f *FSM) {
 	deadline := timeNow().Add(-mutexDeadline)
 	keys := f.ms.Keys()
 	for _, k := range keys {
@@ -117,12 +117,12 @@ func (f *FSM) checkExpiredMutexes() {
 			f.logger.Warn("Mutex expired",
 				"locked", mx.lockedBy, "locked by", mx.lockedBy, "touched", mx.touched)
 			mx.unlock(mx.lockedBy)
-			f.notifyMutex(k.(string), mx)
+			notifyMutex(f, k.(string), mx)
 		}
 	}
 }
 
-func (f *FSM) notifyMutex(name string, mx *mutexRecord) {
+func notifyMutex(f *FSM, name string, mx *mutexRecord) {
 	keys := f.streams.Keys()
 	for _, k := range keys {
 		v := f.streams.Get(k)

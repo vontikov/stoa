@@ -33,7 +33,7 @@ func (f *FSM) DictionaryScan() chan *pb.DictionaryEntry {
 }
 
 func (f *FSM) DictionaryRemove(e *pb.DictionaryEntry) error {
-	d := f.dictionary(e.Name)
+	d := dictionary(f, e.Name)
 	d.Remove(string(e.Key))
 	return nil
 }

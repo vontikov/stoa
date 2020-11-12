@@ -33,7 +33,7 @@ message ClusterCommand {
 
   // Type is a Raft claster command type.
   enum Type {
-    UNKNOWN                  = 0;
+    RESERVED                 = 0;
 
     QUEUE_SIZE               = 1;
     QUEUE_CLEAR              = 2;
@@ -51,6 +51,8 @@ message ClusterCommand {
 
     MUTEX_TRY_LOCK           = 13;
     MUTEX_UNLOCK             = 14;
+
+    MAX_INDEX                = 15;
   }
 }
 

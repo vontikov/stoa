@@ -19,7 +19,7 @@ func TestFsmDictionary(t *testing.T) {
 	for i := 0; i < max; i++ {
 		wg.Add(1)
 		go func(n int) {
-			d := f.dictionary(dictName)
+			d := dictionary(f, dictName)
 			assert.NotNil(t, d)
 			wg.Done()
 		}(i)

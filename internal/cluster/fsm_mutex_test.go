@@ -22,7 +22,7 @@ func TestFsmMutex(t *testing.T) {
 	for i := 0; i < max; i++ {
 		wg.Add(1)
 		go func(n int) {
-			mx := f.mutex(muxName)
+			mx := mutex(f, muxName)
 			assert.NotNil(t, mx)
 			wg.Done()
 		}(i)
@@ -42,7 +42,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 		Payload: &pb.ClusterCommand_Id{Id: &pb.Id{Id: id}},
 	}
 
-	r := f.mutexTryLock(m).(*pb.Result)
+	r := mutexTryLock(f, m).(*pb.Result)
 	assert.True(t, r.Ok)
 
 	var wg sync.WaitGroup
@@ -54,10 +54,10 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 				Payload: &pb.ClusterCommand_Id{Id: &pb.Id{Id: uuid.New().String()}},
 			}
 
-			r := f.mutexTryLock(m).(*pb.Result)
+			r := mutexTryLock(f, m).(*pb.Result)
 			assert.False(t, r.Ok)
 
-			r = f.mutexUnlock(m).(*pb.Result)
+			r = mutexUnlock(f, m).(*pb.Result)
 			assert.False(t, r.Ok)
 
 			wg.Done()
@@ -65,7 +65,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 	}
 	wg.Wait()
 
-	r = f.mutexUnlock(m).(*pb.Result)
+	r = mutexUnlock(f, m).(*pb.Result)
 	assert.True(t, r.Ok)
 }
 
@@ -78,7 +78,7 @@ func TestFsmMutexWatcher(t *testing.T) {
 		defer cancel()
 
 		f := NewFSM(ctx)
-		mx := f.mutex("muxName")
+		mx := mutex(f, "muxName")
 		r := mx.tryLock("lockId")
 		assert.True(t, r)
 		time.Sleep(mutexDeadline << 1)
@@ -93,7 +93,7 @@ func TestFsmMutexWatcher(t *testing.T) {
 		defer cancel()
 
 		f := NewFSM(ctx)
-		mx := f.mutex("muxName")
+		mx := mutex(f, "muxName")
 		r := mx.tryLock("lockId")
 		assert.True(t, r)
 		time.Sleep(mutexDeadline << 1)

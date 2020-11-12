@@ -19,7 +19,7 @@ func TestFsmQueue(t *testing.T) {
 	for i := 0; i < max; i++ {
 		wg.Add(1)
 		go func(n int) {
-			q := f.queue(queueName)
+			q := queue(f, queueName)
 			assert.NotNil(t, q)
 			wg.Done()
 		}(i)

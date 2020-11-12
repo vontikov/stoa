@@ -17,27 +17,27 @@ func newDictionaryRecord() *dictionaryRecord {
 	return &dictionaryRecord{m: cc.NewSynchronizedMap(initialDictionaryCapacity)}
 }
 
-func (f *FSM) dictionary(n string) cc.Map {
+func dictionary(f *FSM, n string) cc.Map {
 	v, _ := f.ds.ComputeIfAbsent(n, func() interface{} { return newDictionaryRecord() })
 	return v.(*dictionaryRecord).m
 }
 
-func (f *FSM) dictionarySize(m *pb.ClusterCommand) interface{} {
-	d := f.dictionary(m.GetName().Name)
+func dictionarySize(f *FSM, m *pb.ClusterCommand) interface{} {
+	d := dictionary(f, m.GetName().Name)
 	v := make([]byte, 4)
 	binary.LittleEndian.PutUint32(v, uint32(d.Size()))
 	return &pb.Value{Value: v}
 }
 
-func (f *FSM) dictionaryClear(m *pb.ClusterCommand) interface{} {
-	d := f.dictionary(m.GetName().Name)
+func dictionaryClear(f *FSM, m *pb.ClusterCommand) interface{} {
+	d := dictionary(f, m.GetName().Name)
 	d.Clear()
 	return nil
 }
 
-func (f *FSM) dictionaryPut(m *pb.ClusterCommand) interface{} {
+func dictionaryPut(f *FSM, m *pb.ClusterCommand) interface{} {
 	kv := m.GetKeyValue()
-	d := f.dictionary(kv.Name)
+	d := dictionary(f, kv.Name)
 	v := entry{
 		Value:     kv.Value,
 		TTLMillis: m.TtlMillis,
@@ -49,9 +49,9 @@ func (f *FSM) dictionaryPut(m *pb.ClusterCommand) interface{} {
 	return &pb.Value{Value: o.(entry).Value}
 }
 
-func (f *FSM) dictionaryPutIfAbsent(m *pb.ClusterCommand) interface{} {
+func dictionaryPutIfAbsent(f *FSM, m *pb.ClusterCommand) interface{} {
 	kv := m.GetKeyValue()
-	d := f.dictionary(kv.Name)
+	d := dictionary(f, kv.Name)
 	v := entry{
 		Value:     kv.Value,
 		TTLMillis: m.TtlMillis,
@@ -60,27 +60,26 @@ func (f *FSM) dictionaryPutIfAbsent(m *pb.ClusterCommand) interface{} {
 	return &pb.Result{Ok: ok}
 }
 
-func (f *FSM) dictionaryGet(m *pb.ClusterCommand) interface{} {
+func dictionaryGet(f *FSM, m *pb.ClusterCommand) interface{} {
 	k := m.GetKey()
-	d := f.dictionary(k.Name)
+	d := dictionary(f, k.Name)
 	if v := d.Get(string(k.Key)); v != nil {
 		return &pb.Value{Value: v.(entry).Value}
 	}
 	return &pb.Value{}
 }
 
-func (f *FSM) dictionaryRemove(m *pb.ClusterCommand) interface{} {
+func dictionaryRemove(f *FSM, m *pb.ClusterCommand) interface{} {
 	k := m.GetKey()
-	d := f.dictionary(k.Name)
+	d := dictionary(f, k.Name)
 	d.Remove(string(k.Key))
 	return nil
 }
 
-func (f *FSM) dictionaryScan(m *pb.ClusterCommand) interface{} {
+func dictionaryScan(f *FSM, m *pb.ClusterCommand) interface{} {
 	ch := make(chan *pb.KeyValue)
-
 	go func() {
-		d := f.dictionary(m.GetName().Name)
+		d := dictionary(f, m.GetName().Name)
 		b := make([]*pb.KeyValue, 0, d.Size())
 		d.Range(func(k, v interface{}) bool {
 			kv := pb.KeyValue{
@@ -95,6 +94,5 @@ func (f *FSM) dictionaryScan(m *pb.ClusterCommand) interface{} {
 		}
 		close(ch)
 	}()
-
 	return ch
 }

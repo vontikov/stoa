@@ -27,15 +27,16 @@ var (
 )
 
 var (
-	ip            = flag.String("ip", "", "IP")
-	grpcPort      = flag.Int("grpc-port", 3502, "gRPC port")
-	httpPort      = flag.Int("http-port", 3503, "HTTP port")
-	discoveryIP   = flag.String("discovery-ip", "224.5.1.1", "Auto-discovery IP")
-	discoveryPort = flag.Int("discovery-port", 3500, "Auto-discovery port")
 	bindIP        = flag.String("bind-ip", "", "Bind IP")
 	bindPort      = flag.Int("bind-port", 3501, "Bind port")
-	pluginAddress = flag.String("plugin", "", "Plugin address")
+	discoveryIP   = flag.String("discovery-ip", "224.5.1.1", "Auto-discovery IP")
+	discoveryPort = flag.Int("discovery-port", 3500, "Auto-discovery port")
+	grpcPort      = flag.Int("grpc-port", 3502, "gRPC port")
+	httpPort      = flag.Int("http-port", 3503, "HTTP port")
+	ip            = flag.String("ip", "", "IP")
 	logLevel      = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
+	peers         = flag.String("peers", "", "Peer addresses")
+	pluginAddress = flag.String("plugin", "", "Plugin address")
 )
 
 func main() {
@@ -44,15 +45,7 @@ func main() {
 
 	logging.SetLevel(*logLevel)
 	logger := logging.NewLogger(App)
-
-	logger.Debug("option", "IP", *ip)
-	logger.Debug("option", "gRPC port", *grpcPort)
-	logger.Debug("option", "HTTP port", *httpPort)
-	logger.Debug("option", "Discovery IP", *discoveryIP)
-	logger.Debug("option", "Discovery port", *discoveryPort)
-	logger.Debug("option", "Bind IP", *bindIP)
-	logger.Debug("option", "Bind port", *bindPort)
-
+	logOptions(logger)
 	logger.Info("Starting", "version", Version)
 
 	signals := make(chan os.Signal, 1)
@@ -132,4 +125,16 @@ func panicOnError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func logOptions(l logging.Logger) {
+	l.Debug("option", "Bind IP", *bindIP)
+	l.Debug("option", "Bind port", *bindPort)
+	l.Debug("option", "Discovery IP", *discoveryIP)
+	l.Debug("option", "Discovery port", *discoveryPort)
+	l.Debug("option", "gRPC port", *grpcPort)
+	l.Debug("option", "HTTP port", *httpPort)
+	l.Debug("option", "IP", *ip)
+	l.Debug("option", "peers", *peers)
+	l.Debug("option", "pluginAddress", *pluginAddress)
 }
