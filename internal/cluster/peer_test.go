@@ -10,7 +10,7 @@ import (
 	"github.com/vontikov/stoa/internal/mocks/github.com/hashicorp/raft"
 )
 
-func TestClusterApply(t *testing.T) {
+func TestPeerApply(t *testing.T) {
 	const ip = "127.0.0.1"
 
 	mockCtrl := gomock.NewController(t)
