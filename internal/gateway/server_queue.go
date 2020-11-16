@@ -23,7 +23,7 @@ func (s *server) QueueSize(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -34,7 +34,7 @@ func (s *server) QueueSize(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -59,7 +59,7 @@ func (s *server) QueueClear(ctx context.Context, v *pb.Name) (*pb.Empty, error) 
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func (s *server) QueueClear(ctx context.Context, v *pb.Name) (*pb.Empty, error) 
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -90,7 +90,7 @@ func (s *server) QueueOffer(ctx context.Context, v *pb.Value) (*pb.Result, error
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ func (s *server) QueueOffer(ctx context.Context, v *pb.Value) (*pb.Result, error
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -121,7 +121,7 @@ func (s *server) QueuePoll(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -132,7 +132,7 @@ func (s *server) QueuePoll(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -155,7 +155,7 @@ func (s *server) QueuePeek(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -166,7 +166,7 @@ func (s *server) QueuePeek(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}

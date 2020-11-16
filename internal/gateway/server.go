@@ -10,25 +10,19 @@ import (
 
 var errIncorrectResponseType = errors.New("incorrect response type")
 
-type Bridge interface {
-	Add(*cluster.Peer, pb.Stoa_KeepServer) error
-}
-
 type server struct {
 	pb.UnimplementedStoaServer
-	logger logging.Logger
-	peer   *cluster.Peer
-	bridge Bridge
+	logger  logging.Logger
+	cluster cluster.Cluster
 }
 
-func newServer(p *cluster.Peer, b Bridge) *server {
+func newServer(p cluster.Cluster) *server {
 	return &server{
-		logger: logging.NewLogger("stoa"),
-		peer:   p,
-		bridge: b,
+		logger:  logging.NewLogger("stoa"),
+		cluster: p,
 	}
 }
 
 func (s *server) Keep(stream pb.Stoa_KeepServer) error {
-	return s.bridge.Add(s.peer, stream)
+	return s.cluster.AddKeeper(stream)
 }

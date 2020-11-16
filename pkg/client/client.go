@@ -41,7 +41,7 @@ func New(opts ...Option) (Client, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	cfg.validate()
+	cfg.applyDefaults()
 
 	c := client{
 		logger: logging.NewLogger("client"),

@@ -22,7 +22,7 @@ func (s *server) DictionarySize(ctx context.Context, v *pb.Name) (*pb.Value, err
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -33,7 +33,7 @@ func (s *server) DictionarySize(ctx context.Context, v *pb.Name) (*pb.Value, err
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -57,7 +57,7 @@ func (s *server) DictionaryClear(ctx context.Context, v *pb.Name) (*pb.Empty, er
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (s *server) DictionaryClear(ctx context.Context, v *pb.Name) (*pb.Empty, er
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -89,7 +89,7 @@ func (s *server) DictionaryPut(ctx context.Context, v *pb.KeyValue) (*pb.Value, 
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -100,7 +100,7 @@ func (s *server) DictionaryPut(ctx context.Context, v *pb.KeyValue) (*pb.Value, 
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -124,7 +124,7 @@ func (s *server) DictionaryPutIfAbsent(ctx context.Context, v *pb.KeyValue) (*pb
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -135,7 +135,7 @@ func (s *server) DictionaryPutIfAbsent(ctx context.Context, v *pb.KeyValue) (*pb
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -159,7 +159,7 @@ func (s *server) DictionaryGet(ctx context.Context, v *pb.Key) (*pb.Value, error
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -170,7 +170,7 @@ func (s *server) DictionaryGet(ctx context.Context, v *pb.Key) (*pb.Value, error
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -193,7 +193,7 @@ func (s *server) DictionaryRemove(ctx context.Context, v *pb.Key) (*pb.Result, e
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -204,7 +204,7 @@ func (s *server) DictionaryRemove(ctx context.Context, v *pb.Key) (*pb.Result, e
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -227,7 +227,7 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 	}
 
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return err
 		}
@@ -238,7 +238,7 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 		return err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return wrapError(err)
 	}

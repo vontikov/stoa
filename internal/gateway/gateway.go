@@ -26,7 +26,7 @@ type Gateway struct {
 }
 
 // New creates new Gateway instance
-func New(ip string, grpcPort int, httpPort int, peer *cluster.Peer, b Bridge) (*Gateway, error) {
+func New(ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gateway, error) {
 	grpcAddr := fmt.Sprintf("%s:%d", ip, grpcPort)
 	httpAddr := fmt.Sprintf("%s:%d", ip, httpPort)
 
@@ -36,7 +36,7 @@ func New(ip string, grpcPort int, httpPort int, peer *cluster.Peer, b Bridge) (*
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterStoaServer(grpcServer, newServer(peer, b))
+	pb.RegisterStoaServer(grpcServer, newServer(cluster))
 
 	healthcheck := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthcheck)

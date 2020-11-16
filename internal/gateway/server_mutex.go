@@ -22,7 +22,7 @@ func (s *server) MutexTryLock(ctx context.Context, v *pb.Id) (*pb.Result, error)
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -33,7 +33,7 @@ func (s *server) MutexTryLock(ctx context.Context, v *pb.Id) (*pb.Result, error)
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}
@@ -57,7 +57,7 @@ func (s *server) MutexUnlock(ctx context.Context, v *pb.Id) (*pb.Result, error) 
 		return nil, err
 	}
 	if msg.BarrierEnabled {
-		fut := s.peer.R.Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
+		fut := s.cluster.Raft().Barrier(time.Duration(msg.BarrierMillis) * time.Millisecond)
 		if err := fut.Error(); err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (s *server) MutexUnlock(ctx context.Context, v *pb.Id) (*pb.Result, error) 
 		return nil, err
 	}
 
-	fut := s.peer.R.Apply(cmd, 0)
+	fut := s.cluster.Raft().Apply(cmd, 0)
 	if err := fut.Error(); err != nil {
 		return nil, wrapError(err)
 	}

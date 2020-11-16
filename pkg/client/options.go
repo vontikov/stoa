@@ -48,7 +48,7 @@ func newOptions() *options {
 	}
 }
 
-func (o *options) validate() {
+func (o *options) applyDefaults() {
 	if o.context == nil {
 		o.context = context.Background()
 	}

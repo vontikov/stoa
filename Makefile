@@ -35,6 +35,10 @@ TEST_PKGS  = \
   ./internal/util            \
   ./pkg/client               \
 
+TEST_PKGS  = \
+  ./internal/cluster         \
+  ./internal/gateway         \
+
 BINARY_FILE   = $(BIN_DIR)/$(APP)
 COVERAGE_FILE = $(BIN_DIR)/test-coverage.out
 

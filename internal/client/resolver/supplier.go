@@ -15,9 +15,9 @@ import (
 
 type peer struct {
 	ID       string
-	Leader   bool
 	GrpcIP   string
 	GrpcPort int32
+	Leader   bool
 }
 
 type Supplier interface {

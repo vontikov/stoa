@@ -24,7 +24,6 @@ func TestFSMPing(t *testing.T) {
 	}
 
 	f := NewFSM(context.Background())
-
 	mx := mutex(f, "name")
 	assert.Equal(t, te, mx.touched)
 
@@ -36,9 +35,9 @@ func TestFSMPing(t *testing.T) {
 	assert.False(t, r)
 	assert.Equal(t, te.Add(1*time.Second), mx.touched)
 
-	f.ping(&pb.Ping{Id: id2})
+	f.processPing(&pb.Ping{Id: id2})
 	assert.Equal(t, te.Add(1*time.Second), mx.touched)
 
-	f.ping(&pb.Ping{Id: id1})
+	f.processPing(&pb.Ping{Id: id1})
 	assert.Equal(t, te.Add(2*time.Second), mx.touched)
 }
