@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
@@ -66,9 +65,6 @@ func main() {
 
 func panicOnError(err error) {
 	if err != nil {
-		fmt.Println("=================")
-		fmt.Println(err)
-		fmt.Println("=================")
 		panic(err)
 	}
 }

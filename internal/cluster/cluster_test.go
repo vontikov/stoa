@@ -1,12 +1,14 @@
 package cluster
 
 import (
+	"testing"
+
 	"strings"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	cc "github.com/vontikov/go-concurrent"
 	"github.com/vontikov/stoa/internal/logging"
 )
 
@@ -23,97 +25,132 @@ func TestCluster(t *testing.T) {
 	)
 
 	peers := []string{
-		strings.Join([]string{addr1, addr2, addr3, addr4, addr5}, peerListSep),
-		strings.Join([]string{addr2}, peerListSep),
-		strings.Join([]string{addr3}, peerListSep),
-		strings.Join([]string{addr4}, peerListSep),
-		strings.Join([]string{addr5}, peerListSep),
+		strings.Join([]string{addr1, addr2, addr3, addr4, addr5}, PeerListSep),
+		strings.Join([]string{addr2}, PeerListSep),
+		strings.Join([]string{addr3}, PeerListSep),
+		strings.Join([]string{addr4}, PeerListSep),
+		strings.Join([]string{addr5}, PeerListSep),
 	}
 
 	var wg sync.WaitGroup
-	var m sync.Mutex
-	var clusters []Cluster
+	clusters := cc.NewSynchronizedMap(0)
+	defer clusters.Range(func(k, v interface{}) bool {
+		return assert.Nil(v.(Cluster).Shutdown())
+	})
 
-	for _, p := range peers {
+	for i, p := range peers {
 		wg.Add(1)
-		go func(p string) {
+		go func(p string, i int) {
 			cluster, err := New(WithPeers(p))
 			assert.Nil(err)
-			m.Lock()
-			clusters = append(clusters, cluster)
-			m.Unlock()
+			clusters.Put(i, cluster)
 			wg.Done()
-		}(p)
+		}(p, i)
 	}
 	wg.Wait()
-	m.Lock()
-	defer m.Unlock()
 
-	// make sure the leader is the same on all the peers
+	ensureSameLeader(t, clusters)
+	assert.True(clusters.Get(0).(Cluster).IsLeader())
+
+	// drain signals
+	clusters.Range(func(k, v interface{}) bool {
+		ch := v.(Cluster).WatchLeadership()
+		for len(ch) > 0 {
+			<-ch
+		}
+		return true
+	})
+
+	// transfer leadership
+	assert.Nil(clusters.Get(0).(Cluster).LeadershipTransfer())
+
+	// make sure there is a new leader
 	timeout := time.After(10 * time.Second)
 loop:
 	for {
 		select {
 		case <-timeout:
-			t.Logf("Election timeout")
+			t.Logf("election timeout")
 			t.Fail()
 		default:
-			for _, c := range clusters {
-				if c.LeaderAddress() != addr1 {
-					continue loop
+			for i := 1; i < clusters.Size(); i++ {
+				ch := clusters.Get(i).(Cluster).WatchLeadership()
+				if len(ch) > 0 && <-ch {
+					break loop
 				}
 			}
-			break loop
 		}
 	}
+	ensureSameLeader(t, clusters)
 
-	// transfer the leadership
-	for _, c := range clusters {
-		if c.IsLeader() {
-			// drain the previous signals
-			ch := c.WatchLeadership()
-			for len(ch) > 0 {
-				<-ch
-			}
-			assert.Nil(c.LeadershipTransfer())
-			// receive the leadership lost signal
-			assert.False(<-ch)
-			assert.False(c.IsLeader())
-		}
+}
+
+func TestClusterLeaderRestart(t *testing.T) {
+	assert := assert.New(t)
+	logging.SetLevel("info")
+
+	const (
+		addr1 = "127.0.0.1:3501"
+		addr2 = "127.0.0.1:3502"
+		addr3 = "127.0.0.1:3503"
+	)
+
+	peers := []string{
+		strings.Join([]string{addr1, addr2, addr3}, PeerListSep),
+		strings.Join([]string{addr2}, PeerListSep),
+		strings.Join([]string{addr3}, PeerListSep),
 	}
 
-	// make sure the leader is chanded and the same on all the peers
-	var leader string
-	timeout = time.After(10 * time.Second)
-loop1:
+	var wg sync.WaitGroup
+	clusters := cc.NewSynchronizedMap(0)
+	defer clusters.Range(func(k, v interface{}) bool {
+		return assert.Nil(v.(Cluster).Shutdown())
+	})
+
+	for i, p := range peers {
+		wg.Add(1)
+		go func(p string, i int) {
+			cluster, err := New(WithPeers(p))
+			assert.Nil(err)
+			clusters.Put(i, cluster)
+			wg.Done()
+		}(p, i)
+	}
+	wg.Wait()
+	ensureSameLeader(t, clusters)
+
+	err := clusters.Get(0).(Cluster).Shutdown()
+	assert.Nil(err)
+
+	cluster, err := New(WithPeers(peers[0]))
+	assert.Nil(err)
+	clusters.Put(0, cluster)
+
+	ensureSameLeader(t, clusters)
+}
+
+func ensureSameLeader(t *testing.T, clusters cc.Map) {
+	timeout := time.After(10 * time.Second)
+	expectedLeader := ""
 	for {
 		select {
 		case <-timeout:
-			t.Logf("Election timeout")
+			t.Logf("election timeout")
 			t.Fail()
 		default:
-			for _, c := range clusters {
-				l := c.LeaderAddress()
-				if leader == "" || leader != l {
-					leader = l
-					continue loop1
+			r := true
+			clusters.Range(func(k, v interface{}) bool {
+				c := v.(Cluster)
+				if c.LeaderAddress() != expectedLeader {
+					expectedLeader = c.LeaderAddress()
+					r = false
+					return false
 				}
+				return true
+			})
+			if r {
+				return
 			}
-			break loop1
 		}
-	}
-
-	n := 0
-	for _, c := range clusters {
-		assert.NotEqual(addr1, c.LeaderAddress())
-		if c.IsLeader() {
-			n++
-		}
-	}
-	assert.Equal(1, n)
-
-	// Shutdown
-	for _, c := range clusters {
-		assert.Nil(c.Shutdown())
 	}
 }

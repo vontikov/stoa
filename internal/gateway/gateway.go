@@ -15,10 +15,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/vontikov/stoa/internal/cluster"
+	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
 type Gateway struct {
+	logger     logging.Logger
 	wg         sync.WaitGroup
 	lis        net.Listener
 	restServer *http.Server
@@ -64,6 +66,7 @@ func New(ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gatew
 		})
 
 	g := Gateway{
+		logger:     logging.NewLogger("gateway"),
 		lis:        lis,
 		restServer: restServer,
 		grpcServer: grpcServer,
@@ -92,4 +95,5 @@ func (g *Gateway) Shutdown() {
 	g.restServer.Close()
 	g.grpcServer.GracefulStop()
 	g.wg.Wait()
+	g.logger.Info("shutdown")
 }

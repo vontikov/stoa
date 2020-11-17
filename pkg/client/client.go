@@ -44,7 +44,7 @@ func New(opts ...Option) (Client, error) {
 	cfg.applyDefaults()
 
 	c := client{
-		logger: logging.NewLogger("client"),
+		logger: logging.NewLogger("stoa"),
 		cfg:    cfg,
 		qs:     cc.NewSynchronizedMap(0),
 		ds:     cc.NewSynchronizedMap(0),

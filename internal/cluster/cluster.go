@@ -23,6 +23,9 @@ type Cluster interface {
 	// Raft returns the raft node for this Cluster.
 	Raft() *raft.Raft
 
+	// ID returns the Cluster ID
+	ID() string
+
 	// IsLeader returns true if the Cluster is the leader.
 	IsLeader() bool
 
@@ -69,12 +72,16 @@ var ErrPeerParams = errors.New("invalid peer parameters")
 type cluster struct {
 	logger       logging.Logger
 	r            *raft.Raft
+	id           string
 	f            *FSM
 	shutdownFunc func() error
 }
 
-const peerListSep = ","
-const peerOptsSep = ":"
+// PeerListSep separates peer definitions in the peer list.
+const PeerListSep = ","
+
+// PeerOptsSep separates a peer's options.
+const PeerOptsSep = ":"
 
 type peer struct {
 	id       string
@@ -131,17 +138,17 @@ func WithPeers(peers string) Option {
 		if in == "" {
 			return ErrEmptyPeerList
 		}
-		if strings.HasSuffix(in, peerListSep) {
-			in = in[:len(in)-len(peerListSep)]
+		if strings.HasSuffix(in, PeerListSep) {
+			in = in[:len(in)-len(PeerListSep)]
 		}
 
-		defs := strings.Split(in, peerListSep)
+		defs := strings.Split(in, PeerListSep)
 		if len(defs)%2 == 0 {
 			return ErrEvenPeerList
 		}
 
 		for _, d := range defs {
-			args := strings.Split(strings.TrimSpace(d), peerOptsSep)
+			args := strings.Split(strings.TrimSpace(d), PeerOptsSep)
 			p, err := newPeer(args)
 			if err != nil {
 				return err
@@ -208,23 +215,22 @@ func New(opts ...Option) (c Cluster, err error) {
 			logger.Error("bootstrap error", "message", err)
 			return nil, err
 		}
-		if err = waitLeaderStatus(r, 30*time.Second); err != nil {
-			logger.Error("leadership status has not been obtained")
-			return
-		}
-		for _, p := range cfg.peers[1:] {
-			addr := raft.ServerAddress(fmt.Sprintf("%s:%d", p.bindAddr, p.bindPort))
-			logger.Info("adding voter", "id", p.id, "address", addr)
-			if err = r.AddVoter(raft.ServerID(p.id), addr, 0, 0).Error(); err != nil {
-				logger.Error("voter error", "message", err)
-				return nil, err
+		if err := waitLeaderStatus(r, 10*time.Second); err == nil {
+			for _, p := range cfg.peers[1:] {
+				addr := raft.ServerAddress(fmt.Sprintf("%s:%d", p.bindAddr, p.bindPort))
+				logger.Info("adding voter", "id", p.id, "address", addr)
+				if err = r.AddVoter(raft.ServerID(p.id), addr, 0, 0).Error(); err != nil {
+					logger.Warn("voter error", "message", err)
+				}
 			}
 		}
+		logger.Warn("not leader")
 	}
 
 	c = &cluster{
 		logger: logger,
 		r:      r,
+		id:     p.id,
 		f:      fsm,
 		shutdownFunc: func() error {
 			cancel()
@@ -237,6 +243,11 @@ func New(opts ...Option) (c Cluster, err error) {
 // Raft implements Cluster.Raft.
 func (c *cluster) Raft() *raft.Raft {
 	return c.r
+}
+
+// ID implements Cluster.ID.
+func (c *cluster) ID() string {
+	return c.id
 }
 
 // LeaderAddress implements Cluster.LeaderAddress.
@@ -299,8 +310,9 @@ func (c *cluster) AddKeeper(stream pb.Stoa_KeepServer) error {
 
 // Shutdown implements Cluster.Shutdown.
 func (c *cluster) Shutdown() error {
-	c.logger.Debug("Shutdown")
-	return c.shutdownFunc()
+	err := c.shutdownFunc()
+	c.logger.Info("shutdown")
+	return err
 }
 
 func peerID(bindAddr string, bindPort int) string {

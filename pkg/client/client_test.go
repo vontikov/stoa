@@ -4,65 +4,90 @@ import (
 	"testing"
 
 	"context"
+	"strings"
+	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/vontikov/stoa/internal/cluster"
-	"github.com/vontikov/stoa/internal/discovery"
 	"github.com/vontikov/stoa/internal/gateway"
 	"github.com/vontikov/stoa/internal/logging"
-
-	"github.com/vontikov/stoa/internal/util"
-	"github.com/vontikov/stoa/pkg/pb"
 )
 
 const (
-	testPeerID        = "id"
-	testBindIP        = "127.0.0.1"
-	testBindPort      = 3601
-	testGrpcIP        = "127.0.0.1"
-	testGrpcPort      = 3602
-	testHTTPPort      = 3603
-	testDiscoveryIP   = "224.0.0.1"
-	testDiscoveryPort = 1234
-	testLogLevel      = "debug"
+	testLogLevel = "debug"
 )
 
 func init() {
 	logging.SetLevel(testLogLevel)
 }
 
-func runTestNode(t *testing.T) func() {
+func runTestCluster(ctx context.Context, t *testing.T) {
+	const (
+		addr1 = "127.0.0.1:3501"
+		addr2 = "127.0.0.1:3502"
+		addr3 = "127.0.0.1:3503"
+	)
+
+	peers := []struct {
+		grpcPort int
+		httpPort int
+		peers    string
+	}{
+
+		{2501, 2601, strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)},
+		{2502, 2602, strings.Join([]string{addr2}, cluster.PeerListSep)},
+		{2503, 2603, strings.Join([]string{addr3}, cluster.PeerListSep)},
+	}
+
+	var wg sync.WaitGroup
+	var m sync.Mutex
+	var clusters []cluster.Cluster
+	for _, p := range peers {
+		wg.Add(1)
+		go func(grpcPort, httpPort int, peers string) {
+			cluster, err := cluster.New(cluster.WithPeers(peers))
+			if err != nil {
+				t.Logf("cluster error: %v", err)
+				t.Fail()
+			}
+			m.Lock()
+			clusters = append(clusters, cluster)
+			m.Unlock()
+			gateway, err := gateway.New("localhost", grpcPort, httpPort, cluster)
+			if err != nil {
+				t.Logf("gateway error: %v", err)
+				t.Fail()
+			}
+			wg.Done()
+
+			<-ctx.Done()
+			gateway.Shutdown()
+			cluster.Shutdown()
+		}(p.grpcPort, p.httpPort, p.peers)
+	}
+	wg.Wait()
+
+	// make sure the leader is the same on all the peers
+	timeout := time.After(10 * time.Second)
+loop:
+	for {
+		select {
+		case <-timeout:
+			t.Logf("Election timeout")
+			t.Fail()
+		default:
+			for _, c := range clusters {
+				if c.LeaderAddress() != addr1 {
+					continue loop
+				}
+			}
+			break loop
+		}
+	}
+}
+
+func TestClient(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	fsm := cluster.NewFSM(ctx)
-	peer, err := cluster.NewPeer(testPeerID, testBindIP, testBindPort, fsm)
-	assert.Nil(t, err)
-	gw, err := gateway.New(testGrpcIP, testGrpcPort, testHTTPPort, peer, fsm)
-	assert.Nil(t, err)
-
-	ms := func() ([]byte, error) {
-		return proto.Marshal(
-			&pb.Discovery{
-				Id:       testPeerID,
-				GrpcIp:   testGrpcIP,
-				GrpcPort: testGrpcPort,
-				Leader:   peer.IsLeader(),
-			})
-	}
-	sender, err := discovery.NewSender(testDiscoveryIP, testDiscoveryPort, ms)
-	assert.Nil(t, err)
-
-	go sender.Run(ctx)
-
-	err = util.WaitLeaderStatus(peer, 5*time.Second)
-	assert.Nil(t, err)
-
-	return func() {
-		gw.Shutdown()
-		peer.Shutdown()
-		cancel()
-	}
+	defer cancel()
+	runTestCluster(ctx, t)
 }
