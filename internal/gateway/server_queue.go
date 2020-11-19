@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
@@ -42,7 +41,7 @@ func (s *server) QueueSize(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 	if r, ok := fut.Response().(*pb.Value); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }
 
 func (s *server) QueueClear(ctx context.Context, v *pb.Name) (*pb.Empty, error) {
@@ -139,7 +138,7 @@ func (s *server) QueuePoll(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 	if r, ok := fut.Response().(*pb.Value); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }
 
 func (s *server) QueuePeek(ctx context.Context, v *pb.Name) (*pb.Value, error) {
@@ -173,5 +172,5 @@ func (s *server) QueuePeek(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 	if r, ok := fut.Response().(*pb.Value); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }

@@ -83,13 +83,13 @@ const PeerListSep = ","
 // PeerOptsSep separates a peer's options.
 const PeerOptsSep = ":"
 
-type peer struct {
-	id       string
-	bindAddr string
-	bindPort int
+type Peer struct {
+	ID       string
+	BindAddr string
+	BindPort int
 }
 
-func newPeer(args []string) (*peer, error) {
+func NewPeer(args []string) (*Peer, error) {
 	var (
 		id       string
 		bindAddr string
@@ -107,12 +107,39 @@ func newPeer(args []string) (*peer, error) {
 	default:
 		return nil, ErrPeerParams
 	}
-	return &peer{id, bindAddr, bindPort}, nil
+	return &Peer{id, bindAddr, bindPort}, nil
+}
+
+func ParsePeers(in string) ([]*Peer, error) {
+	var peers []*Peer
+
+	s := strings.TrimSpace(in)
+	if s == "" {
+		return nil, ErrEmptyPeerList
+	}
+	if strings.HasSuffix(s, PeerListSep) {
+		s = s[:len(s)-len(PeerListSep)]
+	}
+
+	defs := strings.Split(s, PeerListSep)
+	if len(defs)%2 == 0 {
+		return nil, ErrEvenPeerList
+	}
+
+	for _, d := range defs {
+		args := strings.Split(strings.TrimSpace(d), PeerOptsSep)
+		p, err := NewPeer(args)
+		if err != nil {
+			return nil, err
+		}
+		peers = append(peers, p)
+	}
+	return peers, nil
 }
 
 type options struct {
 	autoDiscovery bool
-	peers         []*peer
+	peers         []*Peer
 }
 
 func newOptions(opts ...Option) (*options, error) {
@@ -132,29 +159,13 @@ func newOptions(opts ...Option) (*options, error) {
 type Option func(*options) error
 
 // WithPeers passes the list of peers with which the Clustir should be created.
-func WithPeers(peers string) Option {
+func WithPeers(v string) Option {
 	return func(o *options) error {
-		in := strings.TrimSpace(peers)
-		if in == "" {
-			return ErrEmptyPeerList
+		peers, err := ParsePeers(v)
+		if err != nil {
+			return err
 		}
-		if strings.HasSuffix(in, PeerListSep) {
-			in = in[:len(in)-len(PeerListSep)]
-		}
-
-		defs := strings.Split(in, PeerListSep)
-		if len(defs)%2 == 0 {
-			return ErrEvenPeerList
-		}
-
-		for _, d := range defs {
-			args := strings.Split(strings.TrimSpace(d), PeerOptsSep)
-			p, err := newPeer(args)
-			if err != nil {
-				return err
-			}
-			o.peers = append(o.peers, p)
-		}
+		o.peers = peers
 		return nil
 	}
 }
@@ -176,7 +187,7 @@ func New(opts ...Option) (c Cluster, err error) {
 	logger := logging.NewLogger("raft")
 
 	p := cfg.peers[0]
-	bindAddr := fmt.Sprintf("%s:%d", p.bindAddr, p.bindPort)
+	bindAddr := fmt.Sprintf("%s:%d", p.BindAddr, p.BindPort)
 	advAddr, err := net.ResolveTCPAddr("tcp", bindAddr)
 	if err != nil {
 		return
@@ -187,7 +198,7 @@ func New(opts ...Option) (c Cluster, err error) {
 	}
 
 	conf := raft.DefaultConfig()
-	conf.LocalID = raft.ServerID(p.id)
+	conf.LocalID = raft.ServerID(p.ID)
 	conf.Logger = logger
 
 	logs := raft.NewInmemStore()
@@ -205,7 +216,7 @@ func New(opts ...Option) (c Cluster, err error) {
 			Servers: []raft.Server{
 				{
 					Address: raft.ServerAddress(bindAddr),
-					ID:      raft.ServerID(p.id),
+					ID:      raft.ServerID(p.ID),
 				},
 			},
 		}
@@ -217,20 +228,21 @@ func New(opts ...Option) (c Cluster, err error) {
 		}
 		if err := waitLeaderStatus(r, 10*time.Second); err == nil {
 			for _, p := range cfg.peers[1:] {
-				addr := raft.ServerAddress(fmt.Sprintf("%s:%d", p.bindAddr, p.bindPort))
-				logger.Info("adding voter", "id", p.id, "address", addr)
-				if err = r.AddVoter(raft.ServerID(p.id), addr, 0, 0).Error(); err != nil {
+				addr := raft.ServerAddress(fmt.Sprintf("%s:%d", p.BindAddr, p.BindPort))
+				logger.Info("adding voter", "id", p.ID, "address", addr)
+				if err = r.AddVoter(raft.ServerID(p.ID), addr, 0, 0).Error(); err != nil {
 					logger.Warn("voter error", "message", err)
 				}
 			}
+		} else {
+			logger.Warn("not leader")
 		}
-		logger.Warn("not leader")
 	}
 
 	c = &cluster{
 		logger: logger,
 		r:      r,
-		id:     p.id,
+		id:     p.ID,
 		f:      fsm,
 		shutdownFunc: func() error {
 			cancel()

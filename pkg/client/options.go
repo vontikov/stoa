@@ -22,6 +22,7 @@ type options struct {
 	id               string
 	idleStrategy     cc.IdleStrategy
 	keepAlivePeriod  time.Duration
+	peers            string
 	retryTimeout     time.Duration
 }
 
@@ -37,6 +38,7 @@ func WithID(v string) Option                        { return func(o *options) { 
 func WithIdleStrategyFast(v cc.IdleStrategy) Option { return func(o *options) { o.idleStrategy = v } }
 func WithKeepAlivePeriod(v time.Duration) Option    { return func(o *options) { o.keepAlivePeriod = v } }
 func WithLogLevel(v string) Option                  { return func(_ *options) { logging.SetLevel(v) } }
+func WithPeers(v string) Option                     { return func(o *options) { o.peers = v } }
 func WithRetryTimeout(v time.Duration) Option       { return func(o *options) { o.retryTimeout = v } }
 
 func newOptions() *options {
@@ -67,4 +69,5 @@ func (o *options) applyDefaults() {
 	if o.idleStrategy == nil {
 		o.idleStrategy = cc.NewSleepingIdleStrategy(500 * time.Millisecond)
 	}
+	o.discoveryEnabled = o.peers == ""
 }

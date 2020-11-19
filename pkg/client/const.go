@@ -9,6 +9,6 @@ const (
 	DefaultDiscoveryEnabled = true
 	DefaultDiscoveryIP      = "224.5.1.1"
 	DefaultDiscoveryPort    = 3500
-	DefaultKeepAlivePeriod  = 100 * time.Millisecond
+	DefaultKeepAlivePeriod  = 1000 * time.Millisecond
 	DefaultRetryTimeout     = 15000 * time.Millisecond
 )

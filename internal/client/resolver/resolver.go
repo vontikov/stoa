@@ -1,128 +1,72 @@
 package resolver
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"sync"
-	"sync/atomic"
-	"time"
 
 	"google.golang.org/grpc/resolver"
 
+	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/logging"
 )
 
 const (
-	// Scheme contains resolver scheme
+	// Scheme contains the resolver scheme
 	Scheme = "raft"
-	// DefaultResolutionRate contains the watcher's default resolution rate
-	DefaultResolutionRate = 500 * time.Millisecond
 )
 
-// ErrLeaderNotFound is the error reported when there is no Raft lider yet.
-var ErrLeaderNotFound = errors.New("leader not found")
-
-var resRate = DefaultResolutionRate
-
-var resolveFuncRef atomic.Value
-
-// builder implements
+// StaticBuilder implements
 // ResolverBuilder(https://godoc.org/google.golang.org/grpc/resolver#Builder).
-type builder struct {
-	supplier Supplier
+type StaticBuilder struct {
+	peers []*cluster.Peer
 }
 
-// raftResolver implements
+// staticResolver implements
 // Resolver(https://godoc.org/google.golang.org/grpc/resolver#Resolver).
-type raftResolver struct {
-	sync.Mutex
-	logger   logging.Logger
-	cancel   context.CancelFunc
-	cc       resolver.ClientConn
-	ctx      context.Context
-	leaderID string
-	supplier Supplier
-	target   resolver.Target
-	wg       sync.WaitGroup
-}
-
-// Rate sets watcher resolution rate
-func Rate(d time.Duration) {
-	resRate = d
-}
-
-// Resolve forces name resolution
-func Resolve() {
-	resolveFuncRef.Load().(func())()
+type staticResolver struct {
+	logger logging.Logger
+	cc     resolver.ClientConn
+	target resolver.Target
+	peers  []*cluster.Peer
 }
 
 // New creates new resolver.Builder instance
-func New(s Supplier) resolver.Builder {
-	return &builder{
-		supplier: s,
+func New(peers string) (resolver.Builder, error) {
+	peerList, err := cluster.ParsePeers(peers)
+	if err != nil {
+		return nil, err
 	}
+	return &StaticBuilder{peers: peerList}, nil
 }
 
-func (b *builder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
-	ctx, cancel := context.WithCancel(context.Background())
-	r := &raftResolver{
-		logger:   logging.NewLogger("resolver"),
-		target:   target,
-		cc:       cc,
-		ctx:      ctx,
-		cancel:   cancel,
-		supplier: b.supplier,
+func (b *StaticBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
+	r := staticResolver{
+		logger: logging.NewLogger("static-resolver"),
+		cc:     cc,
+		target: target,
+		peers:  b.peers,
 	}
-
-	resolveFuncRef.Store(r.resolve)
-
 	r.resolve()
-	r.wg.Add(1)
-	go r.watcher()
-	return r, nil
+	return &r, nil
 }
 
-func (*builder) Scheme() string {
+func (*StaticBuilder) Scheme() string {
 	return Scheme
 }
 
-func (r *raftResolver) ResolveNow(o resolver.ResolveNowOptions) {
+func (r *staticResolver) ResolveNow(resolver.ResolveNowOptions) {
 	r.resolve()
 }
 
-func (r *raftResolver) Close() {
-	r.Lock()
-	defer r.Unlock()
-	r.cancel()
-	r.wg.Wait()
-}
+func (r *staticResolver) Close() {}
 
-func (r *raftResolver) resolve() {
-	r.Lock()
-	defer r.Unlock()
-	for p := range r.supplier.Get(r.target.Endpoint) {
-		if p.Leader && p.ID != r.leaderID {
-			r.leaderID = p.ID
-			addr := fmt.Sprintf("%s:%d", p.GrpcIP, p.GrpcPort)
-			r.cc.UpdateState(resolver.State{Addresses: []resolver.Address{{Addr: addr}}})
-			r.logger.Info("updated", "address", addr)
-			return
-		}
+func (r *staticResolver) resolve() {
+	var addresses []resolver.Address
+	for _, p := range r.peers {
+		addr := fmt.Sprintf("%s:%d", p.BindAddr, p.BindPort)
+		addresses = append(addresses, resolver.Address{Addr: addr})
 	}
-	r.cc.ReportError(ErrLeaderNotFound)
-}
 
-func (r *raftResolver) watcher() {
-	defer r.wg.Done()
-	t := time.NewTicker(resRate)
-	for {
-		select {
-		case <-r.ctx.Done():
-			t.Stop()
-			return
-		case <-t.C:
-			r.resolve()
-		}
-	}
+	r.cc.UpdateState(resolver.State{Addresses: addresses})
+	r.logger.Debug("state updated with", "addresses", addresses)
+	return
 }

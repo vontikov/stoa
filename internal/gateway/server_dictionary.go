@@ -107,7 +107,7 @@ func (s *server) DictionaryPut(ctx context.Context, v *pb.KeyValue) (*pb.Value, 
 	if r, ok := fut.Response().(*pb.Value); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }
 
 func (s *server) DictionaryPutIfAbsent(ctx context.Context, v *pb.KeyValue) (*pb.Result, error) {
@@ -142,7 +142,7 @@ func (s *server) DictionaryPutIfAbsent(ctx context.Context, v *pb.KeyValue) (*pb
 	if r, ok := fut.Response().(*pb.Result); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }
 
 func (s *server) DictionaryGet(ctx context.Context, v *pb.Key) (*pb.Value, error) {
@@ -177,7 +177,7 @@ func (s *server) DictionaryGet(ctx context.Context, v *pb.Key) (*pb.Value, error
 	if r, ok := fut.Response().(*pb.Value); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }
 
 func (s *server) DictionaryRemove(ctx context.Context, v *pb.Key) (*pb.Result, error) {
@@ -245,7 +245,7 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 
 	ch, ok := fut.Response().(chan *pb.KeyValue)
 	if !ok {
-		panic(errIncorrectResponseType)
+		panic(ErrIncorrectResponseType)
 	}
 
 	for {

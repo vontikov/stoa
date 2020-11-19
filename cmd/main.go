@@ -63,16 +63,16 @@ func main() {
 	logger.Info("Done")
 }
 
-func panicOnError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
 func logOptions(l logging.Logger) {
 	l.Debug("option", "gRPC port", *grpcPort)
 	l.Debug("option", "HTTP port", *httpPort)
 	l.Debug("option", "IP", *ip)
 	l.Debug("option", "peers", *peers)
 	l.Debug("option", "pluginAddress", *pluginAddress)
+}
+
+func panicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

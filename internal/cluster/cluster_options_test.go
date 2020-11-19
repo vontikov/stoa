@@ -11,7 +11,7 @@ func TestWithPeersOption(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
-		peers []*peer
+		peers []*Peer
 		err   error
 	}{
 		{
@@ -59,7 +59,7 @@ func TestWithPeersOption(t *testing.T) {
 		{
 			"OK",
 			"localhost:1234",
-			[]*peer{
+			[]*Peer{
 				{"localhost:1234", "localhost", 1234},
 			},
 			nil,

@@ -25,18 +25,12 @@ GO_LDFLAGS = "-s -w -X main.Version=$(VERSION)"
 MOCKFILES  = \
   $(GOPATH)/src/github.com/hashicorp/raft/fsm.go \
 
-TEST_OPTS  = -count=1 -timeout 120s -cover -failfast -v
-TEST_PKGS  = \
-  ./internal/client/resolver \
-  ./internal/cluster         \
-  ./internal/cluster/plugin  \
-  ./internal/discovery       \
-  ./internal/gateway         \
-  ./internal/util            \
-  ./pkg/client               \
+TEST_OPTS  = -count=1 -timeout 120s -cover -failfast
 
 TEST_PKGS  = \
   ./internal/cluster         \
+  ./internal/util            \
+  ./pkg/client               \
 
 BINARY_FILE   = $(BIN_DIR)/$(APP)
 COVERAGE_FILE = $(BIN_DIR)/test-coverage.out

@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"google.golang.org/grpc/metadata"
@@ -44,8 +43,8 @@ func processMetadata(ctx context.Context, msg *pb.ClusterCommand) error {
 }
 
 func wrapError(err error) error {
-	if errors.Is(err, raft.ErrNotLeader) {
-		status.Errorf(codes.ResourceExhausted, "%s", err)
+	if err.Error() == raft.ErrNotLeader.Error() {
+		return status.Errorf(codes.FailedPrecondition, raft.ErrNotLeader.Error())
 	}
-	return err
+	return status.Errorf(codes.Internal, err.Error())
 }

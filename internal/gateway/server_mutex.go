@@ -40,7 +40,7 @@ func (s *server) MutexTryLock(ctx context.Context, v *pb.Id) (*pb.Result, error)
 	if r, ok := fut.Response().(*pb.Result); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }
 
 func (s *server) MutexUnlock(ctx context.Context, v *pb.Id) (*pb.Result, error) {
@@ -75,5 +75,5 @@ func (s *server) MutexUnlock(ctx context.Context, v *pb.Id) (*pb.Result, error) 
 	if r, ok := fut.Response().(*pb.Result); ok {
 		return r, nil
 	}
-	panic(errIncorrectResponseType)
+	panic(ErrIncorrectResponseType)
 }

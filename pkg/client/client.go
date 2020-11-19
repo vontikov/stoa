@@ -14,6 +14,7 @@ import (
 
 	cc "github.com/vontikov/go-concurrent"
 
+	"github.com/vontikov/stoa/internal/client/balancer"
 	"github.com/vontikov/stoa/internal/client/resolver"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
@@ -43,26 +44,14 @@ func New(opts ...Option) (Client, error) {
 	}
 	cfg.applyDefaults()
 
-	c := client{
-		logger: logging.NewLogger("stoa"),
-		cfg:    cfg,
-		qs:     cc.NewSynchronizedMap(0),
-		ds:     cc.NewSynchronizedMap(0),
-		ms:     cc.NewSynchronizedMap(0),
-	}
-
-	suppl, err := resolver.NewDiscoverySupplier(cfg.discoveryIP, cfg.discoveryPort)
+	resolver, err := resolver.New(cfg.peers)
 	if err != nil {
 		return nil, err
 	}
-	c.Add(1)
-	go func() {
-		defer c.Done()
-		suppl.Run(cfg.context)
-	}()
-
 	dialOpts := []grpc.DialOption{
-		grpc.WithResolvers(resolver.New(suppl)),
+		grpc.WithResolvers(resolver),
+		grpc.WithBalancerName(balancer.Name),
+		//		grpc.WithBalancerName("pick_first"),
 		grpc.WithBlock(),
 		grpc.WithInsecure(),
 		grpc.WithKeepaliveParams(
@@ -71,6 +60,14 @@ func New(opts ...Option) (Client, error) {
 				Timeout:             time.Second,
 				PermitWithoutStream: true,
 			}),
+	}
+
+	c := client{
+		logger: logging.NewLogger("stoa"),
+		cfg:    cfg,
+		qs:     cc.NewSynchronizedMap(0),
+		ds:     cc.NewSynchronizedMap(0),
+		ms:     cc.NewSynchronizedMap(0),
 	}
 	c.Add(1)
 	go func() {
@@ -122,7 +119,7 @@ func (c *client) keeper() error {
 				return
 			case <-t.C:
 				if err := stream.Send(&pb.Ping{Id: c.cfg.id}); err != nil {
-					c.logger.Error("Ping error", "message", err)
+					c.logger.Warn("ping error", "message", err)
 				}
 			}
 		}
@@ -139,13 +136,16 @@ func (c *client) keeper() error {
 			default:
 				statusMsg, err := stream.Recv()
 				if err != nil {
-					if s, ok := status.FromError(err); ok {
+					s, ok := status.FromError(err)
+					if ok {
 						if s.Code() == codes.Canceled {
 							return
 						}
 					}
-					c.logger.Error("Status error", "message", err)
-					return
+					if s.Code() == codes.FailedPrecondition {
+						//						fmt.Println("!!!!!!!!")
+					}
+					//					c.logger.Warn("Status error", "code", s.Code(), "message", err)
 				}
 				c.logger.Trace("Status received", "status", statusMsg)
 

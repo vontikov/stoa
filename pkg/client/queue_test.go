@@ -1,7 +1,7 @@
 package client
 
-/*
 import (
+	"strings"
 	"testing"
 
 	"bytes"
@@ -11,31 +11,36 @@ import (
 	"fmt"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vontikov/stoa/internal/cluster"
+	"github.com/vontikov/stoa/internal/test"
 )
 
 func TestQueue(t *testing.T) {
 	const (
 		queueName = "queue"
 		max       = 100
+		basePort  = 2700
 	)
 
-	defer runTestNode(t)()
+	assert := assert.New(t)
+
+	addr1 := fmt.Sprintf("127.0.0.1:%d", basePort+1)
+	addr2 := fmt.Sprintf("127.0.0.1:%d", basePort+2)
+	addr3 := fmt.Sprintf("127.0.0.1:%d", basePort+3)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	client, err := New(
-		WithContext(ctx),
-		WithDiscoveryIP(testDiscoveryIP),
-		WithDiscoveryPort(testDiscoveryPort),
-	)
-	assert.Nil(t, err)
-	assert.NotNil(t, client)
+	test.RunTestCluster(ctx, t, basePort)
+
+	peers := strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)
+	client, err := New(WithContext(ctx), WithPeers(peers))
+	assert.Nil(err)
 
 	queue := client.Queue(queueName)
 	sz, err := queue.Size(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(0), sz, "Queue should be empty")
+	assert.Nil(err)
+	assert.Equal(uint32(0), sz, "Queue should be empty")
 
 	for i := 0; i < max; i++ {
 		var wg sync.WaitGroup
@@ -44,7 +49,7 @@ func TestQueue(t *testing.T) {
 			var buf bytes.Buffer
 			fmt.Fprintf(&buf, "Message #%d", i)
 			err = queue.Offer(ctx, buf.Bytes())
-			assert.Nil(t, err, "Offer() should return nil")
+			assert.Nil(err, "Offer() should return nil")
 
 			wg.Done()
 		}(i)
@@ -52,35 +57,34 @@ func TestQueue(t *testing.T) {
 	}
 
 	sz, err = queue.Size(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(max), sz, "All messages should be added")
+	assert.Nil(err)
+	assert.Equal(uint32(max), sz, "All messages should be added")
 
 	for i := 0; i < max/2; i++ {
 		var buf bytes.Buffer
 		fmt.Fprintf(&buf, "Message #%d", i)
 
 		v, err := queue.Peek(ctx)
-		assert.Nil(t, err, "Peek() should return nil")
-		assert.Equal(t, buf.Bytes(), v)
+		assert.Nil(err, "Peek() should return nil")
+		assert.Equal(buf.Bytes(), v)
 
 		sz, err = queue.Size(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, uint32(max-i), sz, "Peek() should not remove message")
+		assert.Nil(err)
+		assert.Equal(uint32(max-i), sz, "Peek() should not remove message")
 
 		v, err = queue.Poll(ctx)
-		assert.Nil(t, err, "Poll() should return nil")
-		assert.Equal(t, buf.Bytes(), v)
+		assert.Nil(err, "Poll() should return nil")
+		assert.Equal(buf.Bytes(), v)
 
 		sz, err = queue.Size(ctx)
-		assert.Nil(t, err)
-		assert.Equal(t, uint32(max-i-1), sz, "Poll() should remove message")
+		assert.Nil(err)
+		assert.Equal(uint32(max-i-1), sz, "Poll() should remove message")
 	}
 
 	err = queue.Clear(ctx)
-	assert.Nil(t, err, "Clear() should return nil")
+	assert.Nil(err, "Clear() should return nil")
 
 	sz, err = queue.Size(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(0), sz, "Queue should be empty")
+	assert.Nil(err)
+	assert.Equal(uint32(0), sz, "Queue should be empty")
 }
-*/

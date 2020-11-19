@@ -1,96 +1,106 @@
 package client
 
-/*
 import (
+	"sync"
 	"testing"
 
-	"fmt"
-	"sync"
-
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vontikov/stoa/internal/cluster"
+	"github.com/vontikov/stoa/internal/test"
 )
 
 func TestMutex(t *testing.T) {
-	const muxName = "mx"
+	const (
+		muxName  = "mx"
+		basePort = 2900
+	)
 
-	defer runTestNode(t)()
+	assert := assert.New(t)
+
+	addr1 := fmt.Sprintf("127.0.0.1:%d", basePort+1)
+	addr2 := fmt.Sprintf("127.0.0.1:%d", basePort+2)
+	addr3 := fmt.Sprintf("127.0.0.1:%d", basePort+3)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	client0, err := New(
-		WithContext(ctx),
-		WithDiscoveryIP(testDiscoveryIP),
-		WithDiscoveryPort(testDiscoveryPort),
-	)
-	assert.Nil(t, err)
+	test.RunTestCluster(ctx, t, basePort)
+
+	peers := strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)
+	client0, err := New(WithContext(ctx), WithPeers(peers))
+	assert.Nil(err)
 
 	mx0 := client0.Mutex(muxName)
 	ok, err := mx0.TryLock(ctx)
-	assert.Nil(t, err)
-	assert.True(t, ok)
+	assert.Nil(err)
+	assert.True(ok)
 
 	ok, err = mx0.TryLock(ctx)
-	assert.Nil(t, err)
-	assert.False(t, ok)
+	assert.Nil(err)
+	assert.False(ok)
 
-	client1, err := New(
-		WithContext(ctx),
-		WithDiscoveryIP(testDiscoveryIP),
-		WithDiscoveryPort(testDiscoveryPort),
-	)
-	assert.Nil(t, err)
+	client1, err := New(WithContext(ctx), WithPeers(peers))
+	assert.Nil(err)
 
 	mx1 := client1.Mutex(muxName)
 	ok, err = mx1.TryLock(ctx)
-	assert.Nil(t, err)
-	assert.False(t, ok)
+	assert.Nil(err)
+	assert.False(ok)
 
 	ok, err = mx0.Unlock(ctx)
-	assert.Nil(t, err)
-	assert.True(t, ok)
+	assert.Nil(err)
+	assert.True(ok)
 	ok, err = mx0.Unlock(ctx)
-	assert.Nil(t, err)
-	assert.False(t, ok)
+	assert.Nil(err)
+	assert.False(ok)
 
 	ok, err = mx1.Unlock(ctx)
-	assert.Nil(t, err)
-	assert.False(t, ok)
+	assert.Nil(err)
+	assert.False(ok)
 
 	cancel()
 }
 
 func TestMutexWatch(t *testing.T) {
-	const max = 10
+	const (
+		max      = 10
+		basePort = 3000
+	)
 
-	defer runTestNode(t)()
+	assert := assert.New(t)
+
+	addr1 := fmt.Sprintf("127.0.0.1:%d", basePort+1)
+	addr2 := fmt.Sprintf("127.0.0.1:%d", basePort+2)
+	addr3 := fmt.Sprintf("127.0.0.1:%d", basePort+3)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	test.RunTestCluster(ctx, t, basePort)
 
 	mxName := func(i int) string { return fmt.Sprintf("mx-%d", i) }
 
-	ctx, cancel := context.WithCancel(context.Background())
 	clients := make(chan Client, max)
+	peers := strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)
 
 	var wg sync.WaitGroup
 	for i := 0; i < max; i++ {
 		wg.Add(1)
 		id := fmt.Sprintf("id-%d", i)
 		go func() {
-			client, err := New(
-				WithContext(ctx),
-				WithDiscoveryIP(testDiscoveryIP),
-				WithDiscoveryPort(testDiscoveryPort),
-				WithLogLevel(testLogLevel),
-				WithID(id),
-			)
-			assert.Nil(t, err)
+			client, err := New(WithID(id), WithContext(ctx), WithPeers(peers))
+			assert.Nil(err)
 
 			for j := 0; j < max; j++ {
 				name := mxName(j)
 				mx := client.Mutex(name)
 				w := struct{ MutexWatchProto }{}
 				w.Callback = func(n string, v bool) {
-					assert.Equal(t, name, n)
+					assert.Equal(name, n)
 				}
 				mx.Watch(w)
 			}
@@ -107,7 +117,4 @@ func TestMutexWatch(t *testing.T) {
 		c.Mutex(mxName(i)).TryLock(context.Background())
 		i++
 	}
-
-	cancel()
 }
-*/

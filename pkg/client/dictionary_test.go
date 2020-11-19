@@ -1,6 +1,5 @@
 package client
 
-/*
 import (
 	"testing"
 
@@ -13,32 +12,37 @@ import (
 	"sync"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/vontikov/stoa/internal/cluster"
+	"github.com/vontikov/stoa/internal/test"
 )
 
 func TestDictionary(t *testing.T) {
 	const (
 		dictName = "dict"
 		max      = 100
+		basePort = 2600
 	)
 
-	defer runTestNode(t)()
+	assert := assert.New(t)
+
+	addr1 := fmt.Sprintf("127.0.0.1:%d", basePort+1)
+	addr2 := fmt.Sprintf("127.0.0.1:%d", basePort+2)
+	addr3 := fmt.Sprintf("127.0.0.1:%d", basePort+3)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	client, err := New(
-		WithContext(ctx),
-		WithDiscoveryIP(testDiscoveryIP),
-		WithDiscoveryPort(testDiscoveryPort),
-	)
-	assert.Nil(t, err)
-	assert.NotNil(t, client)
+	test.RunTestCluster(ctx, t, basePort)
+
+	peers := strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)
+	client, err := New(WithContext(ctx), WithPeers(peers))
+	assert.Nil(err)
 
 	dict := client.Dictionary(dictName)
 
 	sz, err := dict.Size(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(0), sz)
+	assert.Nil(err)
+	assert.Equal(uint32(0), sz)
 
 	var wg sync.WaitGroup
 
@@ -52,24 +56,24 @@ func TestDictionary(t *testing.T) {
 			fmt.Fprintf(&v, "value-%d", i)
 
 			ok, err := dict.PutIfAbsent(ctx, k.Bytes(), v.Bytes())
-			assert.Nil(t, err)
-			assert.True(t, ok)
+			assert.Nil(err)
+			assert.True(ok)
 
 			o, err := dict.Put(ctx, k.Bytes(), v.Bytes())
-			assert.Nil(t, err)
-			assert.Equal(t, v.Bytes(), o)
+			assert.Nil(err)
+			assert.Equal(v.Bytes(), o)
 
 			o, err = dict.Get(ctx, k.Bytes())
-			assert.Nil(t, err)
-			assert.Equal(t, v.Bytes(), o)
+			assert.Nil(err)
+			assert.Equal(v.Bytes(), o)
 
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
 	sz, err = dict.Size(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(max), sz)
+	assert.Nil(err)
+	assert.Equal(uint32(max), sz)
 
 	// Scan
 	var keys, vals []int
@@ -86,23 +90,23 @@ loop:
 			}
 
 			k, err := strconv.Atoi(strings.ReplaceAll(string(kv[0]), "key-", ""))
-			assert.Nil(t, err)
+			assert.Nil(err)
 			v, err := strconv.Atoi(strings.ReplaceAll(string(kv[1]), "value-", ""))
-			assert.Nil(t, err)
+			assert.Nil(err)
 
 			keys = append(keys, k)
 			vals = append(vals, v)
 		}
 	}
-	assert.Equal(t, max, len(keys))
-	assert.Equal(t, max, len(vals))
+	assert.Equal(max, len(keys))
+	assert.Equal(max, len(vals))
 
 	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
 	sort.Slice(vals, func(i, j int) bool { return vals[i] < vals[j] })
 
 	for i := 0; i < max; i++ {
-		assert.Equal(t, i, keys[i])
-		assert.Equal(t, i, vals[i])
+		assert.Equal(i, keys[i])
+		assert.Equal(i, vals[i])
 	}
 
 	// Remove
@@ -113,13 +117,12 @@ loop:
 			var k bytes.Buffer
 			fmt.Fprintf(&k, "key-%d", i)
 			err := dict.Remove(ctx, k.Bytes())
-			assert.Nil(t, err)
+			assert.Nil(err)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
 	sz, err = dict.Size(ctx)
-	assert.Nil(t, err)
-	assert.Equal(t, uint32(0), sz)
+	assert.Nil(err)
+	assert.Equal(uint32(0), sz)
 }
-*/

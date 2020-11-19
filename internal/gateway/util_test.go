@@ -56,6 +56,3 @@ func TestProcessMetadata(t *testing.T) {
 			assert.Equal(t, int64(42000), msg.TtlMillis)
 		})
 }
-
-func TestWrapError(t *testing.T) {
-}
