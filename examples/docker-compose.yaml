@@ -1,0 +1,30 @@
+version: '3.8'
+
+networks:
+  stoa:
+
+services:
+  stoa0:
+    image: github.com/vontikov/stoa:0.0.1
+    hostname: stoa0
+    command: stoa -log-level debug -peers stoa0:2501,stoa1:2501,stoa2:2501
+    networks:
+      - stoa
+  stoa1:
+    image: github.com/vontikov/stoa:0.0.1
+    hostname: stoa1
+    command: stoa -log-level debug -peers stoa1:2501
+    networks:
+      - stoa
+  stoa2:
+    image: github.com/vontikov/stoa:0.0.1
+    hostname: stoa2
+    command: stoa -log-level debug -peers stoa2:2501
+    networks:
+      - stoa
+
+  client0:
+    image: github.com/vontikov/stoa-example:0.0.1
+    command: stoa-example -log-level debug -peers stoa0:3501,stoa1:3501,stoa2:3501
+    networks:
+      - stoa

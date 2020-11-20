@@ -78,9 +78,11 @@ func New(opts ...Option) (Client, error) {
 	if err := c.ready(cfg.dialTimeout); err != nil {
 		return nil, err
 	}
-	if err := c.keeper(); err != nil {
-		return nil, err
-	}
+	/*
+		if err := c.keeper(); err != nil {
+			return nil, err
+		}
+	*/
 	return &c, nil
 }
 

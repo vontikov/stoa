@@ -21,8 +21,8 @@ var (
 )
 
 var (
-	grpcPort      = flag.Int("grpc-port", 3502, "gRPC port")
-	httpPort      = flag.Int("http-port", 3501, "HTTP port")
+	grpcPort      = flag.Int("grpc-port", 3501, "gRPC port")
+	httpPort      = flag.Int("http-port", 3502, "HTTP port")
 	logLevel      = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
 	ip            = flag.String("ip", "", "IP")
 	peers         = flag.String("peers", "", "Peer addresses")
@@ -36,7 +36,7 @@ func main() {
 	logging.SetLevel(*logLevel)
 	logger := logging.NewLogger(App)
 	logOptions(logger)
-	logger.Info("Starting", "version", Version)
+	logger.Info("starting", "version", Version)
 
 	if *ip == "" {
 		ifaces, err := util.GetInterfaces()
@@ -54,13 +54,13 @@ func main() {
 	panicOnError(err)
 	gateway, err := gateway.New(*ip, *grpcPort, *httpPort, cluster)
 	panicOnError(err)
-	logger.Info("Started")
+	logger.Info("started")
 
 	sig := <-signals
-	logger.Debug("Received signal", "type", sig)
+	logger.Debug("received signal", "type", sig)
 	gateway.Shutdown()
 	cluster.Shutdown()
-	logger.Info("Done")
+	logger.Info("done")
 }
 
 func logOptions(l logging.Logger) {

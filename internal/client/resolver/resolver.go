@@ -67,6 +67,6 @@ func (r *staticResolver) resolve() {
 	}
 
 	r.cc.UpdateState(resolver.State{Addresses: addresses})
-	r.logger.Debug("state updated with", "addresses", addresses)
+	r.logger.Debug("updated with", "addresses", addresses)
 	return
 }
