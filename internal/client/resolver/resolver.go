@@ -21,7 +21,7 @@ const (
 	// PeerOptsSep separates a peer's options.
 	PeerOptsSep = ":"
 
-	DefaultRaftPort = 3499
+	DefaultGRPCPort = 3500
 )
 
 // ErrPeerParams is the error returned if the peer parameters are invalid.
@@ -45,7 +45,7 @@ func newPeer(args []string) (*peer, error) {
 	switch len(args) {
 	case 1:
 		addr = args[0]
-		port = DefaultRaftPort
+		port = DefaultGRPCPort
 	case 2:
 		addr = args[0]
 		port, err = strconv.Atoi(args[1])

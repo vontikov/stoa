@@ -21,12 +21,11 @@ var (
 )
 
 var (
-	grpcPort      = flag.Int("grpc-port", 3501, "gRPC port")
-	httpPort      = flag.Int("http-port", 3502, "HTTP port")
-	logLevel      = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
-	ip            = flag.String("ip", "", "IP")
-	peers         = flag.String("peers", "", "Peer addresses")
-	pluginAddress = flag.String("plugin", "", "Plugin address")
+	grpcPort = flag.Int("grpc-port", 3500, "gRPC port")
+	httpPort = flag.Int("http-port", 3501, "HTTP port")
+	ip       = flag.String("ip", "", "IP")
+	logLevel = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
+	peers    = flag.String("peers", "", "Peer addresses")
 )
 
 func main() {
@@ -68,7 +67,6 @@ func logOptions(l logging.Logger) {
 	l.Debug("option", "HTTP port", *httpPort)
 	l.Debug("option", "IP", *ip)
 	l.Debug("option", "peers", *peers)
-	l.Debug("option", "pluginAddress", *pluginAddress)
 }
 
 func panicOnError(err error) {
