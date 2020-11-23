@@ -57,14 +57,6 @@ var ErrDeadlineExceeded error = errors.New("deadline exceeded")
 // configuration.
 var ErrClusterConfig = errors.New("invalid cluster configuration")
 
-// ErrEmptyPeerList is the error returned if an empty peer list passed to the
-// Cluster configuration.
-var ErrEmptyPeerList = errors.New("empty peer list")
-
-// ErrEvenPeerList is the error returned if the peer list passed to the Cluster
-// configuration contains even number of nodes.
-var ErrEvenPeerList = errors.New("even peer list")
-
 // ErrPeerParams is the error returned if the peer parameters are invalid.
 var ErrPeerParams = errors.New("invalid peer parameters")
 
@@ -114,18 +106,11 @@ func ParsePeers(in string) ([]*Peer, error) {
 	var peers []*Peer
 
 	s := strings.TrimSpace(in)
-	if s == "" {
-		return nil, ErrEmptyPeerList
-	}
 	if strings.HasSuffix(s, PeerListSep) {
 		s = s[:len(s)-len(PeerListSep)]
 	}
 
 	defs := strings.Split(s, PeerListSep)
-	if len(defs)%2 == 0 {
-		return nil, ErrEvenPeerList
-	}
-
 	for _, d := range defs {
 		args := strings.Split(strings.TrimSpace(d), PeerOptsSep)
 		p, err := NewPeer(args)
