@@ -18,6 +18,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const DefaultRaftPort = 3499
+
 // Cluster is a higher level representation of raft.Raft cluster endpoint.
 type Cluster interface {
 	// Raft returns the raft node for this Cluster.
@@ -75,35 +77,39 @@ const PeerListSep = ","
 // PeerOptsSep separates a peer's options.
 const PeerOptsSep = ":"
 
-type Peer struct {
-	ID       string
-	BindAddr string
-	BindPort int
+type peer struct {
+	id   string
+	addr string
+	port int
 }
 
-func NewPeer(args []string) (*Peer, error) {
+func newPeer(args []string) (*peer, error) {
 	var (
-		id       string
-		bindAddr string
-		bindPort int
+		addr string
+		port int
+		err  error
 	)
+
 	switch len(args) {
+	case 1:
+		addr = args[0]
+		port = DefaultRaftPort
 	case 2:
-		bindAddr = args[0]
-		bindPort, _ = strconv.Atoi(args[1])
-		id = peerID(bindAddr, bindPort)
-	case 3:
-		id = args[0]
-		bindAddr = args[1]
-		bindPort, _ = strconv.Atoi(args[2])
+		addr = args[0]
+		port, err = strconv.Atoi(args[1])
+		if err != nil {
+			return nil, ErrPeerParams
+		}
 	default:
 		return nil, ErrPeerParams
 	}
-	return &Peer{id, bindAddr, bindPort}, nil
+
+	id := peerID(addr, port)
+	return &peer{id, addr, port}, nil
 }
 
-func ParsePeers(in string) ([]*Peer, error) {
-	var peers []*Peer
+func parsePeers(in string) ([]*peer, error) {
+	var peers []*peer
 
 	s := strings.TrimSpace(in)
 	if strings.HasSuffix(s, PeerListSep) {
@@ -113,7 +119,7 @@ func ParsePeers(in string) ([]*Peer, error) {
 	defs := strings.Split(s, PeerListSep)
 	for _, d := range defs {
 		args := strings.Split(strings.TrimSpace(d), PeerOptsSep)
-		p, err := NewPeer(args)
+		p, err := newPeer(args)
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +130,7 @@ func ParsePeers(in string) ([]*Peer, error) {
 
 type options struct {
 	autoDiscovery bool
-	peers         []*Peer
+	peers         []*peer
 }
 
 func newOptions(opts ...Option) (*options, error) {
@@ -146,7 +152,7 @@ type Option func(*options) error
 // WithPeers passes the list of peers with which the Clustir should be created.
 func WithPeers(v string) Option {
 	return func(o *options) error {
-		peers, err := ParsePeers(v)
+		peers, err := parsePeers(v)
 		if err != nil {
 			return err
 		}
@@ -172,7 +178,7 @@ func New(opts ...Option) (c Cluster, err error) {
 	logger := logging.NewLogger("raft")
 
 	p := cfg.peers[0]
-	bindAddr := fmt.Sprintf("%s:%d", p.BindAddr, p.BindPort)
+	bindAddr := fmt.Sprintf("%s:%d", p.addr, p.port)
 	advAddr, err := net.ResolveTCPAddr("tcp", bindAddr)
 	if err != nil {
 		return
@@ -183,7 +189,7 @@ func New(opts ...Option) (c Cluster, err error) {
 	}
 
 	conf := raft.DefaultConfig()
-	conf.LocalID = raft.ServerID(p.ID)
+	conf.LocalID = raft.ServerID(p.id)
 	conf.Logger = logger
 
 	logs := raft.NewInmemStore()
@@ -201,7 +207,7 @@ func New(opts ...Option) (c Cluster, err error) {
 			Servers: []raft.Server{
 				{
 					Address: raft.ServerAddress(bindAddr),
-					ID:      raft.ServerID(p.ID),
+					ID:      raft.ServerID(p.id),
 				},
 			},
 		}
@@ -213,9 +219,9 @@ func New(opts ...Option) (c Cluster, err error) {
 		}
 		if err := waitLeaderStatus(r, 10*time.Second); err == nil {
 			for _, p := range cfg.peers[1:] {
-				addr := raft.ServerAddress(fmt.Sprintf("%s:%d", p.BindAddr, p.BindPort))
-				logger.Info("adding voter", "id", p.ID, "address", addr)
-				if err = r.AddVoter(raft.ServerID(p.ID), addr, 0, 0).Error(); err != nil {
+				addr := raft.ServerAddress(fmt.Sprintf("%s:%d", p.addr, p.port))
+				logger.Info("adding voter", "id", p.id, "address", addr)
+				if err = r.AddVoter(raft.ServerID(p.id), addr, 0, 0).Error(); err != nil {
 					logger.Warn("voter error", "message", err)
 				}
 			}
@@ -227,7 +233,7 @@ func New(opts ...Option) (c Cluster, err error) {
 	c = &cluster{
 		logger: logger,
 		r:      r,
-		id:     p.ID,
+		id:     p.id,
 		f:      fsm,
 		shutdownFunc: func() error {
 			cancel()

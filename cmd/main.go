@@ -21,11 +21,11 @@ var (
 )
 
 var (
-	grpcPort = flag.Int("grpc-port", 3500, "gRPC port")
-	httpPort = flag.Int("http-port", 3501, "HTTP port")
-	ip       = flag.String("ip", "", "IP")
-	logLevel = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
-	peers    = flag.String("peers", "", "Peer addresses")
+	grpcPort  = flag.Int("grpc-port", 3500, "gRPC port")
+	httpPort  = flag.Int("http-port", 3501, "HTTP port")
+	ip        = flag.String("ip", "", "IP")
+	logLevel  = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
+	bootstrap = flag.String("bootstrap", "", "Peer addresses")
 )
 
 func main() {
@@ -49,7 +49,13 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	cluster, err := cluster.New(cluster.WithPeers(*peers))
+	var err error
+	peers := *bootstrap
+	if peers == "" {
+		peers, err = os.Hostname()
+		panicOnError(err)
+	}
+	cluster, err := cluster.New(cluster.WithPeers(peers))
 	panicOnError(err)
 	gateway, err := gateway.New(*ip, *grpcPort, *httpPort, cluster)
 	panicOnError(err)
@@ -66,7 +72,7 @@ func logOptions(l logging.Logger) {
 	l.Debug("option", "gRPC port", *grpcPort)
 	l.Debug("option", "HTTP port", *httpPort)
 	l.Debug("option", "IP", *ip)
-	l.Debug("option", "peers", *peers)
+	l.Debug("option", "peers", *bootstrap)
 }
 
 func panicOnError(err error) {

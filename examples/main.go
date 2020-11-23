@@ -16,13 +16,13 @@ import (
 const dictName = "dict"
 
 var Version string = "N/A"
-var peers = flag.String("peers", "", "Peers")
+var bootstrap = flag.String("bootstrap", "", "Comma separated peer list")
 var logLevel = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
 
 func main() {
 	flag.Parse()
-	if *peers == "" {
-		panic("peers must not be empty")
+	if *bootstrap == "" {
+		panic("peer list must not be empty")
 	}
 
 	logging.SetLevel(*logLevel)
@@ -40,7 +40,7 @@ func main() {
 
 	client, err := stoa.New(
 		stoa.WithContext(ctx),
-		stoa.WithPeers(*peers),
+		stoa.WithPeers(*bootstrap),
 	)
 	panicOnError(err)
 	logger.Info("client is ready")
