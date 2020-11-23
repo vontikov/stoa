@@ -12,18 +12,15 @@ import (
 )
 
 type options struct {
-	callOptions      []grpc.CallOption
-	context          context.Context
-	dialTimeout      time.Duration
-	discoveryEnabled bool
-	discoveryIP      string
-	discoveryPort    int
-	failFast         bool
-	id               string
-	idleStrategy     cc.IdleStrategy
-	keepAlivePeriod  time.Duration
-	peers            string
-	retryTimeout     time.Duration
+	callOptions     []grpc.CallOption
+	context         context.Context
+	dialTimeout     time.Duration
+	failFast        bool
+	id              string
+	idleStrategy    cc.IdleStrategy
+	keepAlivePeriod time.Duration
+	peers           string
+	retryTimeout    time.Duration
 }
 
 type Option func(*options)
@@ -31,8 +28,6 @@ type Option func(*options)
 func WithCallOptions(v []grpc.CallOption) Option    { return func(o *options) { o.callOptions = v } }
 func WithContext(v context.Context) Option          { return func(o *options) { o.context = v } }
 func WithDialTimeout(v time.Duration) Option        { return func(o *options) { o.dialTimeout = v } }
-func WithDiscoveryIP(v string) Option               { return func(o *options) { o.discoveryIP = v } }
-func WithDiscoveryPort(v int) Option                { return func(o *options) { o.discoveryPort = v } }
 func WithFailFast(v bool) Option                    { return func(o *options) { o.failFast = v } }
 func WithID(v string) Option                        { return func(o *options) { o.id = v } }
 func WithIdleStrategyFast(v cc.IdleStrategy) Option { return func(o *options) { o.idleStrategy = v } }
@@ -43,10 +38,7 @@ func WithRetryTimeout(v time.Duration) Option       { return func(o *options) { 
 
 func newOptions() *options {
 	return &options{
-		id:               uuid.New().String(),
-		discoveryEnabled: DefaultDiscoveryEnabled,
-		discoveryIP:      DefaultDiscoveryIP,
-		discoveryPort:    DefaultDiscoveryPort,
+		id: uuid.New().String(),
 	}
 }
 
@@ -69,5 +61,4 @@ func (o *options) applyDefaults() {
 	if o.idleStrategy == nil {
 		o.idleStrategy = cc.NewSleepingIdleStrategy(500 * time.Millisecond)
 	}
-	o.discoveryEnabled = o.peers == ""
 }
