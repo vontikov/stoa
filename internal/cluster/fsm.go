@@ -1,7 +1,9 @@
 package cluster
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"errors"
 	"io"
 	"sync"
@@ -26,6 +28,7 @@ type entry struct {
 
 // FSM implements raft.FSM
 type FSM struct {
+	sync.RWMutex
 	logger  logging.Logger
 	ctx     context.Context
 	streams cc.Map
@@ -76,15 +79,56 @@ func (f *FSM) Apply(l *raft.Log) interface{} {
 	if err := proto.Unmarshal(l.Data, &c); err != nil {
 		return err
 	}
+	f.RLock()
+	defer f.RUnlock()
 	return fsmCommands[c.Command](f, &c)
 }
 
 // Snapshot is used to support log compaction.
 func (f *FSM) Snapshot() (raft.FSMSnapshot, error) {
-	return &snapshot{}, nil
+	f.RLock()
+	defer f.RUnlock()
+
+	return f, nil
 }
 
 // Restore is used to restore an FSM from a snapshot.
 func (f *FSM) Restore(rc io.ReadCloser) error {
-	panic("Restore()")
+	f.Lock()
+	defer f.Unlock()
+	return gob.NewDecoder(rc).Decode(f)
+}
+
+// Persist implements raft.SnapshotSink.Persist.
+func (f *FSM) Persist(sink raft.SnapshotSink) error {
+	err := func() error {
+		var b bytes.Buffer
+		if err := gob.NewEncoder(&b).Encode(f); err != nil {
+			return err
+		}
+		if _, err := sink.Write(b.Bytes()); err != nil {
+			return err
+		}
+		return sink.Close()
+	}()
+
+	if err != nil {
+		sink.Cancel()
+	}
+	return err
+}
+
+// Release implements raft.SnapshotSink.Release.
+func (f *FSM) Release() {}
+
+// MarshalBinary implements encoding.BinaryMarshaller.MarshalBinary().
+func (f *FSM) MarshalBinary() (data []byte, err error) {
+	// TODO
+	return nil, nil
+}
+
+// UnmarshalBinary implements encoding.BinaryUnmarshaler.UnmarshalBinary.
+func (f *FSM) UnmarshalBinary(data []byte) error {
+	// TODO
+	return nil
 }
