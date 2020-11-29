@@ -3,6 +3,7 @@ package cluster
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/gob"
 	"errors"
 	"io"
@@ -20,21 +21,18 @@ import (
 // unknown.
 var ErrUnknownCommand = errors.New("unknown command")
 
-// entry is an data object stored in the FSM
-type entry struct {
-	Value     []byte // Value is the object's value
-	TTLMillis int64  // TTLMillis is the object's TTL
-}
+type streamMap cc.Map
+type mutexMap cc.Map
 
 // FSM implements raft.FSM
 type FSM struct {
 	sync.RWMutex
 	logger  logging.Logger
 	ctx     context.Context
-	streams cc.Map
-	qs      cc.Map
-	ds      cc.Map
-	ms      cc.Map
+	streams streamMap
+	qs      queueMapPtr
+	ds      dictMapPtr
+	ms      mutexMap
 	mo      sync.Once
 }
 
@@ -45,10 +43,10 @@ func NewFSM(ctx context.Context) *FSM {
 	return &FSM{
 		logger:  logging.NewLogger("fsm"),
 		ctx:     ctx,
-		streams: cc.NewSynchronizedMap(0),
-		qs:      cc.NewSynchronizedMap(0),
-		ds:      cc.NewSynchronizedMap(0),
+		qs:      newQueueMap(),
+		ds:      newDictMap(),
 		ms:      cc.NewSynchronizedMap(0),
+		streams: cc.NewSynchronizedMap(0),
 	}
 }
 
@@ -86,21 +84,14 @@ func (f *FSM) Apply(l *raft.Log) interface{} {
 
 // Snapshot is used to support log compaction.
 func (f *FSM) Snapshot() (raft.FSMSnapshot, error) {
-	f.RLock()
-	defer f.RUnlock()
-
 	return f, nil
-}
-
-// Restore is used to restore an FSM from a snapshot.
-func (f *FSM) Restore(rc io.ReadCloser) error {
-	f.Lock()
-	defer f.Unlock()
-	return gob.NewDecoder(rc).Decode(f)
 }
 
 // Persist implements raft.SnapshotSink.Persist.
 func (f *FSM) Persist(sink raft.SnapshotSink) error {
+	f.RLock()
+	defer f.RUnlock()
+
 	err := func() error {
 		var b bytes.Buffer
 		if err := gob.NewEncoder(&b).Encode(f); err != nil {
@@ -118,17 +109,88 @@ func (f *FSM) Persist(sink raft.SnapshotSink) error {
 	return err
 }
 
+// Restore is used to restore an FSM from a snapshot.
+func (f *FSM) Restore(rc io.ReadCloser) error {
+	f.Lock()
+	defer f.Unlock()
+	return gob.NewDecoder(rc).Decode(f)
+}
+
 // Release implements raft.SnapshotSink.Release.
 func (f *FSM) Release() {}
 
-// MarshalBinary implements encoding.BinaryMarshaller.MarshalBinary().
-func (f *FSM) MarshalBinary() (data []byte, err error) {
-	// TODO
-	return nil, nil
+// MarshalBinary implements encoding.BinaryMarshaler.MarshalBinary
+// (https://golang.org/pkg/encoding/#BinaryMarshaler).
+func (f *FSM) MarshalBinary() ([]byte, error) {
+	f.logger.Debug("start marshalling")
+
+	qb, err := f.qs.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	qbSz := len(qb)
+	f.logger.Debug("queues marshalled", "size", qbSz)
+
+	db, err := f.ds.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	dbSz := len(db)
+	f.logger.Debug("dictionaries marshalled", "size", qbSz)
+
+	data := make([]byte, 4+qbSz+4+dbSz)
+
+	idx := 0
+
+	// queues size
+	binary.LittleEndian.PutUint32(data[idx:], uint32(qbSz))
+	idx += 4
+	// queues
+	idx += copy(data[idx:], qb)
+
+	// dictionaries size
+	binary.LittleEndian.PutUint32(data[idx:], uint32(dbSz))
+	idx += 4
+
+	// dictionaries
+	idx += copy(data[idx:], db)
+
+	f.logger.Debug("marshalling complete", "size", len(data))
+	return data, nil
 }
 
-// UnmarshalBinary implements encoding.BinaryUnmarshaler.UnmarshalBinary.
+// UnmarshalBinary implements encoding.BinaryUnmarshaler.UnmarshalBinary
+// (https://golang.org/pkg/encoding/#BinaryUnmarshaler).
 func (f *FSM) UnmarshalBinary(data []byte) error {
-	// TODO
+	f.logger.Debug("start unmarshalling", "size", len(data))
+	idx := 0
+
+	// queues size
+	sz := int(binary.LittleEndian.Uint32(data[idx:]))
+	idx += 4
+	// queues
+	qs := newQueueMap()
+	if err := qs.UnmarshalBinary(data[idx : idx+sz]); err != nil {
+		return err
+	}
+	idx += sz
+	f.logger.Debug("queues unmarshalled", "size", sz)
+
+	// dictionaries size
+	sz = int(binary.LittleEndian.Uint32(data[idx:]))
+	idx += 4
+	// dictionaries
+	ds := newDictMap()
+	if err := ds.UnmarshalBinary(data[idx : idx+sz]); err != nil {
+		return err
+	}
+	f.logger.Debug("dictionaries unmarshalled", "size", sz)
+
+	f.Lock()
+	f.qs = qs
+	f.ds = ds
+	f.Unlock()
+
+	f.logger.Debug("unmarshalling complete")
 	return nil
 }

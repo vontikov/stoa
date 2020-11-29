@@ -18,7 +18,9 @@ type mutexRecord struct {
 	touched  time.Time
 }
 
-func newMutexRecord() *mutexRecord {
+type mutexRecordPtr = *mutexRecord
+
+func newMutexRecord() mutexRecordPtr {
 	return &mutexRecord{}
 }
 
@@ -76,12 +78,12 @@ func (f *FSM) startMutexWatcher() {
 	f.logger.Debug("Mutex watcher started")
 }
 
-func mutex(f *FSM, n string) *mutexRecord {
+func mutex(f *FSM, n string) mutexRecordPtr {
 	v, ok := f.ms.ComputeIfAbsent(n, func() interface{} { return newMutexRecord() })
 	if ok {
 		f.mo.Do(f.startMutexWatcher)
 	}
-	return v.(*mutexRecord)
+	return v.(mutexRecordPtr)
 }
 
 func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
@@ -112,7 +114,7 @@ func checkExpiredMutexes(f *FSM) {
 		if v == nil {
 			continue
 		}
-		mx := v.(*mutexRecord)
+		mx := v.(mutexRecordPtr)
 		if mx.locked && mx.touched.Before(deadline) {
 			f.logger.Warn("Mutex expired",
 				"locked", mx.lockedBy, "locked by", mx.lockedBy, "touched", mx.touched)
@@ -122,7 +124,7 @@ func checkExpiredMutexes(f *FSM) {
 	}
 }
 
-func notifyMutex(f *FSM, name string, mx *mutexRecord) {
+func notifyMutex(f *FSM, name string, mx mutexRecordPtr) {
 	keys := f.streams.Keys()
 	for _, k := range keys {
 		v := f.streams.Get(k)

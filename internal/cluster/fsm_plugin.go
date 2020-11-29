@@ -8,13 +8,13 @@ func (f *FSM) DictionaryScan() chan *pb.DictionaryEntry {
 	b := make([]*pb.DictionaryEntry, 0, 1024)
 	f.ds.Range(func(k, v interface{}) bool {
 		n := k.(string)
-		d := v.(*dictionaryRecord).m
+		d := v.(dictRecordPtr)
 		d.Range(func(k, v interface{}) bool {
 			e := pb.DictionaryEntry{
 				Name:      n,
 				Key:       []byte(k.(string)),
-				Value:     v.(entry).Value,
-				TtlMillis: v.(entry).TTLMillis,
+				Value:     v.(*entry).Value,
+				TtlMillis: v.(*entry).TTLMillis,
 			}
 			b = append(b, &e)
 			return true
