@@ -153,7 +153,7 @@ func (f *FSM) MarshalBinary() ([]byte, error) {
 	idx += 4
 
 	// dictionaries
-	idx += copy(data[idx:], db)
+	copy(data[idx:], db)
 
 	f.logger.Debug("marshalling complete", "size", len(data))
 	return data, nil

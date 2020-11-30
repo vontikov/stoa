@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Client defines Stoa client methods.
 type Client interface {
 	Wait()
 	Queue(n string) Queue
@@ -17,10 +18,10 @@ type Client interface {
 	Mutex(n string) Mutex
 }
 
-// CallOption adds an additional option to the method call.
+// CallOption adds an option to the method call.
 type CallOption func(*callOptions)
 
-// WithTTL is used to set the element TTL.
+// WithTTL is used to set the element's TTL.
 func WithTTL(d time.Duration) CallOption {
 	return func(o *callOptions) {
 		o.ttlEnabled = true

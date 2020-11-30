@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/vontikov/stoa)](https://goreportcard.com/report/github.com/vontikov/stoa)
+
 # Stoa
 
 Distributed in-memory collections based on

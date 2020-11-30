@@ -37,6 +37,7 @@ type client struct {
 	ms     cc.Map
 }
 
+// New creates and returns a new Client instance.
 func New(opts ...Option) (Client, error) {
 	cfg := newOptions()
 	for _, o := range opts {

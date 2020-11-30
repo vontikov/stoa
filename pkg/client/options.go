@@ -23,6 +23,7 @@ type options struct {
 	retryTimeout    time.Duration
 }
 
+// Option is a function applied to an options to change the options' default values.
 type Option func(*options)
 
 func WithCallOptions(v []grpc.CallOption) Option    { return func(o *options) { o.callOptions = v } }

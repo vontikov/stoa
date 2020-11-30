@@ -15,7 +15,9 @@ import (
 
 const dictName = "dict"
 
+// Version contains the app version.
 var Version string = "N/A"
+
 var bootstrap = flag.String("bootstrap", "", "Comma separated peer list")
 var logLevel = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
 
