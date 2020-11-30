@@ -11,6 +11,7 @@ import (
 	"github.com/vontikov/stoa/internal/logging"
 )
 
+// Name is the balancer name.
 const Name = "stoa_picker"
 
 func init() {
@@ -62,8 +63,8 @@ func (p *picker) Pick(balancer.PickInfo) (balancer.PickResult, error) {
 				p.Lock()
 				defer p.Unlock()
 				p.idx = (p.idx + 1) % len(p.scs)
-				if p.logger.IsDebug() {
-					p.logger.Debug("switched to", "address", p.rcs[p.scs[p.idx]].Address.Addr)
+				if p.logger.IsTrace() {
+					p.logger.Trace("switched to", "address", p.rcs[p.scs[p.idx]].Address.Addr)
 				}
 			}
 		},

@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	// Scheme contains the resolver scheme
+	// Scheme contains the resolver scheme.
 	Scheme = "raft"
 
 	// PeerListSep separates peer definitions in the peer list.
@@ -21,6 +21,7 @@ const (
 	// PeerOptsSep separates a peer's options.
 	PeerOptsSep = ":"
 
+	// DefaultGRPCPort is the default gRPC port.
 	DefaultGRPCPort = 3500
 )
 
@@ -105,6 +106,7 @@ func New(peers string) (resolver.Builder, error) {
 	return &StaticBuilder{peers: peerList}, nil
 }
 
+// Build implements resolver.Builder.Build.
 func (b *StaticBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	r := staticResolver{
 		logger: logging.NewLogger("static-resolver"),
@@ -116,6 +118,7 @@ func (b *StaticBuilder) Build(target resolver.Target, cc resolver.ClientConn, op
 	return &r, nil
 }
 
+// Scheme implements resolver.Builder.Scheme.
 func (*StaticBuilder) Scheme() string {
 	return Scheme
 }
@@ -134,6 +137,8 @@ func (r *staticResolver) resolve() {
 	}
 
 	r.cc.UpdateState(resolver.State{Addresses: addresses})
-	r.logger.Debug("updated with", "addresses", addresses)
+	if r.logger.IsTrace() {
+		r.logger.Trace("updated with", "addresses", addresses)
+	}
 	return
 }
