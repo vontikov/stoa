@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/gateway"
 	"github.com/vontikov/stoa/internal/logging"
@@ -14,9 +17,11 @@ import (
 )
 
 var (
-	// App contains the app name.
+	// Namespace is the app namespace.
+	Namespace string = "github_com_vontikov"
+	// App is the app name.
 	App string = "stoa"
-	// Version contains the app version.
+	// Version is the app version.
 	Version string = "N/A"
 )
 
@@ -25,7 +30,7 @@ var (
 	httpPort  = flag.Int("http-port", 3501, "HTTP port")
 	ip        = flag.String("ip", "", "IP")
 	logLevel  = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
-	bootstrap = flag.String("bootstrap", "", "Peer addresses")
+	bootstrap = flag.String("bootstrap", "", "Raft bootstrap")
 )
 
 func main() {
@@ -49,6 +54,18 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
+	hostname, _ := os.Hostname()
+	infoGauge := promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: Namespace,
+		Subsystem: App,
+		Name:      "info",
+		Help:      "Application info",
+		ConstLabels: prometheus.Labels{
+			"version":  Version,
+			"hostname": util.HostHostname(hostname),
+		},
+	})
+
 	var err error
 	peers := *bootstrap
 	if peers == "" {
@@ -57,13 +74,18 @@ func main() {
 	}
 	cluster, err := cluster.New(cluster.WithPeers(peers))
 	panicOnError(err)
-	gateway, err := gateway.New(*ip, *grpcPort, *httpPort, cluster)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	gateway, err := gateway.New(ctx, *ip, *grpcPort, *httpPort, cluster)
 	panicOnError(err)
+
+	infoGauge.Set(1.0)
 	logger.Info("started")
 
 	sig := <-signals
 	logger.Debug("received signal", "type", sig)
-	gateway.Shutdown()
+	cancel()
+	gateway.Wait()
 	cluster.Shutdown()
 	logger.Info("done")
 }

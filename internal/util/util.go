@@ -1,11 +1,15 @@
 package util
 
 import (
+	"io/ioutil"
 	"net"
+	"strings"
 )
 
 // DeadlineExceeded is the error returned if a timeout is specified.
 var DeadlineExceeded error = deadlineExceededError{}
+
+var hostHostnamePath = "/etc/host_hostname"
 
 type deadlineExceededError struct{}
 
@@ -40,4 +44,13 @@ func GetInterfaces() (ips []net.IP, err error) {
 		}
 	}
 	return
+}
+
+// HostHostname returns hostname from file defined in constant hostHostnamePath
+// or the defaultValue in case the file does not exits.
+func HostHostname(defaultValue string) string {
+	if content, err := ioutil.ReadFile(hostHostnamePath); err == nil {
+		return strings.Trim(string(content), "\n")
+	}
+	return defaultValue
 }

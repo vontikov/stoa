@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sync"
 
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -19,19 +19,14 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-type Gateway struct {
-	logger     logging.Logger
-	wg         sync.WaitGroup
-	lis        net.Listener
-	restServer *http.Server
-	grpcServer *grpc.Server
-}
+// Gateway processes external requests.
+type Gateway = errgroup.Group
 
 // New creates new Gateway instance
-func New(ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gateway, error) {
-	grpcAddr := fmt.Sprintf("%s:%d", ip, grpcPort)
-	httpAddr := fmt.Sprintf("%s:%d", ip, httpPort)
+func New(ctx context.Context, ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gateway, error) {
+	logger := logging.NewLogger("gateway")
 
+	grpcAddr := fmt.Sprintf("%s:%d", ip, grpcPort)
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		return nil, err
@@ -43,8 +38,9 @@ func New(ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gatew
 	healthcheck := health.NewServer()
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthcheck)
 
+	httpAddr := fmt.Sprintf("%s:%d", ip, httpPort)
 	mux := runtime.NewServeMux()
-	restServer := &http.Server{
+	httpServer := &http.Server{
 		Addr:    httpAddr,
 		Handler: mux,
 	}
@@ -65,35 +61,24 @@ func New(ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gatew
 			promhttp.Handler().ServeHTTP(w, r)
 		})
 
-	g := Gateway{
-		logger:     logging.NewLogger("gateway"),
-		lis:        lis,
-		restServer: restServer,
-		grpcServer: grpcServer,
-	}
+	g, ctx := errgroup.WithContext(ctx)
 
-	g.start()
+	g.Go(func() error {
+		logger.Info("serving gRPC", "address", grpcAddr)
+		defer logger.Info("gRPC stopped")
+		return grpcServer.Serve(lis)
+	})
+	g.Go(func() error {
+		logger.Info("serving HTTP", "address", httpAddr)
+		defer logger.Info("http stopped")
+		return httpServer.ListenAndServe()
+	})
+	g.Go(func() error {
+		<-ctx.Done()
+		httpServer.Close()
+		grpcServer.GracefulStop()
+		return nil
+	})
 
-	return &g, nil
-}
-
-func (g *Gateway) start() {
-	g.wg.Add(1)
-	go func() {
-		g.grpcServer.Serve(g.lis)
-		g.wg.Done()
-	}()
-
-	g.wg.Add(1)
-	go func() {
-		g.restServer.ListenAndServe()
-		g.wg.Done()
-	}()
-}
-
-func (g *Gateway) Shutdown() {
-	g.restServer.Close()
-	g.grpcServer.GracefulStop()
-	g.wg.Wait()
-	g.logger.Info("shutdown")
+	return g, nil
 }

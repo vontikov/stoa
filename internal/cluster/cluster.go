@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const DefaultRaftPort = 3499
+const defaultBindPort = 3499
 
 // Cluster is a higher level representation of raft.Raft cluster endpoint.
 type Cluster interface {
@@ -93,7 +93,7 @@ func newPeer(args []string) (*peer, error) {
 	switch len(args) {
 	case 1:
 		addr = args[0]
-		port = DefaultRaftPort
+		port = defaultBindPort
 	case 2:
 		addr = args[0]
 		port, err = strconv.Atoi(args[1])
