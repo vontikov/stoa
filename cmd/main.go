@@ -28,7 +28,7 @@ var (
 var (
 	grpcPort  = flag.Int("grpc-port", 3500, "gRPC port")
 	httpPort  = flag.Int("http-port", 3501, "HTTP port")
-	ip        = flag.String("ip", "", "IP")
+	ip        = flag.String("ip", "0.0.0.0", "IP")
 	logLevel  = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
 	bootstrap = flag.String("bootstrap", "", "Raft bootstrap")
 )
