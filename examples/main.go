@@ -3,29 +3,36 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
+	"strconv"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/vontikov/stoa/internal/logging"
 	stoa "github.com/vontikov/stoa/pkg/client"
 )
 
-const dictName = "dict"
+const (
+	dictName  = "dict"
+	queueName = "queue"
+)
 
 // Version contains the app version.
 var Version string = "N/A"
 
-var bootstrap = flag.String("bootstrap", "", "Comma separated peer list")
-var logLevel = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
+var (
+	bootstrap       = flag.String("bootstrap", "", "Comma separated peer list")
+	logLevel        = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
+	queueOutEnabled = flag.Bool("queue-out", false, "Enable output to the queue")
+	queueInEnabled  = flag.Bool("queue-in", false, "Enable input from the queue")
+)
 
 func main() {
 	flag.Parse()
-	if *bootstrap == "" {
-		panic("peer list must not be empty")
-	}
 
 	logging.SetLevel(*logLevel)
 	logger := logging.NewLogger("stoa-example")
@@ -35,39 +42,84 @@ func main() {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		cancel()
-		logger.Info("done")
-	}()
 
-	client, err := stoa.New(
+	var client stoa.Client
+	var err error
+
+	if *bootstrap == "" {
+		panic("bootstrap must not be empty")
+	}
+	client, err = stoa.New(
 		stoa.WithContext(ctx),
 		stoa.WithPeers(*bootstrap),
 	)
 	panicOnError(err)
-	logger.Info("client is ready")
 
+	g, ctx := errgroup.WithContext(ctx)
+
+	if *queueOutEnabled {
+		g.Go(queueOut(ctx, client))
+	}
+	if *queueInEnabled {
+		g.Go(queueIn(ctx, client))
+	}
 	logger.Info("started")
 
-	dict := client.Dictionary(dictName)
-	logger.Info("dictionary created", "name", dictName)
+	sig := <-signals
+	logger.Debug("received signal", "type", sig)
+	cancel()
+	g.Wait()
+	logger.Info("done")
+}
 
-	i := 0
-	for {
-		select {
-		case sig := <-signals:
-			logger.Debug("received signal", "type", sig)
-			return
-		default:
-			k := fmt.Sprintf("k-%d", i)
-			i++
-			r, err := dict.PutIfAbsent(ctx, []byte(k), []byte("value"))
-			panicOnError(err)
-			logger.Info("dictionary putIfAbsent", "result", r)
-			sz, err := dict.Size(ctx)
-			panicOnError(err)
-			logger.Info("dictionary size", "value", sz)
-			time.Sleep(1 * time.Second)
+func queueOut(ctx context.Context, client stoa.Client) func() error {
+	return func() error {
+		logger := logging.NewLogger("queue-out")
+		q := client.Queue(queueName)
+
+		t := time.Tick(1000 * time.Millisecond)
+		n := 0
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-t:
+				if err := q.Offer(ctx, []byte(strconv.Itoa(n))); err != nil {
+					return err
+				}
+				logger.Info("offer", "value", n)
+				n++
+			}
+		}
+	}
+}
+
+func queueIn(ctx context.Context, client stoa.Client) func() error {
+	return func() error {
+		logger := logging.NewLogger("queue-out")
+		q := client.Queue(queueName)
+
+		t := time.Tick(500 * time.Millisecond)
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
+			case <-t:
+				v, err := q.Poll(ctx)
+				if err != nil {
+					return err
+				}
+				if v == nil {
+					runtime.Gosched()
+					continue
+				}
+
+				n, err := strconv.Atoi(string(v))
+				if err != nil {
+					return err
+				}
+				logger.Info("poll", "value", n)
+			}
 		}
 	}
 }

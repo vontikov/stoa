@@ -5,14 +5,12 @@ import (
 )
 
 func (f *FSM) processPing(p *pb.Ping) {
-	f.logger.Debug("Ping received", "message", p)
-	keys := f.ms.Keys()
-	for _, k := range keys {
-		v := f.ms.Get(k)
-		if v == nil {
-			continue
+	if f.logger.IsTrace() {
+		f.logger.Trace("ping received", "id", p.Id)
+	}
+	for _, k := range f.ms.Keys() {
+		if v := f.ms.Get(k); v != nil {
+			v.(*mutexRecord).touch(p.Id)
 		}
-		mx := v.(*mutexRecord)
-		mx.touch(p.Id)
 	}
 }

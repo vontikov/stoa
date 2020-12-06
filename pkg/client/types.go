@@ -99,7 +99,7 @@ type Dictionary interface {
 	Range(ctx context.Context, opts ...CallOption) (kv <-chan [][]byte, err <-chan error)
 }
 
-type MutexWatch interface {
+type MutexWatcher interface {
 	Apply(string, bool)
 }
 
@@ -112,8 +112,8 @@ func (m MutexWatchProto) Apply(n string, v bool) { m.Callback(n, v) }
 type Mutex interface {
 	TryLock(ctx context.Context, opts ...CallOption) (bool, error)
 	Unlock(ctx context.Context, opts ...CallOption) (bool, error)
-	Watch(MutexWatch)
-	Unwatch(MutexWatch)
+	Watch(MutexWatcher)
+	Unwatch(MutexWatcher)
 }
 
 type callOptions struct {

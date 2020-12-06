@@ -89,10 +89,10 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err err
 	return
 }
 
-func (m *mutex) Watch(w MutexWatch) {
+func (m *mutex) Watch(w MutexWatcher) {
 	m.watchers.Add(w)
 }
 
-func (m *mutex) Unwatch(w MutexWatch) {
+func (m *mutex) Unwatch(w MutexWatcher) {
 	m.watchers.Remove(w, func(l, r interface{}) bool { return l == r })
 }

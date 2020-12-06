@@ -79,8 +79,9 @@ func New(opts ...Option) (Client, error) {
 	if err := c.ready(cfg.dialTimeout); err != nil {
 		return nil, err
 	}
+
 	/*
-		if err := c.keeper(); err != nil {
+		if err := c.watcher(); err != nil {
 			return nil, err
 		}
 	*/
@@ -103,15 +104,36 @@ func (c *client) dial(cfg *options, dialOpts []grpc.DialOption) error {
 	return conn.Close()
 }
 
-func (c *client) keeper() error {
+func (c *client) ready(d time.Duration) error {
+	t := time.After(d)
+	idle := cc.NewSleepingIdleStrategy(100 * time.Millisecond)
+
+	for {
+		select {
+		case <-t:
+			return ErrNotReady
+		default:
+			if func() bool {
+				c.RLock()
+				defer c.RUnlock()
+				return c.conn != nil && c.conn.GetState() == connectivity.Ready
+			}() {
+				return nil
+			}
+			idle.Idle()
+		}
+	}
+}
+
+func (c *client) watcher() error {
 	stream, err := c.handle.Keep(c.cfg.context)
 	if err != nil {
-		c.logger.Error("Stream error", "message", err)
+		c.logger.Error("stream error", "message", err)
 		return err
 	}
 	ctx := c.cfg.context
 
-	// send ping
+	// ping
 	c.Add(1)
 	go func() {
 		defer c.Done()
@@ -121,6 +143,9 @@ func (c *client) keeper() error {
 			case <-ctx.Done():
 				return
 			case <-t.C:
+				if c.logger.IsTrace() {
+					c.logger.Trace("sending ping", "id", c.cfg.id)
+				}
 				if err := stream.Send(&pb.Ping{Id: c.cfg.id}); err != nil {
 					c.logger.Warn("ping error", "message", err)
 				}
@@ -128,7 +153,7 @@ func (c *client) keeper() error {
 		}
 	}()
 
-	// receive status
+	// status
 	c.Add(1)
 	go func() {
 		defer c.Done()
@@ -145,68 +170,50 @@ func (c *client) keeper() error {
 							return
 						}
 					}
-					if s.Code() == codes.FailedPrecondition {
-						//						fmt.Println("!!!!!!!!")
+					if s.Code() != codes.FailedPrecondition {
+						c.logger.Warn("status error", "code", s.Code(), "message", err)
 					}
-					//					c.logger.Warn("Status error", "code", s.Code(), "message", err)
 				}
-				c.logger.Trace("Status received", "status", statusMsg)
+				if c.logger.IsTrace() {
+					c.logger.Trace("status received", "status", statusMsg)
+				}
 
 				switch statusMsg.GetPayload().(type) {
 				case *pb.Status_Mutex:
-					mxs := statusMsg.GetMutex()
-					if v := c.ms.Get(mxs.Name); v != nil {
-						v.(*mutex).watchers.Range(func(e interface{}) bool {
-							w := e.(MutexWatch)
-							w.Apply(mxs.Name, mxs.Locked)
-							return true
-						})
+					mx := statusMsg.GetMutex()
+					if v := c.ms.Get(mx.Name); v != nil {
+						v.(*mutex).watchers.Range(
+							func(e interface{}) bool {
+								e.(MutexWatcher).Apply(mx.Name, mx.Locked)
+								return true
+							})
 					}
 				}
 			}
 		}
 	}()
 
+	c.logger.Info("watcher started")
 	return nil
 }
 
-func (c *client) ready(d time.Duration) error {
-	r := func() bool {
-		c.RLock()
-		defer c.RUnlock()
-		return c.conn != nil && c.conn.GetState() == connectivity.Ready
-	}
-
-	t := time.After(d)
-	is := cc.NewSleepingIdleStrategy(100 * time.Millisecond)
-
-	for {
-		select {
-		case <-t:
-			return ErrNotReady
-		default:
-			if r() {
-				return nil
-			}
-			is.Idle()
-		}
-	}
-}
-
 func (c *client) Queue(n string) Queue {
-	v, _ := c.qs.ComputeIfAbsent(n,
-		func() interface{} { return newQueue(n, c.cfg, c.handle) })
+	v, _ := c.qs.ComputeIfAbsent(n, func() interface{} {
+		return newQueue(n, c.cfg, c.handle)
+	})
 	return v.(Queue)
 }
 
 func (c *client) Dictionary(n string) Dictionary {
-	v, _ := c.ds.ComputeIfAbsent(n,
-		func() interface{} { return newDictionary(n, c.cfg, c.handle) })
+	v, _ := c.ds.ComputeIfAbsent(n, func() interface{} {
+		return newDictionary(n, c.cfg, c.handle)
+	})
 	return v.(Dictionary)
 }
 
 func (c *client) Mutex(n string) Mutex {
-	v, _ := c.ms.ComputeIfAbsent(n,
-		func() interface{} { return newMutex(n, c.cfg, c.handle) })
+	v, _ := c.ms.ComputeIfAbsent(n, func() interface{} {
+		return newMutex(n, c.cfg, c.handle)
+	})
 	return v.(Mutex)
 }
