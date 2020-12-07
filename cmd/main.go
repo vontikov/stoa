@@ -8,17 +8,14 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/gateway"
 	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/internal/metric"
 	"github.com/vontikov/stoa/internal/util"
 )
 
 var (
-	// Namespace is the app namespace.
-	Namespace string = "github_com_vontikov"
 	// App is the app name.
 	App string = "stoa"
 	// Version is the app version.
@@ -54,18 +51,6 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	hostname, _ := os.Hostname()
-	infoGauge := promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: Namespace,
-		Subsystem: App,
-		Name:      "info",
-		Help:      "Application info",
-		ConstLabels: prometheus.Labels{
-			"version":  Version,
-			"hostname": util.HostHostname(hostname),
-		},
-	})
-
 	var err error
 	peers := *bootstrap
 	if peers == "" {
@@ -75,11 +60,13 @@ func main() {
 	cluster, err := cluster.New(cluster.WithPeers(peers))
 	panicOnError(err)
 
+	metric.Init(App, Version, cluster)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	gateway, err := gateway.New(ctx, *ip, *grpcPort, *httpPort, cluster)
 	panicOnError(err)
 
-	infoGauge.Set(1.0)
+	metric.Info.Set(1.0)
 	logger.Info("started")
 
 	sig := <-signals
