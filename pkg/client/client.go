@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/status"
 
 	cc "github.com/vontikov/go-concurrent"
 
@@ -80,11 +78,8 @@ func New(opts ...Option) (Client, error) {
 		return nil, err
 	}
 
-	/*
-		if err := c.watcher(); err != nil {
-			return nil, err
-		}
-	*/
+	c.ping()
+
 	return &c, nil
 }
 
@@ -125,19 +120,15 @@ func (c *client) ready(d time.Duration) error {
 	}
 }
 
-func (c *client) watcher() error {
-	stream, err := c.handle.Keep(c.cfg.context)
-	if err != nil {
-		c.logger.Error("stream error", "message", err)
-		return err
-	}
-	ctx := c.cfg.context
-
-	// ping
+func (c *client) ping() {
 	c.Add(1)
 	go func() {
 		defer c.Done()
+
+		ctx := c.cfg.context
+		id := pb.ClientId{Id: c.cfg.id}
 		t := time.NewTicker(c.cfg.keepAlivePeriod)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -146,55 +137,13 @@ func (c *client) watcher() error {
 				if c.logger.IsTrace() {
 					c.logger.Trace("sending ping", "id", c.cfg.id)
 				}
-				if err := stream.Send(&pb.Ping{Id: c.cfg.id}); err != nil {
+				_, err := c.handle.Ping(ctx, &id, c.cfg.callOptions...)
+				if err != nil {
 					c.logger.Warn("ping error", "message", err)
 				}
 			}
 		}
 	}()
-
-	// status
-	c.Add(1)
-	go func() {
-		defer c.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				statusMsg, err := stream.Recv()
-				if err != nil {
-					s, ok := status.FromError(err)
-					if ok {
-						if s.Code() == codes.Canceled {
-							return
-						}
-					}
-					if s.Code() != codes.FailedPrecondition {
-						c.logger.Warn("status error", "code", s.Code(), "message", err)
-					}
-				}
-				if c.logger.IsTrace() {
-					c.logger.Trace("status received", "status", statusMsg)
-				}
-
-				switch statusMsg.GetPayload().(type) {
-				case *pb.Status_Mutex:
-					mx := statusMsg.GetMutex()
-					if v := c.ms.Get(mx.Name); v != nil {
-						v.(*mutex).watchers.Range(
-							func(e interface{}) bool {
-								e.(MutexWatcher).Apply(mx.Name, mx.Locked)
-								return true
-							})
-					}
-				}
-			}
-		}
-	}()
-
-	c.logger.Info("watcher started")
-	return nil
 }
 
 func (c *client) Queue(n string) Queue {

@@ -192,6 +192,18 @@ func (m *ClusterCommand) Validate() error {
 			}
 		}
 
+	case *ClusterCommand_Cid:
+
+		if v, ok := interface{}(m.GetCid()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ClusterCommandValidationError{
+					field:  "Cid",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
 	}
 
 	return nil

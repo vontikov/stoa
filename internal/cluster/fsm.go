@@ -68,6 +68,7 @@ func init() {
 		pb.ClusterCommand_DICTIONARY_SCAN:          dictionaryScan,
 		pb.ClusterCommand_MUTEX_TRY_LOCK:           mutexTryLock,
 		pb.ClusterCommand_MUTEX_UNLOCK:             mutexUnlock,
+		pb.ClusterCommand_SERVICE_PING:             processPing,
 	}
 }
 

@@ -35,9 +35,15 @@ func TestFSMPing(t *testing.T) {
 	assert.False(t, r)
 	assert.Equal(t, te.Add(1*time.Second), mx.touched)
 
-	f.processPing(&pb.Ping{Id: id2})
+	processPing(f, &pb.ClusterCommand{
+		Command: pb.ClusterCommand_SERVICE_PING,
+		Payload: &pb.ClusterCommand_Cid{Cid: &pb.ClientId{Id: id2}},
+	})
 	assert.Equal(t, te.Add(1*time.Second), mx.touched)
 
-	f.processPing(&pb.Ping{Id: id1})
+	processPing(f, &pb.ClusterCommand{
+		Command: pb.ClusterCommand_SERVICE_PING,
+		Payload: &pb.ClusterCommand_Cid{Cid: &pb.ClientId{Id: id1}},
+	})
 	assert.Equal(t, te.Add(2*time.Second), mx.touched)
 }

@@ -90,9 +90,6 @@ func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetId()
 	mx := mutex(f, id.Name)
 	r := mx.tryLock(id.Id)
-	if r {
-		notifyMutex(f, id.Name, mx)
-	}
 	return &pb.Result{Ok: r}
 }
 
@@ -100,9 +97,6 @@ func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetId()
 	mx := mutex(f, id.Name)
 	r := mx.unlock(id.Id)
-	if r {
-		notifyMutex(f, id.Name, mx)
-	}
 	return &pb.Result{Ok: r}
 }
 
@@ -119,21 +113,7 @@ func checkExpiredMutexes(f *FSM) {
 			f.logger.Warn("Mutex expired",
 				"locked", mx.lockedBy, "locked by", mx.lockedBy, "touched", mx.touched)
 			mx.unlock(mx.lockedBy)
-			notifyMutex(f, k.(string), mx)
-		}
-	}
-}
-
-func notifyMutex(f *FSM, name string, mx mutexRecordPtr) {
-	keys := f.streams.Keys()
-	for _, k := range keys {
-		v := f.streams.Get(k)
-		stream := v.(pb.Stoa_KeepServer)
-
-		status := pb.Status{Payload: &pb.Status_Mutex{Mutex: &pb.MutexStatus{Name: name, Locked: mx.locked}}}
-		err := stream.Send(&status)
-		if err != nil {
-			f.logger.Error("Notification error", "message", err)
+			// TODO notifyMutex()
 		}
 	}
 }

@@ -29,6 +29,7 @@ message ClusterCommand {
     Key      key       = 8;
     KeyValue key_value = 9;
     Id       id        = 10;
+    ClientId cid       = 11;
   }
 
   // Type is a Raft claster command type.
@@ -52,7 +53,9 @@ message ClusterCommand {
     MUTEX_TRY_LOCK           = 13;
     MUTEX_UNLOCK             = 14;
 
-    MAX_INDEX                = 15;
+    SERVICE_PING             = 15;
+
+    MAX_INDEX                = 16;
   }
 }
 

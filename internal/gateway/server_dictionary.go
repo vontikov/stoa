@@ -259,7 +259,6 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 			if err := stream.Send(kv); err != nil {
 				return err
 			}
-
 		}
 	}
 }

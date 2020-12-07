@@ -10,12 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/raft"
 	"github.com/vontikov/stoa/internal/logging"
-	"github.com/vontikov/stoa/pkg/pb"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const defaultBindPort = 3499
@@ -47,9 +43,6 @@ type Cluster interface {
 	// leadership.  It sends true if the Cluster become the leader, otherwise it
 	// returns false.
 	WatchLeadership() <-chan bool
-
-	// AddKeeper adds an external keeper to the Cluster.
-	AddKeeper(pb.Stoa_KeepServer) error
 }
 
 // ErrDeadlineExceeded is the error returned if a timeout is specified.
@@ -278,37 +271,6 @@ func (c *cluster) LeadershipTransfer() error {
 // WatchLeadership implements Cluster.WatchLeadership.
 func (c *cluster) WatchLeadership() <-chan bool {
 	return c.r.LeaderCh()
-}
-
-// AddKeeper implements Cluster.AddKeeper.
-func (c *cluster) AddKeeper(stream pb.Stoa_KeepServer) error {
-	id := uuid.New().String()
-	c.f.streams.Put(id, stream)
-	c.logger.Debug("Stream added", "id", id)
-
-	ctx := stream.Context()
-	for {
-		select {
-		case <-ctx.Done():
-			c.f.streams.Remove(id)
-			c.logger.Debug("Stream removed", "id", id)
-			return ctx.Err()
-		default:
-			p, err := stream.Recv()
-			if err != nil {
-				if s, ok := status.FromError(err); ok {
-					if s.Code() == codes.Canceled {
-						return nil
-					}
-				}
-				c.logger.Error("Stream error", "message", err)
-				return err
-			}
-			if c.IsLeader() {
-				c.f.processPing(p)
-			}
-		}
-	}
 }
 
 // Shutdown implements Cluster.Shutdown.

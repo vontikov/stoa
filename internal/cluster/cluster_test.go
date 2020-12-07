@@ -82,7 +82,6 @@ loop:
 		}
 	}
 	ensureSameLeader(t, clusters)
-
 }
 
 func TestClusterLeaderRestart(t *testing.T) {

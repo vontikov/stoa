@@ -96,7 +96,7 @@ func queueOut(ctx context.Context, client stoa.Client) func() error {
 
 func queueIn(ctx context.Context, client stoa.Client) func() error {
 	return func() error {
-		logger := logging.NewLogger("queue-out")
+		logger := logging.NewLogger("queue-in")
 		q := client.Queue(queueName)
 
 		t := time.Tick(500 * time.Millisecond)

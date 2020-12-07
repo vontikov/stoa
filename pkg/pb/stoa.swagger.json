@@ -421,6 +421,28 @@
           "Stoa"
         ]
       }
+    },
+    "/v1/service/ping": {
+      "post": {
+        "operationId": "Stoa_Ping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Empty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "Stoa"
+        ]
+      }
     }
   },
   "definitions": {
@@ -503,17 +525,6 @@
       },
       "description": "KeyValue contains a Dictionary key-value pair."
     },
-    "v1MutexStatus": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "locked": {
-          "type": "boolean"
-        }
-      }
-    },
     "v1Result": {
       "type": "object",
       "properties": {
@@ -522,14 +533,6 @@
         }
       },
       "description": "Result contains an operation result."
-    },
-    "v1Status": {
-      "type": "object",
-      "properties": {
-        "mutex": {
-          "$ref": "#/definitions/v1MutexStatus"
-        }
-      }
     },
     "v1Value": {
       "type": "object",

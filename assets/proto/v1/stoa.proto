@@ -37,7 +37,7 @@ message KeyValue {
   bytes value = 3 [(validate.rules).bytes.min_len = 1];
 }
 
-message Ping {
+message ClientId {
   string id = 1 [(validate.rules).string.min_len=1];
 }
 
@@ -142,6 +142,9 @@ service Stoa {
     };
   }
 
-  rpc Keep (stream Ping) returns (stream Status) {
+  rpc Ping (ClientId) returns (Empty) {
+    option(google.api.http) = {
+      post: "/v1/service/ping",
+    };
   }
 }

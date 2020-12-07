@@ -31,7 +31,7 @@ type StoaClient interface {
 	DictionaryScan(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryScanClient, error)
 	MutexTryLock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
 	MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
-	Keep(ctx context.Context, opts ...grpc.CallOption) (Stoa_KeepClient, error)
+	Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type stoaClient struct {
@@ -191,35 +191,13 @@ func (c *stoaClient) MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *stoaClient) Keep(ctx context.Context, opts ...grpc.CallOption) (Stoa_KeepClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Stoa_serviceDesc.Streams[1], "/github.com.vontikov.stoa.v1.Stoa/Keep", opts...)
+func (c *stoaClient) Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/Ping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &stoaKeepClient{stream}
-	return x, nil
-}
-
-type Stoa_KeepClient interface {
-	Send(*Ping) error
-	Recv() (*Status, error)
-	grpc.ClientStream
-}
-
-type stoaKeepClient struct {
-	grpc.ClientStream
-}
-
-func (x *stoaKeepClient) Send(m *Ping) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *stoaKeepClient) Recv() (*Status, error) {
-	m := new(Status)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // StoaServer is the server API for Stoa service.
@@ -240,7 +218,7 @@ type StoaServer interface {
 	DictionaryScan(*Name, Stoa_DictionaryScanServer) error
 	MutexTryLock(context.Context, *Id) (*Result, error)
 	MutexUnlock(context.Context, *Id) (*Result, error)
-	Keep(Stoa_KeepServer) error
+	Ping(context.Context, *ClientId) (*Empty, error)
 	mustEmbedUnimplementedStoaServer()
 }
 
@@ -290,8 +268,8 @@ func (UnimplementedStoaServer) MutexTryLock(context.Context, *Id) (*Result, erro
 func (UnimplementedStoaServer) MutexUnlock(context.Context, *Id) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MutexUnlock not implemented")
 }
-func (UnimplementedStoaServer) Keep(Stoa_KeepServer) error {
-	return status.Errorf(codes.Unimplemented, "method Keep not implemented")
+func (UnimplementedStoaServer) Ping(context.Context, *ClientId) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 func (UnimplementedStoaServer) mustEmbedUnimplementedStoaServer() {}
 
@@ -561,30 +539,22 @@ func _Stoa_MutexUnlock_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Stoa_Keep_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(StoaServer).Keep(&stoaKeepServer{stream})
-}
-
-type Stoa_KeepServer interface {
-	Send(*Status) error
-	Recv() (*Ping, error)
-	grpc.ServerStream
-}
-
-type stoaKeepServer struct {
-	grpc.ServerStream
-}
-
-func (x *stoaKeepServer) Send(m *Status) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *stoaKeepServer) Recv() (*Ping, error) {
-	m := new(Ping)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
+func _Stoa_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientId)
+	if err := dec(in); err != nil {
 		return nil, err
 	}
-	return m, nil
+	if interceptor == nil {
+		return srv.(StoaServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/Ping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoaServer).Ping(ctx, req.(*ClientId))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _Stoa_serviceDesc = grpc.ServiceDesc{
@@ -643,18 +613,16 @@ var _Stoa_serviceDesc = grpc.ServiceDesc{
 			MethodName: "MutexUnlock",
 			Handler:    _Stoa_MutexUnlock_Handler,
 		},
+		{
+			MethodName: "Ping",
+			Handler:    _Stoa_Ping_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "DictionaryScan",
 			Handler:       _Stoa_DictionaryScan_Handler,
 			ServerStreams: true,
-		},
-		{
-			StreamName:    "Keep",
-			Handler:       _Stoa_Keep_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "stoa.proto",

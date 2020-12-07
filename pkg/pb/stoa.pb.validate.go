@@ -426,15 +426,15 @@ var _ interface {
 	ErrorName() string
 } = KeyValueValidationError{}
 
-// Validate checks the field values on Ping with the rules defined in the proto
-// definition for this message. If any rules are violated, an error is returned.
-func (m *Ping) Validate() error {
+// Validate checks the field values on ClientId with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ClientId) Validate() error {
 	if m == nil {
 		return nil
 	}
 
 	if utf8.RuneCountInString(m.GetId()) < 1 {
-		return PingValidationError{
+		return ClientIdValidationError{
 			field:  "Id",
 			reason: "value length must be at least 1 runes",
 		}
@@ -443,9 +443,9 @@ func (m *Ping) Validate() error {
 	return nil
 }
 
-// PingValidationError is the validation error returned by Ping.Validate if the
-// designated constraints aren't met.
-type PingValidationError struct {
+// ClientIdValidationError is the validation error returned by
+// ClientId.Validate if the designated constraints aren't met.
+type ClientIdValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -453,22 +453,22 @@ type PingValidationError struct {
 }
 
 // Field function returns field value.
-func (e PingValidationError) Field() string { return e.field }
+func (e ClientIdValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e PingValidationError) Reason() string { return e.reason }
+func (e ClientIdValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e PingValidationError) Cause() error { return e.cause }
+func (e ClientIdValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e PingValidationError) Key() bool { return e.key }
+func (e ClientIdValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e PingValidationError) ErrorName() string { return "PingValidationError" }
+func (e ClientIdValidationError) ErrorName() string { return "ClientIdValidationError" }
 
 // Error satisfies the builtin error interface
-func (e PingValidationError) Error() string {
+func (e ClientIdValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -480,14 +480,14 @@ func (e PingValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sPing.%s: %s%s",
+		"invalid %sClientId.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = PingValidationError{}
+var _ error = ClientIdValidationError{}
 
 var _ interface {
 	Field() string
@@ -495,7 +495,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = PingValidationError{}
+} = ClientIdValidationError{}
 
 // Validate checks the field values on MutexStatus with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
