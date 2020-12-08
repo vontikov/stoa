@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/raft"
 	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/pb"
 )
 
 const defaultBindPort = 3499
@@ -43,6 +44,9 @@ type Cluster interface {
 	// leadership.  It sends true if the Cluster become the leader, otherwise it
 	// returns false.
 	WatchLeadership() <-chan bool
+
+	// Apply executes the command c bypassing Raft node.
+	Apply(c *pb.ClusterCommand) interface{}
 }
 
 // ErrDeadlineExceeded is the error returned if a timeout is specified.
@@ -271,6 +275,11 @@ func (c *cluster) LeadershipTransfer() error {
 // WatchLeadership implements Cluster.WatchLeadership.
 func (c *cluster) WatchLeadership() <-chan bool {
 	return c.r.LeaderCh()
+}
+
+// Apply implements Cluster.Apply.
+func (c *cluster) Apply(cmd *pb.ClusterCommand) interface{} {
+	return c.f.Execute(cmd)
 }
 
 // Shutdown implements Cluster.Shutdown.

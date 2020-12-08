@@ -22,7 +22,7 @@ func init() {
 	logging.SetLevel(testLogLevel)
 }
 
-func RunTestCluster(ctx context.Context, t *testing.T, basePort int) {
+func RunTestCluster(ctx context.Context, t *testing.T, basePort int) []cluster.Cluster {
 	bindAddr1 := fmt.Sprintf("127.0.0.1:%d", basePort+21)
 	bindAddr2 := fmt.Sprintf("127.0.0.1:%d", basePort+22)
 	bindAddr3 := fmt.Sprintf("127.0.0.1:%d", basePort+23)
@@ -83,4 +83,5 @@ loop:
 			break loop
 		}
 	}
+	return clusters
 }

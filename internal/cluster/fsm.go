@@ -26,7 +26,7 @@ type mutexMap cc.Map
 
 // FSM implements raft.FSM
 type FSM struct {
-	sync.RWMutex
+	sync.Mutex
 	logger  logging.Logger
 	ctx     context.Context
 	streams streamMap
@@ -78,9 +78,16 @@ func (f *FSM) Apply(l *raft.Log) interface{} {
 	if err := proto.Unmarshal(l.Data, &c); err != nil {
 		return err
 	}
-	f.RLock()
-	defer f.RUnlock()
+	f.Lock()
+	defer f.Unlock()
 	return fsmCommands[c.Command](f, &c)
+}
+
+// Execute executes the command c.
+func (f *FSM) Execute(c *pb.ClusterCommand) interface{} {
+	f.Lock()
+	defer f.Unlock()
+	return fsmCommands[c.Command](f, c)
 }
 
 // Snapshot is used to support log compaction.
@@ -90,8 +97,8 @@ func (f *FSM) Snapshot() (raft.FSMSnapshot, error) {
 
 // Persist implements raft.SnapshotSink.Persist.
 func (f *FSM) Persist(sink raft.SnapshotSink) error {
-	f.RLock()
-	defer f.RUnlock()
+	f.Lock()
+	defer f.Unlock()
 
 	err := func() error {
 		var b bytes.Buffer

@@ -1,15 +1,10 @@
 package gateway
 
 import (
-	"errors"
-
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
-
-var ErrIncorrectResponseType = errors.New("incorrect response type")
-var ErrNotLeader = errors.New("not leader")
 
 type server struct {
 	pb.UnimplementedStoaServer

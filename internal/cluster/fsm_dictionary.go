@@ -214,7 +214,12 @@ func dictionaryRemove(f *FSM, m *pb.ClusterCommand) interface{} {
 func dictionaryScan(f *FSM, m *pb.ClusterCommand) interface{} {
 	ch := make(chan *pb.KeyValue)
 	go func() {
-		d := dictionary(f, m.GetName().Name)
+		n := m.GetName().Name
+		if f.logger.IsTrace() {
+			f.logger.Trace("dictionary scan", "name", n)
+		}
+
+		d := dictionary(f, n)
 		b := make([]*pb.KeyValue, 0, d.Size())
 		d.Range(func(k, v interface{}) bool {
 			kv := pb.KeyValue{

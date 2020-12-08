@@ -44,7 +44,7 @@ func processMetadata(ctx context.Context, msg *pb.ClusterCommand) error {
 
 func wrapError(err error) error {
 	if err.Error() == raft.ErrNotLeader.Error() {
-		return status.Errorf(codes.FailedPrecondition, raft.ErrNotLeader.Error())
+		return ErrNotLeader
 	}
 	return status.Errorf(codes.Internal, err.Error())
 }

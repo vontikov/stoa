@@ -60,7 +60,7 @@ test: $(TEST_MARKER)
 $(TEST_MARKER): mocks $(GO_FILES)
 	@echo "Executing unit tests..."
 	@mkdir -p $(BIN_DIR)
-	@GOBIN=$(BIN_DIR); go test -coverprofile=$(COVERAGE_FILE) $(TEST_OPTS) $(TEST_PKGS)
+	@GOBIN=$(BIN_DIR); go test -coverprofile=$(COVERAGE_FILE) -tags=$(TAGS) $(TEST_OPTS) $(TEST_PKGS)
 	@mkdir -p $(@D)
 	@touch $@
 

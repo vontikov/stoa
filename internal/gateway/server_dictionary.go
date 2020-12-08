@@ -216,13 +216,16 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 		return err
 	}
 
+	if !s.cluster.IsLeader() {
+		return ErrNotLeader
+	}
+
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_DICTIONARY_SCAN,
 		Payload: &pb.ClusterCommand_Name{Name: v},
 	}
 
-	ctx := stream.Context()
-	if err := processMetadata(ctx, &msg); err != nil {
+	if err := processMetadata(stream.Context(), &msg); err != nil {
 		return err
 	}
 
@@ -233,21 +236,13 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 		}
 	}
 
-	cmd, err := proto.Marshal(&msg)
-	if err != nil {
-		return err
-	}
-
-	fut := s.cluster.Raft().Apply(cmd, 0)
-	if err := fut.Error(); err != nil {
-		return wrapError(err)
-	}
-
-	ch, ok := fut.Response().(chan *pb.KeyValue)
+	// bypass Raft
+	ch, ok := s.cluster.Apply(&msg).(chan *pb.KeyValue)
 	if !ok {
 		panic(ErrIncorrectResponseType)
 	}
 
+	ctx := stream.Context()
 	for {
 		select {
 		case <-ctx.Done():
