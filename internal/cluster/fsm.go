@@ -65,7 +65,7 @@ func init() {
 		pb.ClusterCommand_DICTIONARY_PUT_IF_ABSENT: dictionaryPutIfAbsent,
 		pb.ClusterCommand_DICTIONARY_GET:           dictionaryGet,
 		pb.ClusterCommand_DICTIONARY_REMOVE:        dictionaryRemove,
-		pb.ClusterCommand_DICTIONARY_SCAN:          dictionaryScan,
+		pb.ClusterCommand_DICTIONARY_RANGE:         dictionaryRange,
 		pb.ClusterCommand_MUTEX_TRY_LOCK:           mutexTryLock,
 		pb.ClusterCommand_MUTEX_UNLOCK:             mutexUnlock,
 		pb.ClusterCommand_SERVICE_PING:             processPing,

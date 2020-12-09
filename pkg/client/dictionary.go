@@ -207,7 +207,7 @@ func (d *dictionary) Range(ctx context.Context, opts ...CallOption) (<-chan [][]
 
 	go func() {
 		m := pb.Name{Name: d.name}
-		stream, err := d.handle.DictionaryScan(ctx, &m, d.callOptions...)
+		stream, err := d.handle.DictionaryRange(ctx, &m, d.callOptions...)
 		if err != nil {
 			if d.failFast {
 				ec <- err
@@ -215,7 +215,7 @@ func (d *dictionary) Range(ctx context.Context, opts ...CallOption) (<-chan [][]
 			}
 			if err := retry(ctx, func() error {
 				var err error
-				stream, err = d.handle.DictionaryScan(ctx, &m, d.callOptions...)
+				stream, err = d.handle.DictionaryRange(ctx, &m, d.callOptions...)
 				return err
 			},
 				d.retryTimeout, d.idleStrategy); err != nil {

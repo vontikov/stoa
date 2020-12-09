@@ -490,21 +490,21 @@ func local_request_Stoa_DictionaryRemove_0(ctx context.Context, marshaler runtim
 }
 
 var (
-	filter_Stoa_DictionaryScan_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Stoa_DictionaryRange_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Stoa_DictionaryScan_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (Stoa_DictionaryScanClient, runtime.ServerMetadata, error) {
+func request_Stoa_DictionaryRange_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (Stoa_DictionaryRangeClient, runtime.ServerMetadata, error) {
 	var protoReq Name
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionaryScan_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionaryRange_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	stream, err := client.DictionaryScan(ctx, &protoReq)
+	stream, err := client.DictionaryRange(ctx, &protoReq)
 	if err != nil {
 		return nil, metadata, err
 	}
@@ -884,7 +884,7 @@ func RegisterStoaHandlerServer(ctx context.Context, mux *runtime.ServeMux, serve
 
 	})
 
-	mux.Handle("GET", pattern_Stoa_DictionaryScan_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Stoa_DictionaryRange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
 		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -1221,23 +1221,23 @@ func RegisterStoaHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 
 	})
 
-	mux.Handle("GET", pattern_Stoa_DictionaryScan_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Stoa_DictionaryRange_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/github.com.vontikov.stoa.v1.Stoa/DictionaryScan")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/github.com.vontikov.stoa.v1.Stoa/DictionaryRange")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Stoa_DictionaryScan_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Stoa_DictionaryRange_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Stoa_DictionaryScan_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+		forward_Stoa_DictionaryRange_0(ctx, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1327,7 +1327,7 @@ var (
 
 	pattern_Stoa_DictionaryRemove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"storage", "dictionary", "delete", "key"}, ""))
 
-	pattern_Stoa_DictionaryScan_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "scan"}, ""))
+	pattern_Stoa_DictionaryRange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "range"}, ""))
 
 	pattern_Stoa_MutexTryLock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "mutex", "trylock"}, ""))
 
@@ -1359,7 +1359,7 @@ var (
 
 	forward_Stoa_DictionaryRemove_0 = runtime.ForwardResponseMessage
 
-	forward_Stoa_DictionaryScan_0 = runtime.ForwardResponseStream
+	forward_Stoa_DictionaryRange_0 = runtime.ForwardResponseStream
 
 	forward_Stoa_MutexTryLock_0 = runtime.ForwardResponseMessage
 

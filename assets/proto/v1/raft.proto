@@ -48,7 +48,7 @@ message ClusterCommand {
     DICTIONARY_PUT           = 9;
     DICTIONARY_GET           = 10;
     DICTIONARY_REMOVE        = 11;
-    DICTIONARY_SCAN          = 12;
+    DICTIONARY_RANGE         = 12;
 
     MUTEX_TRY_LOCK           = 13;
     MUTEX_UNLOCK             = 14;

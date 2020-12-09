@@ -211,7 +211,7 @@ func dictionaryRemove(f *FSM, m *pb.ClusterCommand) interface{} {
 	return nil
 }
 
-func dictionaryScan(f *FSM, m *pb.ClusterCommand) interface{} {
+func dictionaryRange(f *FSM, m *pb.ClusterCommand) interface{} {
 	ch := make(chan *pb.KeyValue)
 	go func() {
 		n := m.GetName().Name

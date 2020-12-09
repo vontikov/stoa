@@ -54,13 +54,20 @@ help: Makefile
 	@echo "Choose a command in "$(PROJECTNAME)":"
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 
-## test: Runs unit tests
+## test [TEST_TAGS=all] [TEST_OPTS=...]: Runs unit tests.
 test: $(TEST_MARKER)
 
 $(TEST_MARKER): mocks $(GO_FILES)
 	@echo "Executing unit tests..."
 	@mkdir -p $(BIN_DIR)
-	@GOBIN=$(BIN_DIR); go test -coverprofile=$(COVERAGE_FILE) -tags=$(TAGS) $(TEST_OPTS) $(TEST_PKGS)
+	@GOBIN=$(BIN_DIR); go test \
+	  -failfast \
+	  -count=1 \
+	  -timeout 120s \
+	  -cover \
+	  -coverprofile=$(COVERAGE_FILE) \
+	  -tags=$(TEST_TAGS) $(TEST_OPTS) \
+	  $(TEST_PKGS)
 	@mkdir -p $(@D)
 	@touch $@
 

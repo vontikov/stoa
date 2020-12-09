@@ -211,7 +211,7 @@ func (s *server) DictionaryRemove(ctx context.Context, v *pb.Key) (*pb.Result, e
 	return &pb.Result{Ok: true}, nil
 }
 
-func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer) error {
+func (s *server) DictionaryRange(v *pb.Name, stream pb.Stoa_DictionaryRangeServer) error {
 	if err := v.Validate(); err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func (s *server) DictionaryScan(v *pb.Name, stream pb.Stoa_DictionaryScanServer)
 	}
 
 	msg := pb.ClusterCommand{
-		Command: pb.ClusterCommand_DICTIONARY_SCAN,
+		Command: pb.ClusterCommand_DICTIONARY_RANGE,
 		Payload: &pb.ClusterCommand_Name{Name: v},
 	}
 

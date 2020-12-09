@@ -28,7 +28,7 @@ type StoaClient interface {
 	DictionaryPut(ctx context.Context, in *KeyValue, opts ...grpc.CallOption) (*Value, error)
 	DictionaryGet(ctx context.Context, in *Key, opts ...grpc.CallOption) (*Value, error)
 	DictionaryRemove(ctx context.Context, in *Key, opts ...grpc.CallOption) (*Result, error)
-	DictionaryScan(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryScanClient, error)
+	DictionaryRange(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error)
 	MutexTryLock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
 	MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
 	Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error)
@@ -141,12 +141,12 @@ func (c *stoaClient) DictionaryRemove(ctx context.Context, in *Key, opts ...grpc
 	return out, nil
 }
 
-func (c *stoaClient) DictionaryScan(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryScanClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Stoa_serviceDesc.Streams[0], "/github.com.vontikov.stoa.v1.Stoa/DictionaryScan", opts...)
+func (c *stoaClient) DictionaryRange(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Stoa_serviceDesc.Streams[0], "/github.com.vontikov.stoa.v1.Stoa/DictionaryRange", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &stoaDictionaryScanClient{stream}
+	x := &stoaDictionaryRangeClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -156,16 +156,16 @@ func (c *stoaClient) DictionaryScan(ctx context.Context, in *Name, opts ...grpc.
 	return x, nil
 }
 
-type Stoa_DictionaryScanClient interface {
+type Stoa_DictionaryRangeClient interface {
 	Recv() (*KeyValue, error)
 	grpc.ClientStream
 }
 
-type stoaDictionaryScanClient struct {
+type stoaDictionaryRangeClient struct {
 	grpc.ClientStream
 }
 
-func (x *stoaDictionaryScanClient) Recv() (*KeyValue, error) {
+func (x *stoaDictionaryRangeClient) Recv() (*KeyValue, error) {
 	m := new(KeyValue)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ type StoaServer interface {
 	DictionaryPut(context.Context, *KeyValue) (*Value, error)
 	DictionaryGet(context.Context, *Key) (*Value, error)
 	DictionaryRemove(context.Context, *Key) (*Result, error)
-	DictionaryScan(*Name, Stoa_DictionaryScanServer) error
+	DictionaryRange(*Name, Stoa_DictionaryRangeServer) error
 	MutexTryLock(context.Context, *Id) (*Result, error)
 	MutexUnlock(context.Context, *Id) (*Result, error)
 	Ping(context.Context, *ClientId) (*Empty, error)
@@ -259,8 +259,8 @@ func (UnimplementedStoaServer) DictionaryGet(context.Context, *Key) (*Value, err
 func (UnimplementedStoaServer) DictionaryRemove(context.Context, *Key) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DictionaryRemove not implemented")
 }
-func (UnimplementedStoaServer) DictionaryScan(*Name, Stoa_DictionaryScanServer) error {
-	return status.Errorf(codes.Unimplemented, "method DictionaryScan not implemented")
+func (UnimplementedStoaServer) DictionaryRange(*Name, Stoa_DictionaryRangeServer) error {
+	return status.Errorf(codes.Unimplemented, "method DictionaryRange not implemented")
 }
 func (UnimplementedStoaServer) MutexTryLock(context.Context, *Id) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MutexTryLock not implemented")
@@ -482,24 +482,24 @@ func _Stoa_DictionaryRemove_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Stoa_DictionaryScan_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _Stoa_DictionaryRange_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(Name)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(StoaServer).DictionaryScan(m, &stoaDictionaryScanServer{stream})
+	return srv.(StoaServer).DictionaryRange(m, &stoaDictionaryRangeServer{stream})
 }
 
-type Stoa_DictionaryScanServer interface {
+type Stoa_DictionaryRangeServer interface {
 	Send(*KeyValue) error
 	grpc.ServerStream
 }
 
-type stoaDictionaryScanServer struct {
+type stoaDictionaryRangeServer struct {
 	grpc.ServerStream
 }
 
-func (x *stoaDictionaryScanServer) Send(m *KeyValue) error {
+func (x *stoaDictionaryRangeServer) Send(m *KeyValue) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -620,8 +620,8 @@ var _Stoa_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "DictionaryScan",
-			Handler:       _Stoa_DictionaryScan_Handler,
+			StreamName:    "DictionaryRange",
+			Handler:       _Stoa_DictionaryRange_Handler,
 			ServerStreams: true,
 		},
 	},

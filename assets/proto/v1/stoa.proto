@@ -124,9 +124,9 @@ service Stoa {
     };
   }
 
-  rpc DictionaryScan (Name) returns (stream KeyValue) {
+  rpc DictionaryRange (Name) returns (stream KeyValue) {
     option(google.api.http) = {
-      get: "/v1/dictionary/scan",
+      get: "/v1/dictionary/range",
     };
   }
 
