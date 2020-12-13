@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stoa0
+  labels:
+    app: stoa0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stoa0
+  template:
+    metadata:
+      labels:
+        app: stoa0
+    spec:
+      hostname: stoa0
+      containers:
+      - name: stoa0
+        image: github.com/vontikov/stoa:0.0.1
+        imagePullPolicy: Never
+        command: ["stoa"]
+        args: ["-log-level", "trace", "-bootstrap", "stoa0,stoa1,stoa2"]
+        ports:
+        - containerPort: 3499
+        - containerPort: 3500
+        - containerPort: 3501
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stoa0
+  labels:
+    app: stoa0
+spec:
+  selector:
+    app: stoa0
+  ports:
+  - port: 3499
+    protocol: TCP
+    name: bind
+  - port: 3500
+    protocol: TCP
+    name: grpc
+  - port: 3501
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stoa1
+  labels:
+    app: stoa1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stoa1
+  template:
+    metadata:
+      labels:
+        app: stoa1
+    spec:
+      hostname: stoa1
+      containers:
+      - name: stoa1
+        image: github.com/vontikov/stoa:0.0.1
+        imagePullPolicy: Never
+        command: ["stoa"]
+        args: ["-log-level", "trace"]
+        ports:
+        - containerPort: 3499
+        - containerPort: 3500
+        - containerPort: 3501
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stoa1
+  labels:
+    app: stoa1
+spec:
+  selector:
+    app: stoa1
+  ports:
+  - port: 3499
+    protocol: TCP
+    name: bind
+  - port: 3500
+    protocol: TCP
+    name: grpc
+  - port: 3501
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stoa2
+  labels:
+    app: stoa2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stoa2
+  template:
+    metadata:
+      labels:
+        app: stoa2
+    spec:
+      hostname: stoa2
+      containers:
+      - name: stoa2
+        image: github.com/vontikov/stoa:0.0.1
+        imagePullPolicy: Never
+        command: ["stoa"]
+        args: ["-log-level", "trace"]
+        ports:
+        - containerPort: 3499
+        - containerPort: 3500
+        - containerPort: 3501
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stoa2
+  labels:
+    app: stoa2
+spec:
+  selector:
+    app: stoa2
+  ports:
+  - port: 3499
+    protocol: TCP
+    name: bind
+  - port: 3500
+    protocol: TCP
+    name: grpc
+  - port: 3501
+    protocol: TCP
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client0
+  labels:
+    app: client0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client0
+  template:
+    metadata:
+      labels:
+        app: client0
+    spec:
+      containers:
+      - name: client0
+        image: github.com/vontikov/stoa-example:0.0.1
+        imagePullPolicy: Never
+        command: ["stoa-example"]
+        args: ["-log-level", "trace", "-bootstrap", "stoa0,stoa1,stoa2", "-queue-out", "true"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client1
+  labels:
+    app: client1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client1
+  template:
+    metadata:
+      labels:
+        app: client1
+    spec:
+      containers:
+      - name: client1
+        image: github.com/vontikov/stoa-example:0.0.1
+        imagePullPolicy: Never
+        command: ["stoa-example"]
+        args: ["-log-level", "trace", "-bootstrap", "stoa0,stoa1,stoa2", "-queue-in", "true"]
