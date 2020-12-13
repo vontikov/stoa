@@ -16,6 +16,7 @@ import (
 )
 
 const defaultBindPort = 3499
+const defaultBindAddress = "0.0.0.0"
 
 // Cluster is a higher level representation of raft.Raft cluster endpoint.
 type Cluster interface {
@@ -127,6 +128,7 @@ func parsePeers(in string) ([]*peer, error) {
 
 type options struct {
 	autoDiscovery bool
+	bindAddr      string
 	peers         []*peer
 }
 
@@ -139,6 +141,9 @@ func newOptions(opts ...Option) (*options, error) {
 	}
 	if !cfg.autoDiscovery && len(cfg.peers) == 0 {
 		return nil, ErrClusterConfig
+	}
+	if cfg.bindAddr == "" {
+		cfg.bindAddr = defaultBindAddress
 	}
 	return cfg, nil
 }
@@ -154,6 +159,14 @@ func WithPeers(v string) Option {
 			return err
 		}
 		o.peers = peers
+		return nil
+	}
+}
+
+// WithBindAddress passes the Cluster's bind address.
+func WithBindAddress(v string) Option {
+	return func(o *options) error {
+		o.bindAddr = v
 		return nil
 	}
 }
@@ -175,12 +188,14 @@ func New(opts ...Option) (c Cluster, err error) {
 	logger := logging.NewLogger("raft")
 
 	p := cfg.peers[0]
-	bindAddr := fmt.Sprintf("%s:%d", p.addr, p.port)
-	advAddr, err := net.ResolveTCPAddr("tcp", bindAddr)
+	bindAddr := fmt.Sprintf("%s:%d", cfg.bindAddr, p.port)
+	advAddr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", p.addr, p.port))
 	if err != nil {
 		return
 	}
-	trans, err := raft.NewTCPTransport(bindAddr, advAddr, 3, 10*time.Second, os.Stderr)
+
+	logger.Debug("creating transport", "bind address", bindAddr, "advertise address", advAddr)
+	trans, err := raft.NewTCPTransport(bindAddr, advAddr, 7, 10*time.Second, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +208,7 @@ func New(opts ...Option) (c Cluster, err error) {
 	stable := raft.NewInmemStore()
 	snaps := raft.NewInmemSnapshotStore()
 
+	logger.Debug("creating raft")
 	fsm := NewFSM(ctx)
 	r, err := raft.NewRaft(conf, fsm, logs, stable, snaps, trans)
 	if err != nil {
@@ -200,6 +216,8 @@ func New(opts ...Option) (c Cluster, err error) {
 	}
 
 	if len(cfg.peers) > 1 {
+		logger.Debug("bootstrap cluster")
+
 		configuration := raft.Configuration{
 			Servers: []raft.Server{
 				{
@@ -208,8 +226,6 @@ func New(opts ...Option) (c Cluster, err error) {
 				},
 			},
 		}
-
-		logger.Debug("bootstrap cluster")
 		if err = r.BootstrapCluster(configuration).Error(); err != nil {
 			logger.Error("bootstrap error", "message", err)
 			return nil, err
