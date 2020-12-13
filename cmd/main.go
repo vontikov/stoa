@@ -23,29 +23,32 @@ var (
 )
 
 var (
-	grpcPort  = flag.Int("grpc-port", 3500, "gRPC port")
-	httpPort  = flag.Int("http-port", 3501, "HTTP port")
-	ip        = flag.String("ip", "0.0.0.0", "IP")
-	logLevel  = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
-	bootstrap = flag.String("bootstrap", "", "Raft bootstrap")
+	bindAddr   = flag.String("bind", "0.0.0.0", "Raft bind address")
+	bootstrap  = flag.String("bootstrap", "", "Raft bootstrap")
+	grpcPort   = flag.Int("grpc-port", 3500, "gRPC port")
+	httpPort   = flag.Int("http-port", 3501, "HTTP port")
+	listenAddr = flag.String("listen", "0.0.0.0", "Listen address")
+	logLevel   = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	flag.Parse()
 
+	flag.Parse()
 	logging.SetLevel(*logLevel)
 	logger := logging.NewLogger(App)
-	logOptions(logger)
-	logger.Info("starting", "version", Version)
 
-	if *ip == "" {
+	hostname, _ := os.Hostname()
+	logger.Info("starting", "name", App, "version", Version, "hostname", hostname)
+	flag.VisitAll(func(f *flag.Flag) { logger.Debug("option", "name", f.Name, "value", f.Value) })
+
+	if *listenAddr == "" {
 		ifaces, err := util.GetInterfaces()
 		panicOnError(err)
 		if len(ifaces) == 0 {
 			panic("networking interfaces not found")
 		}
-		*ip = ifaces[0].String()
+		*listenAddr = ifaces[0].String()
 	}
 
 	signals := make(chan os.Signal, 1)
@@ -57,13 +60,16 @@ func main() {
 		peers, err = os.Hostname()
 		panicOnError(err)
 	}
-	cluster, err := cluster.New(cluster.WithPeers(peers))
+	cluster, err := cluster.New(
+		cluster.WithBindAddress(*bindAddr),
+		cluster.WithPeers(peers),
+	)
 	panicOnError(err)
 
 	metric.Init(App, Version, cluster)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	gateway, err := gateway.New(ctx, *ip, *grpcPort, *httpPort, cluster)
+	gateway, err := gateway.New(ctx, *listenAddr, *grpcPort, *httpPort, cluster)
 	panicOnError(err)
 
 	metric.Info.Set(1.0)
@@ -75,13 +81,6 @@ func main() {
 	gateway.Wait()
 	cluster.Shutdown()
 	logger.Info("done")
-}
-
-func logOptions(l logging.Logger) {
-	l.Debug("option", "gRPC port", *grpcPort)
-	l.Debug("option", "HTTP port", *httpPort)
-	l.Debug("option", "IP", *ip)
-	l.Debug("option", "peers", *bootstrap)
 }
 
 func panicOnError(err error) {
