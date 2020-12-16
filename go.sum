@@ -424,8 +424,6 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
-github.com/vontikov/go-concurrent v0.0.15 h1:Pcb1SgEi++f29lcfZLLU2cFZQ0RkGPoX0+OTrX3qjQ0=
-github.com/vontikov/go-concurrent v0.0.15/go.mod h1:hMqB4wYUUCdrj/gj/lyRxyTjCoj8zkKwQ98vBkjyvJ0=
 github.com/vontikov/go-concurrent v0.0.16 h1:vca06o4no/97yDzu983FvRRUDh2TdICN1S+GeswI08c=
 github.com/vontikov/go-concurrent v0.0.16/go.mod h1:hMqB4wYUUCdrj/gj/lyRxyTjCoj8zkKwQ98vBkjyvJ0=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=

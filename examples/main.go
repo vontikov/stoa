@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -12,7 +13,6 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/vontikov/stoa/internal/logging"
 	stoa "github.com/vontikov/stoa/pkg/client"
 )
 
@@ -34,10 +34,6 @@ var (
 func main() {
 	flag.Parse()
 
-	logging.SetLevel(*logLevel)
-	logger := logging.NewLogger("stoa-example")
-
-	logger.Info("starting", "version", Version)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
@@ -47,13 +43,15 @@ func main() {
 	var err error
 
 	if *bootstrap == "" {
-		panic("bootstrap must not be empty")
+		log.Fatal("bootstrap must not be empty")
 	}
 	client, err = stoa.New(
 		stoa.WithContext(ctx),
 		stoa.WithPeers(*bootstrap),
 	)
-	panicOnError(err)
+	if err != nil {
+		log.Fatal("client error: ", err)
+	}
 
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -63,18 +61,15 @@ func main() {
 	if *queueInEnabled {
 		g.Go(queueIn(ctx, client))
 	}
-	logger.Info("started")
+	log.Println("started")
 
-	sig := <-signals
-	logger.Debug("received signal", "type", sig)
+	<-signals
 	cancel()
 	g.Wait()
-	logger.Info("done")
 }
 
 func queueOut(ctx context.Context, client stoa.Client) func() error {
 	return func() error {
-		logger := logging.NewLogger("queue-out")
 		q := client.Queue(queueName)
 
 		t := time.Tick(1000 * time.Millisecond)
@@ -87,7 +82,7 @@ func queueOut(ctx context.Context, client stoa.Client) func() error {
 				if err := q.Offer(ctx, []byte(strconv.Itoa(n))); err != nil {
 					return err
 				}
-				logger.Info("offer", "value", n)
+				log.Println("offer: ", n)
 				n++
 			}
 		}
@@ -96,7 +91,6 @@ func queueOut(ctx context.Context, client stoa.Client) func() error {
 
 func queueIn(ctx context.Context, client stoa.Client) func() error {
 	return func() error {
-		logger := logging.NewLogger("queue-in")
 		q := client.Queue(queueName)
 
 		t := time.Tick(500 * time.Millisecond)
@@ -118,14 +112,8 @@ func queueIn(ctx context.Context, client stoa.Client) func() error {
 				if err != nil {
 					return err
 				}
-				logger.Info("poll", "value", n)
+				log.Printf("poll: ", n)
 			}
 		}
-	}
-}
-
-func panicOnError(err error) {
-	if err != nil {
-		panic(err)
 	}
 }
