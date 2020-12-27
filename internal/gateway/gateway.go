@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -19,14 +21,51 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
+type options struct {
+	ip              string
+	grpcPort        int
+	httpPort        int
+	metricsEnabled  bool
+	profilerEnabled bool
+}
+
 // Gateway processes external requests.
 type Gateway = errgroup.Group
 
-// New creates new Gateway instance
-func New(ctx context.Context, ip string, grpcPort int, httpPort int, cluster cluster.Cluster) (*Gateway, error) {
-	logger := logging.NewLogger("gateway")
+// Option defines a Gateway configuration option.
+type Option func(*options)
 
-	grpcAddr := fmt.Sprintf("%s:%d", ip, grpcPort)
+func WithListenAddress(v string) Option {
+	return func(o *options) { o.ip = v }
+}
+
+func WithGRPCPort(v int) Option {
+	return func(o *options) { o.grpcPort = v }
+}
+
+func WithHTTPPort(v int) Option {
+	return func(o *options) { o.httpPort = v }
+}
+
+func WithMetricsEnabled(v bool) Option {
+	return func(o *options) { o.metricsEnabled = v }
+}
+
+func WithPprofEnabled(v bool) Option {
+	return func(o *options) { o.profilerEnabled = v }
+}
+
+// New creates new Gateway instance
+func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway, error) {
+	logger := logging.NewLogger("gateway")
+	cfg := &options{}
+	for _, o := range opts {
+		o(cfg)
+	}
+
+	grpcAddr := fmt.Sprintf("%s:%d", cfg.ip, cfg.grpcPort)
+	httpAddr := fmt.Sprintf("%s:%d", cfg.ip, cfg.httpPort)
+
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		return nil, err
@@ -34,35 +73,26 @@ func New(ctx context.Context, ip string, grpcPort int, httpPort int, cluster clu
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterStoaServer(grpcServer, newServer(cluster))
+	grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
 
-	healthcheck := health.NewServer()
-	grpc_health_v1.RegisterHealthServer(grpcServer, healthcheck)
-
-	httpAddr := fmt.Sprintf("%s:%d", ip, httpPort)
-	mux := runtime.NewServeMux()
-	httpServer := &http.Server{
-		Addr:    httpAddr,
-		Handler: mux,
-	}
-
-	opts := []grpc.DialOption{
+	gwMux := runtime.NewServeMux()
+	dialOpts := []grpc.DialOption{
 		grpc.WithInsecure(),
 	}
-	err = pb.RegisterStoaHandlerFromEndpoint(context.Background(), mux, grpcAddr, opts)
+	err = pb.RegisterStoaHandlerFromEndpoint(context.Background(), gwMux, grpcAddr, dialOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	// Prometheus metrics
-	mux.Handle(
-		"GET",
-		runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"metrics"}, "")),
-		func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-			promhttp.Handler().ServeHTTP(w, r)
-		})
+	router := mux.NewRouter()
+	registerServiceHandlers(router, gwMux, cfg)
+
+	httpServer := &http.Server{
+		Addr:    httpAddr,
+		Handler: router,
+	}
 
 	g, ctx := errgroup.WithContext(ctx)
-
 	g.Go(func() error {
 		logger.Info("serving gRPC", "address", grpcAddr)
 		defer logger.Info("gRPC stopped")
@@ -81,4 +111,28 @@ func New(ctx context.Context, ip string, grpcPort int, httpPort int, cluster clu
 	})
 
 	return g, nil
+}
+
+func registerServiceHandlers(router *mux.Router, gwMux *runtime.ServeMux, cfg *options) {
+	router.Handle("/", gwMux)
+
+	if cfg.metricsEnabled {
+		router.HandleFunc("/metrics", promhttp.Handler().ServeHTTP)
+	}
+
+	if cfg.profilerEnabled {
+		pprofRouter := router.PathPrefix("/debug/pprof").Subrouter()
+		pprofRouter.HandleFunc("", pprof.Index)
+		pprofRouter.HandleFunc("/cmdline", pprof.Cmdline)
+		pprofRouter.HandleFunc("/symbol", pprof.Symbol)
+		pprofRouter.HandleFunc("/trace", pprof.Trace)
+
+		profileRouter := pprofRouter.PathPrefix("/profile").Subrouter()
+		profileRouter.HandleFunc("", pprof.Profile)
+		profileRouter.Handle("/block", pprof.Handler("block"))
+		profileRouter.Handle("/goroutine", pprof.Handler("goroutine"))
+		profileRouter.Handle("/heap", pprof.Handler("heap"))
+		profileRouter.Handle("/mutex", pprof.Handler("mutex"))
+		profileRouter.Handle("/threadcreate", pprof.Handler("threadcreate"))
+	}
 }

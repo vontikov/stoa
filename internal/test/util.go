@@ -52,7 +52,10 @@ func RunTestCluster(ctx context.Context, t *testing.T, basePort int) []cluster.C
 			m.Lock()
 			clusters = append(clusters, cluster)
 			m.Unlock()
-			gateway, err := gateway.New(ctx, "localhost", grpcPort, httpPort, cluster)
+			gateway, err := gateway.New(ctx, cluster,
+				gateway.WithListenAddress("localhost"),
+				gateway.WithGRPCPort(grpcPort),
+				gateway.WithHTTPPort(httpPort))
 			if err != nil {
 				t.Logf("gateway error: %v", err)
 				t.Fail()
