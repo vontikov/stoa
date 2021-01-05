@@ -409,20 +409,68 @@ func (x *MutexStatus) GetLocked() bool {
 	return false
 }
 
+type QueueStatus struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *QueueStatus) Reset() {
+	*x = QueueStatus{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_stoa_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *QueueStatus) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QueueStatus) ProtoMessage() {}
+
+func (x *QueueStatus) ProtoReflect() protoreflect.Message {
+	mi := &file_stoa_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QueueStatus.ProtoReflect.Descriptor instead.
+func (*QueueStatus) Descriptor() ([]byte, []int) {
+	return file_stoa_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *QueueStatus) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 type Status struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Payload:
-	//	*Status_Mutex
-	Payload isStatus_Payload `protobuf_oneof:"payload"`
+	// Types that are assignable to U:
+	//	*Status_M
+	//	*Status_Q
+	U isStatus_U `protobuf_oneof:"u"`
 }
 
 func (x *Status) Reset() {
 	*x = Status{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_stoa_proto_msgTypes[7]
+		mi := &file_stoa_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -435,7 +483,7 @@ func (x *Status) String() string {
 func (*Status) ProtoMessage() {}
 
 func (x *Status) ProtoReflect() protoreflect.Message {
-	mi := &file_stoa_proto_msgTypes[7]
+	mi := &file_stoa_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -448,32 +496,45 @@ func (x *Status) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Status.ProtoReflect.Descriptor instead.
 func (*Status) Descriptor() ([]byte, []int) {
-	return file_stoa_proto_rawDescGZIP(), []int{7}
+	return file_stoa_proto_rawDescGZIP(), []int{8}
 }
 
-func (m *Status) GetPayload() isStatus_Payload {
+func (m *Status) GetU() isStatus_U {
 	if m != nil {
-		return m.Payload
+		return m.U
 	}
 	return nil
 }
 
-func (x *Status) GetMutex() *MutexStatus {
-	if x, ok := x.GetPayload().(*Status_Mutex); ok {
-		return x.Mutex
+func (x *Status) GetM() *MutexStatus {
+	if x, ok := x.GetU().(*Status_M); ok {
+		return x.M
 	}
 	return nil
 }
 
-type isStatus_Payload interface {
-	isStatus_Payload()
+func (x *Status) GetQ() *QueueStatus {
+	if x, ok := x.GetU().(*Status_Q); ok {
+		return x.Q
+	}
+	return nil
 }
 
-type Status_Mutex struct {
-	Mutex *MutexStatus `protobuf:"bytes,1,opt,name=mutex,proto3,oneof"`
+type isStatus_U interface {
+	isStatus_U()
 }
 
-func (*Status_Mutex) isStatus_Payload() {}
+type Status_M struct {
+	M *MutexStatus `protobuf:"bytes,1,opt,name=m,proto3,oneof"`
+}
+
+type Status_Q struct {
+	Q *QueueStatus `protobuf:"bytes,2,opt,name=q,proto3,oneof"`
+}
+
+func (*Status_M) isStatus_U() {}
+
+func (*Status_Q) isStatus_U() {}
 
 var File_stoa_proto protoreflect.FileDescriptor
 
@@ -514,12 +575,17 @@ var file_stoa_proto_rawDesc = []byte{
 	0x61, 0x74, 0x75, 0x73, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x6c, 0x6f, 0x63, 0x6b,
 	0x65, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06, 0x6c, 0x6f, 0x63, 0x6b, 0x65, 0x64,
-	0x22, 0x55, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x40, 0x0a, 0x05, 0x6d, 0x75,
-	0x74, 0x65, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x68,
+	0x22, 0x21, 0x0a, 0x0b, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
+	0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x22, 0x81, 0x01, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x38,
+	0x0a, 0x01, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x68,
 	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e,
 	0x73, 0x74, 0x6f, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x4d, 0x75, 0x74, 0x65, 0x78, 0x53, 0x74, 0x61,
-	0x74, 0x75, 0x73, 0x48, 0x00, 0x52, 0x05, 0x6d, 0x75, 0x74, 0x65, 0x78, 0x42, 0x09, 0x0a, 0x07,
-	0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x32, 0xea, 0x0d, 0x0a, 0x04, 0x53, 0x74, 0x6f, 0x61,
+	0x74, 0x75, 0x73, 0x48, 0x00, 0x52, 0x01, 0x6d, 0x12, 0x38, 0x0a, 0x01, 0x71, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f, 0x61, 0x2e, 0x76,
+	0x31, 0x2e, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x48, 0x00, 0x52,
+	0x01, 0x71, 0x42, 0x03, 0x0a, 0x01, 0x75, 0x32, 0xdc, 0x0e, 0x0a, 0x04, 0x53, 0x74, 0x6f, 0x61,
 	0x12, 0x6a, 0x0a, 0x09, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x69, 0x7a, 0x65, 0x12, 0x21, 0x2e,
 	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69,
 	0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x61, 0x6d, 0x65,
@@ -630,8 +696,15 @@ var file_stoa_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f,
 	0x61, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x22, 0x18, 0x82, 0xd3, 0xe4, 0x93,
 	0x02, 0x12, 0x22, 0x10, 0x2f, 0x76, 0x31, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2f,
-	0x70, 0x69, 0x6e, 0x67, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x3b, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x69, 0x6e, 0x67, 0x12, 0x70, 0x0a, 0x05, 0x57, 0x61, 0x74, 0x63, 0x68, 0x12, 0x25, 0x2e,
+	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69,
+	0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6c, 0x69, 0x65,
+	0x6e, 0x74, 0x49, 0x64, 0x1a, 0x23, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
+	0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f, 0x61, 0x2e,
+	0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x19, 0x82, 0xd3, 0xe4, 0x93, 0x02,
+	0x13, 0x22, 0x11, 0x2f, 0x76, 0x31, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2f, 0x77,
+	0x61, 0x74, 0x63, 0x68, 0x30, 0x01, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x3b, 0x70, 0x62, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -646,7 +719,7 @@ func file_stoa_proto_rawDescGZIP() []byte {
 	return file_stoa_proto_rawDescData
 }
 
-var file_stoa_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_stoa_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_stoa_proto_goTypes = []interface{}{
 	(*Name)(nil),        // 0: github.com.vontikov.stoa.v1.Name
 	(*Id)(nil),          // 1: github.com.vontikov.stoa.v1.Id
@@ -655,47 +728,51 @@ var file_stoa_proto_goTypes = []interface{}{
 	(*KeyValue)(nil),    // 4: github.com.vontikov.stoa.v1.KeyValue
 	(*ClientId)(nil),    // 5: github.com.vontikov.stoa.v1.ClientId
 	(*MutexStatus)(nil), // 6: github.com.vontikov.stoa.v1.MutexStatus
-	(*Status)(nil),      // 7: github.com.vontikov.stoa.v1.Status
-	(*Empty)(nil),       // 8: github.com.vontikov.stoa.v1.Empty
-	(*Result)(nil),      // 9: github.com.vontikov.stoa.v1.Result
+	(*QueueStatus)(nil), // 7: github.com.vontikov.stoa.v1.QueueStatus
+	(*Status)(nil),      // 8: github.com.vontikov.stoa.v1.Status
+	(*Empty)(nil),       // 9: github.com.vontikov.stoa.v1.Empty
+	(*Result)(nil),      // 10: github.com.vontikov.stoa.v1.Result
 }
 var file_stoa_proto_depIdxs = []int32{
-	6,  // 0: github.com.vontikov.stoa.v1.Status.mutex:type_name -> github.com.vontikov.stoa.v1.MutexStatus
-	0,  // 1: github.com.vontikov.stoa.v1.Stoa.QueueSize:input_type -> github.com.vontikov.stoa.v1.Name
-	0,  // 2: github.com.vontikov.stoa.v1.Stoa.QueueClear:input_type -> github.com.vontikov.stoa.v1.Name
-	2,  // 3: github.com.vontikov.stoa.v1.Stoa.QueueOffer:input_type -> github.com.vontikov.stoa.v1.Value
-	0,  // 4: github.com.vontikov.stoa.v1.Stoa.QueuePoll:input_type -> github.com.vontikov.stoa.v1.Name
-	0,  // 5: github.com.vontikov.stoa.v1.Stoa.QueuePeek:input_type -> github.com.vontikov.stoa.v1.Name
-	0,  // 6: github.com.vontikov.stoa.v1.Stoa.DictionarySize:input_type -> github.com.vontikov.stoa.v1.Name
-	0,  // 7: github.com.vontikov.stoa.v1.Stoa.DictionaryClear:input_type -> github.com.vontikov.stoa.v1.Name
-	4,  // 8: github.com.vontikov.stoa.v1.Stoa.DictionaryPutIfAbsent:input_type -> github.com.vontikov.stoa.v1.KeyValue
-	4,  // 9: github.com.vontikov.stoa.v1.Stoa.DictionaryPut:input_type -> github.com.vontikov.stoa.v1.KeyValue
-	3,  // 10: github.com.vontikov.stoa.v1.Stoa.DictionaryGet:input_type -> github.com.vontikov.stoa.v1.Key
-	3,  // 11: github.com.vontikov.stoa.v1.Stoa.DictionaryRemove:input_type -> github.com.vontikov.stoa.v1.Key
-	0,  // 12: github.com.vontikov.stoa.v1.Stoa.DictionaryRange:input_type -> github.com.vontikov.stoa.v1.Name
-	1,  // 13: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:input_type -> github.com.vontikov.stoa.v1.Id
-	1,  // 14: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:input_type -> github.com.vontikov.stoa.v1.Id
-	5,  // 15: github.com.vontikov.stoa.v1.Stoa.Ping:input_type -> github.com.vontikov.stoa.v1.ClientId
-	2,  // 16: github.com.vontikov.stoa.v1.Stoa.QueueSize:output_type -> github.com.vontikov.stoa.v1.Value
-	8,  // 17: github.com.vontikov.stoa.v1.Stoa.QueueClear:output_type -> github.com.vontikov.stoa.v1.Empty
-	9,  // 18: github.com.vontikov.stoa.v1.Stoa.QueueOffer:output_type -> github.com.vontikov.stoa.v1.Result
-	2,  // 19: github.com.vontikov.stoa.v1.Stoa.QueuePoll:output_type -> github.com.vontikov.stoa.v1.Value
-	2,  // 20: github.com.vontikov.stoa.v1.Stoa.QueuePeek:output_type -> github.com.vontikov.stoa.v1.Value
-	2,  // 21: github.com.vontikov.stoa.v1.Stoa.DictionarySize:output_type -> github.com.vontikov.stoa.v1.Value
-	8,  // 22: github.com.vontikov.stoa.v1.Stoa.DictionaryClear:output_type -> github.com.vontikov.stoa.v1.Empty
-	9,  // 23: github.com.vontikov.stoa.v1.Stoa.DictionaryPutIfAbsent:output_type -> github.com.vontikov.stoa.v1.Result
-	2,  // 24: github.com.vontikov.stoa.v1.Stoa.DictionaryPut:output_type -> github.com.vontikov.stoa.v1.Value
-	2,  // 25: github.com.vontikov.stoa.v1.Stoa.DictionaryGet:output_type -> github.com.vontikov.stoa.v1.Value
-	9,  // 26: github.com.vontikov.stoa.v1.Stoa.DictionaryRemove:output_type -> github.com.vontikov.stoa.v1.Result
-	4,  // 27: github.com.vontikov.stoa.v1.Stoa.DictionaryRange:output_type -> github.com.vontikov.stoa.v1.KeyValue
-	9,  // 28: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:output_type -> github.com.vontikov.stoa.v1.Result
-	9,  // 29: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:output_type -> github.com.vontikov.stoa.v1.Result
-	8,  // 30: github.com.vontikov.stoa.v1.Stoa.Ping:output_type -> github.com.vontikov.stoa.v1.Empty
-	16, // [16:31] is the sub-list for method output_type
-	1,  // [1:16] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	6,  // 0: github.com.vontikov.stoa.v1.Status.m:type_name -> github.com.vontikov.stoa.v1.MutexStatus
+	7,  // 1: github.com.vontikov.stoa.v1.Status.q:type_name -> github.com.vontikov.stoa.v1.QueueStatus
+	0,  // 2: github.com.vontikov.stoa.v1.Stoa.QueueSize:input_type -> github.com.vontikov.stoa.v1.Name
+	0,  // 3: github.com.vontikov.stoa.v1.Stoa.QueueClear:input_type -> github.com.vontikov.stoa.v1.Name
+	2,  // 4: github.com.vontikov.stoa.v1.Stoa.QueueOffer:input_type -> github.com.vontikov.stoa.v1.Value
+	0,  // 5: github.com.vontikov.stoa.v1.Stoa.QueuePoll:input_type -> github.com.vontikov.stoa.v1.Name
+	0,  // 6: github.com.vontikov.stoa.v1.Stoa.QueuePeek:input_type -> github.com.vontikov.stoa.v1.Name
+	0,  // 7: github.com.vontikov.stoa.v1.Stoa.DictionarySize:input_type -> github.com.vontikov.stoa.v1.Name
+	0,  // 8: github.com.vontikov.stoa.v1.Stoa.DictionaryClear:input_type -> github.com.vontikov.stoa.v1.Name
+	4,  // 9: github.com.vontikov.stoa.v1.Stoa.DictionaryPutIfAbsent:input_type -> github.com.vontikov.stoa.v1.KeyValue
+	4,  // 10: github.com.vontikov.stoa.v1.Stoa.DictionaryPut:input_type -> github.com.vontikov.stoa.v1.KeyValue
+	3,  // 11: github.com.vontikov.stoa.v1.Stoa.DictionaryGet:input_type -> github.com.vontikov.stoa.v1.Key
+	3,  // 12: github.com.vontikov.stoa.v1.Stoa.DictionaryRemove:input_type -> github.com.vontikov.stoa.v1.Key
+	0,  // 13: github.com.vontikov.stoa.v1.Stoa.DictionaryRange:input_type -> github.com.vontikov.stoa.v1.Name
+	1,  // 14: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:input_type -> github.com.vontikov.stoa.v1.Id
+	1,  // 15: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:input_type -> github.com.vontikov.stoa.v1.Id
+	5,  // 16: github.com.vontikov.stoa.v1.Stoa.Ping:input_type -> github.com.vontikov.stoa.v1.ClientId
+	5,  // 17: github.com.vontikov.stoa.v1.Stoa.Watch:input_type -> github.com.vontikov.stoa.v1.ClientId
+	2,  // 18: github.com.vontikov.stoa.v1.Stoa.QueueSize:output_type -> github.com.vontikov.stoa.v1.Value
+	9,  // 19: github.com.vontikov.stoa.v1.Stoa.QueueClear:output_type -> github.com.vontikov.stoa.v1.Empty
+	10, // 20: github.com.vontikov.stoa.v1.Stoa.QueueOffer:output_type -> github.com.vontikov.stoa.v1.Result
+	2,  // 21: github.com.vontikov.stoa.v1.Stoa.QueuePoll:output_type -> github.com.vontikov.stoa.v1.Value
+	2,  // 22: github.com.vontikov.stoa.v1.Stoa.QueuePeek:output_type -> github.com.vontikov.stoa.v1.Value
+	2,  // 23: github.com.vontikov.stoa.v1.Stoa.DictionarySize:output_type -> github.com.vontikov.stoa.v1.Value
+	9,  // 24: github.com.vontikov.stoa.v1.Stoa.DictionaryClear:output_type -> github.com.vontikov.stoa.v1.Empty
+	10, // 25: github.com.vontikov.stoa.v1.Stoa.DictionaryPutIfAbsent:output_type -> github.com.vontikov.stoa.v1.Result
+	2,  // 26: github.com.vontikov.stoa.v1.Stoa.DictionaryPut:output_type -> github.com.vontikov.stoa.v1.Value
+	2,  // 27: github.com.vontikov.stoa.v1.Stoa.DictionaryGet:output_type -> github.com.vontikov.stoa.v1.Value
+	10, // 28: github.com.vontikov.stoa.v1.Stoa.DictionaryRemove:output_type -> github.com.vontikov.stoa.v1.Result
+	4,  // 29: github.com.vontikov.stoa.v1.Stoa.DictionaryRange:output_type -> github.com.vontikov.stoa.v1.KeyValue
+	10, // 30: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:output_type -> github.com.vontikov.stoa.v1.Result
+	10, // 31: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:output_type -> github.com.vontikov.stoa.v1.Result
+	9,  // 32: github.com.vontikov.stoa.v1.Stoa.Ping:output_type -> github.com.vontikov.stoa.v1.Empty
+	8,  // 33: github.com.vontikov.stoa.v1.Stoa.Watch:output_type -> github.com.vontikov.stoa.v1.Status
+	18, // [18:34] is the sub-list for method output_type
+	2,  // [2:18] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_stoa_proto_init() }
@@ -790,6 +867,18 @@ func file_stoa_proto_init() {
 			}
 		}
 		file_stoa_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*QueueStatus); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_stoa_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Status); i {
 			case 0:
 				return &v.state
@@ -802,8 +891,9 @@ func file_stoa_proto_init() {
 			}
 		}
 	}
-	file_stoa_proto_msgTypes[7].OneofWrappers = []interface{}{
-		(*Status_Mutex)(nil),
+	file_stoa_proto_msgTypes[8].OneofWrappers = []interface{}{
+		(*Status_M)(nil),
+		(*Status_Q)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -811,7 +901,7 @@ func file_stoa_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_stoa_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

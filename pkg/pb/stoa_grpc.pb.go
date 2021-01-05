@@ -32,6 +32,7 @@ type StoaClient interface {
 	MutexTryLock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
 	MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
 	Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error)
+	Watch(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (Stoa_WatchClient, error)
 }
 
 type stoaClient struct {
@@ -200,6 +201,38 @@ func (c *stoaClient) Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOp
 	return out, nil
 }
 
+func (c *stoaClient) Watch(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (Stoa_WatchClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Stoa_serviceDesc.Streams[1], "/github.com.vontikov.stoa.v1.Stoa/Watch", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &stoaWatchClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Stoa_WatchClient interface {
+	Recv() (*Status, error)
+	grpc.ClientStream
+}
+
+type stoaWatchClient struct {
+	grpc.ClientStream
+}
+
+func (x *stoaWatchClient) Recv() (*Status, error) {
+	m := new(Status)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StoaServer is the server API for Stoa service.
 // All implementations must embed UnimplementedStoaServer
 // for forward compatibility
@@ -219,6 +252,7 @@ type StoaServer interface {
 	MutexTryLock(context.Context, *Id) (*Result, error)
 	MutexUnlock(context.Context, *Id) (*Result, error)
 	Ping(context.Context, *ClientId) (*Empty, error)
+	Watch(*ClientId, Stoa_WatchServer) error
 	mustEmbedUnimplementedStoaServer()
 }
 
@@ -270,6 +304,9 @@ func (UnimplementedStoaServer) MutexUnlock(context.Context, *Id) (*Result, error
 }
 func (UnimplementedStoaServer) Ping(context.Context, *ClientId) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (UnimplementedStoaServer) Watch(*ClientId, Stoa_WatchServer) error {
+	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
 }
 func (UnimplementedStoaServer) mustEmbedUnimplementedStoaServer() {}
 
@@ -557,6 +594,27 @@ func _Stoa_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Stoa_Watch_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ClientId)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(StoaServer).Watch(m, &stoaWatchServer{stream})
+}
+
+type Stoa_WatchServer interface {
+	Send(*Status) error
+	grpc.ServerStream
+}
+
+type stoaWatchServer struct {
+	grpc.ServerStream
+}
+
+func (x *stoaWatchServer) Send(m *Status) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 var _Stoa_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "github.com.vontikov.stoa.v1.Stoa",
 	HandlerType: (*StoaServer)(nil),
@@ -622,6 +680,11 @@ var _Stoa_serviceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "DictionaryRange",
 			Handler:       _Stoa_DictionaryRange_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "Watch",
+			Handler:       _Stoa_Watch_Handler,
 			ServerStreams: true,
 		},
 	},

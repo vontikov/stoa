@@ -566,6 +566,73 @@ var _ interface {
 	ErrorName() string
 } = MutexStatusValidationError{}
 
+// Validate checks the field values on QueueStatus with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *QueueStatus) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for Name
+
+	return nil
+}
+
+// QueueStatusValidationError is the validation error returned by
+// QueueStatus.Validate if the designated constraints aren't met.
+type QueueStatusValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e QueueStatusValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e QueueStatusValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e QueueStatusValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e QueueStatusValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e QueueStatusValidationError) ErrorName() string { return "QueueStatusValidationError" }
+
+// Error satisfies the builtin error interface
+func (e QueueStatusValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sQueueStatus.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = QueueStatusValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = QueueStatusValidationError{}
+
 // Validate checks the field values on Status with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *Status) Validate() error {
@@ -573,14 +640,26 @@ func (m *Status) Validate() error {
 		return nil
 	}
 
-	switch m.Payload.(type) {
+	switch m.U.(type) {
 
-	case *Status_Mutex:
+	case *Status_M:
 
-		if v, ok := interface{}(m.GetMutex()).(interface{ Validate() error }); ok {
+		if v, ok := interface{}(m.GetM()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return StatusValidationError{
-					field:  "Mutex",
+					field:  "M",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Status_Q:
+
+		if v, ok := interface{}(m.GetQ()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StatusValidationError{
+					field:  "Q",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

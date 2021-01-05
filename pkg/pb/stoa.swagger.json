@@ -443,6 +443,37 @@
           "Stoa"
         ]
       }
+    },
+    "/v1/service/watch": {
+      "post": {
+        "operationId": "Stoa_Watch",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/v1Status"
+                },
+                "error": {
+                  "$ref": "#/definitions/runtimeStreamError"
+                }
+              },
+              "title": "Stream result of v1Status"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "Stoa"
+        ]
+      }
     }
   },
   "definitions": {
@@ -525,6 +556,25 @@
       },
       "description": "KeyValue contains a Dictionary key-value pair."
     },
+    "v1MutexStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "locked": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1QueueStatus": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
     "v1Result": {
       "type": "object",
       "properties": {
@@ -533,6 +583,17 @@
         }
       },
       "description": "Result contains an operation result."
+    },
+    "v1Status": {
+      "type": "object",
+      "properties": {
+        "m": {
+          "$ref": "#/definitions/v1MutexStatus"
+        },
+        "q": {
+          "$ref": "#/definitions/v1QueueStatus"
+        }
+      }
     },
     "v1Value": {
       "type": "object",

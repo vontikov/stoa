@@ -46,9 +46,14 @@ message MutexStatus {
   bool locked = 2;
 }
 
+message QueueStatus {
+  string name = 1;
+}
+
 message Status {
-  oneof payload {
-    MutexStatus mutex = 1;
+  oneof u {
+    MutexStatus m = 1;
+    QueueStatus q = 2;
   }
 }
 
@@ -145,6 +150,12 @@ service Stoa {
   rpc Ping (ClientId) returns (Empty) {
     option(google.api.http) = {
       post: "/v1/service/ping",
+    };
+  }
+
+  rpc Watch (ClientId) returns (stream Status) {
+    option(google.api.http) = {
+      post: "/v1/service/watch",
     };
   }
 }
