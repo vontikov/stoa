@@ -13,8 +13,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
+
 	"github.com/hashicorp/raft"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
