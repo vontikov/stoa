@@ -62,7 +62,10 @@ func main() {
 		peers, err = os.Hostname()
 		panicOnError(err)
 	}
-	cluster, err := cluster.New(
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	cluster, err := cluster.New(ctx,
 		cluster.WithBindAddress(*bindAddrFlag),
 		cluster.WithPeers(peers),
 	)
@@ -70,7 +73,6 @@ func main() {
 
 	metric.Init(App, Version, cluster)
 
-	ctx, cancel := context.WithCancel(context.Background())
 	gateway, err := gateway.New(ctx, cluster,
 		gateway.WithListenAddress(*listenAddrFlag),
 		gateway.WithGRPCPort(*grpcPortFlag),
@@ -87,7 +89,6 @@ func main() {
 	logger.Debug("received signal", "type", sig)
 	cancel()
 	gateway.Wait()
-	cluster.Shutdown()
 	logger.Info("done")
 }
 

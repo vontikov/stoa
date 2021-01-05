@@ -3,6 +3,7 @@ package cluster
 import (
 	"testing"
 
+	"context"
 	"strings"
 	"sync"
 	"time"
@@ -12,7 +13,13 @@ import (
 	"github.com/vontikov/stoa/internal/logging"
 )
 
+type R struct {
+	cluster Cluster
+	cancel  context.CancelFunc
+}
+
 func TestCluster(t *testing.T) {
+
 	assert := assert.New(t)
 	logging.SetLevel("trace")
 
@@ -32,29 +39,35 @@ func TestCluster(t *testing.T) {
 		strings.Join([]string{addr5}, PeerListSep),
 	}
 
-	var wg sync.WaitGroup
 	clusters := cc.NewSynchronizedMap(0)
-	defer clusters.Range(func(k, v interface{}) bool {
-		return assert.Nil(v.(Cluster).Shutdown())
-	})
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		cancel()
+		clusters.Range(func(k, v interface{}) bool {
+			return assert.Nil(<-v.(R).cluster.Done())
+		})
+	}()
+
+	var wg sync.WaitGroup
 	for i, p := range peers {
 		wg.Add(1)
 		go func(p string, i int) {
-			cluster, err := New(WithPeers(p))
+			cctx, ccancel := context.WithCancel(ctx)
+			cluster, err := New(cctx, WithPeers(p))
 			assert.Nil(err)
-			clusters.Put(i, cluster)
+			clusters.Put(i, R{cluster, ccancel})
 			wg.Done()
 		}(p, i)
 	}
 	wg.Wait()
 
 	ensureSameLeader(t, clusters)
-	assert.True(clusters.Get(0).(Cluster).IsLeader())
+	assert.True(clusters.Get(0).(R).cluster.IsLeader())
 
 	// drain signals
 	clusters.Range(func(k, v interface{}) bool {
-		ch := v.(Cluster).WatchLeadership()
+		ch := v.(R).cluster.WatchLeadership()
 		for len(ch) > 0 {
 			<-ch
 		}
@@ -62,7 +75,7 @@ func TestCluster(t *testing.T) {
 	})
 
 	// transfer leadership
-	assert.Nil(clusters.Get(0).(Cluster).LeadershipTransfer())
+	assert.Nil(clusters.Get(0).(R).cluster.LeadershipTransfer())
 
 	// make sure there is a new leader
 	timeout := time.After(10 * time.Second)
@@ -74,7 +87,7 @@ loop:
 			t.Fail()
 		default:
 			for i := 1; i < clusters.Size(); i++ {
-				ch := clusters.Get(i).(Cluster).WatchLeadership()
+				ch := clusters.Get(i).(R).cluster.WatchLeadership()
 				if len(ch) > 0 && <-ch {
 					break loop
 				}
@@ -100,30 +113,38 @@ func TestClusterLeaderRestart(t *testing.T) {
 		strings.Join([]string{addr3}, PeerListSep),
 	}
 
-	var wg sync.WaitGroup
 	clusters := cc.NewSynchronizedMap(0)
-	defer clusters.Range(func(k, v interface{}) bool {
-		return assert.Nil(v.(Cluster).Shutdown())
-	})
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer func() {
+		cancel()
+		clusters.Range(func(k, v interface{}) bool {
+			return assert.Nil(<-v.(R).cluster.Done())
+		})
+	}()
+
+	var wg sync.WaitGroup
 	for i, p := range peers {
 		wg.Add(1)
 		go func(p string, i int) {
-			cluster, err := New(WithPeers(p))
+			cctx, ccancel := context.WithCancel(ctx)
+			cluster, err := New(cctx, WithPeers(p))
 			assert.Nil(err)
-			clusters.Put(i, cluster)
+			clusters.Put(i, R{cluster, ccancel})
 			wg.Done()
 		}(p, i)
 	}
 	wg.Wait()
 	ensureSameLeader(t, clusters)
 
-	err := clusters.Get(0).(Cluster).Shutdown()
-	assert.Nil(err)
+	r := clusters.Get(0).(R)
+	r.cancel()
+	assert.Nil(<-r.cluster.Done())
 
-	cluster, err := New(WithPeers(peers[0]))
+	cctx, ccancel := context.WithCancel(ctx)
+	cluster, err := New(cctx, WithPeers(peers[0]))
 	assert.Nil(err)
-	clusters.Put(0, cluster)
+	clusters.Put(0, R{cluster, ccancel})
 
 	ensureSameLeader(t, clusters)
 }
@@ -139,7 +160,7 @@ func ensureSameLeader(t *testing.T, clusters cc.Map) {
 		default:
 			r := true
 			clusters.Range(func(k, v interface{}) bool {
-				c := v.(Cluster)
+				c := v.(R).cluster
 				if c.LeaderAddress() != expectedLeader {
 					expectedLeader = c.LeaderAddress()
 					r = false

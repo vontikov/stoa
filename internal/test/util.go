@@ -44,7 +44,7 @@ func RunTestCluster(ctx context.Context, t *testing.T, basePort int) []cluster.C
 	for _, p := range peers {
 		wg.Add(1)
 		go func(grpcPort, httpPort int, peers string) {
-			cluster, err := cluster.New(cluster.WithPeers(peers))
+			cluster, err := cluster.New(ctx, cluster.WithPeers(peers))
 			if err != nil {
 				t.Logf("cluster error: %v", err)
 				t.Fail()
@@ -64,7 +64,6 @@ func RunTestCluster(ctx context.Context, t *testing.T, basePort int) []cluster.C
 
 			<-ctx.Done()
 			gateway.Wait()
-			cluster.Shutdown()
 		}(p.grpcPort, p.httpPort, p.peers)
 	}
 	wg.Wait()

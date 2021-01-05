@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/raft"
@@ -35,9 +36,6 @@ type Cluster interface {
 	// AddVoter adds a new Voter to the cluster.
 	AddVoter(id string, bindIP string, bindPort int) error
 
-	// Shutdown stops the Cluster.
-	Shutdown() error
-
 	// LeadershipTransfer will transfer leadership to another Cluster.
 	LeadershipTransfer() error
 
@@ -48,6 +46,9 @@ type Cluster interface {
 
 	// Apply executes the command c bypassing Raft node.
 	Apply(c *pb.ClusterCommand) interface{}
+
+	// Done returns a channel that's closed when the Cluster is shutdown.
+	Done() <-chan error
 }
 
 // ErrDeadlineExceeded is the error returned if a timeout is specified.
@@ -62,11 +63,13 @@ var ErrPeerParams = errors.New("invalid peer parameters")
 
 // cluster implements Cluster.
 type cluster struct {
-	logger       logging.Logger
-	r            *raft.Raft
-	id           string
-	f            *FSM
-	shutdownFunc func() error
+	logger logging.Logger
+	r      *raft.Raft
+	id     string
+	f      *FSM
+
+	mu   sync.Mutex
+	done chan error
 }
 
 // PeerListSep separates peer definitions in the peer list.
@@ -172,18 +175,11 @@ func WithBindAddress(v string) Option {
 }
 
 // New creates a new Cluster instance.
-func New(opts ...Option) (c Cluster, err error) {
+func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 	cfg, err := newOptions(opts...)
 	if err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer func() {
-		if err != nil {
-			cancel()
-		}
-	}()
 
 	logger := logging.NewLogger("raft")
 
@@ -243,16 +239,29 @@ func New(opts ...Option) (c Cluster, err error) {
 		}
 	}
 
-	c = &cluster{
+	cl := &cluster{
 		logger: logger,
 		r:      r,
 		id:     p.id,
 		f:      fsm,
-		shutdownFunc: func() error {
-			cancel()
-			return r.Shutdown().Error()
-		},
 	}
+
+	go func() {
+		<-ctx.Done()
+
+		cl.mu.Lock()
+		if cl.done == nil {
+			cl.done = make(chan error, 1)
+		}
+		d := cl.done
+		cl.mu.Unlock()
+
+		d <- r.Shutdown().Error()
+		close(d)
+		logger.Info("shutdown")
+	}()
+
+	c = cl
 	return
 }
 
@@ -298,11 +307,14 @@ func (c *cluster) Apply(cmd *pb.ClusterCommand) interface{} {
 	return c.f.Execute(cmd)
 }
 
-// Shutdown implements Cluster.Shutdown.
-func (c *cluster) Shutdown() error {
-	err := c.shutdownFunc()
-	c.logger.Info("shutdown")
-	return err
+// Done implements Cluster.Done.
+func (c *cluster) Done() <-chan error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.done == nil {
+		c.done = make(chan error, 1)
+	}
+	return c.done
 }
 
 func peerID(bindAddr string, bindPort int) string {
