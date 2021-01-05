@@ -4,12 +4,25 @@ import (
 	"sync"
 	"time"
 
+	cc "github.com/vontikov/go-concurrent"
+
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
 var timeNow = time.Now
 var mutexCheckPeriod = 200 * time.Millisecond
 var mutexDeadline = 5 * time.Second
+
+type mutexMap struct {
+	cc.Map
+	once sync.Once
+}
+
+type mutexMapPtr = *mutexMap
+
+func newMutexMap() mutexMapPtr {
+	return &mutexMap{Map: cc.NewSynchronizedMap(0)}
+}
 
 type mutexRecord struct {
 	sync.RWMutex
@@ -81,7 +94,7 @@ func (f *FSM) startMutexWatcher() {
 func mutex(f *FSM, n string) mutexRecordPtr {
 	v, ok := f.ms.ComputeIfAbsent(n, func() interface{} { return newMutexRecord() })
 	if ok {
-		f.mo.Do(f.startMutexWatcher)
+		f.ms.once.Do(f.startMutexWatcher)
 	}
 	return v.(mutexRecordPtr)
 }

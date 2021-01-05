@@ -12,7 +12,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/raft"
 
-	cc "github.com/vontikov/go-concurrent"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
@@ -21,19 +20,14 @@ import (
 // unknown.
 var ErrUnknownCommand = errors.New("unknown command")
 
-type streamMap cc.Map
-type mutexMap cc.Map
-
 // FSM implements raft.FSM
 type FSM struct {
 	sync.Mutex
-	logger  logging.Logger
-	ctx     context.Context
-	streams streamMap
-	qs      queueMapPtr
-	ds      dictMapPtr
-	ms      mutexMap
-	mo      sync.Once
+	logger logging.Logger
+	ctx    context.Context
+	qs     queueMapPtr
+	ds     dictMapPtr
+	ms     mutexMapPtr
 }
 
 type fsmCommand func(*FSM, *pb.ClusterCommand) interface{}
@@ -41,12 +35,11 @@ type fsmCommand func(*FSM, *pb.ClusterCommand) interface{}
 // NewFSM creates a new raft.FSM instance
 func NewFSM(ctx context.Context) *FSM {
 	return &FSM{
-		logger:  logging.NewLogger("fsm"),
-		ctx:     ctx,
-		qs:      newQueueMap(),
-		ds:      newDictMap(),
-		ms:      cc.NewSynchronizedMap(0),
-		streams: cc.NewSynchronizedMap(0),
+		logger: logging.NewLogger("fsm"),
+		ctx:    ctx,
+		qs:     newQueueMap(),
+		ds:     newDictMap(),
+		ms:     newMutexMap(),
 	}
 }
 
