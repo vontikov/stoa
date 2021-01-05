@@ -54,3 +54,10 @@ func HostHostname(defaultValue string) string {
 	}
 	return defaultValue
 }
+
+// PanicOnError panics if the error is not nil.
+func PanicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}

@@ -46,7 +46,7 @@ func main() {
 
 	if *listenAddrFlag == "" {
 		ifaces, err := util.GetInterfaces()
-		panicOnError(err)
+		util.PanicOnError(err)
 		if len(ifaces) == 0 {
 			panic("networking interfaces not found")
 		}
@@ -60,7 +60,7 @@ func main() {
 	peers := *bootstrapFlag
 	if peers == "" {
 		peers, err = os.Hostname()
-		panicOnError(err)
+		util.PanicOnError(err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -69,7 +69,7 @@ func main() {
 		cluster.WithBindAddress(*bindAddrFlag),
 		cluster.WithPeers(peers),
 	)
-	panicOnError(err)
+	util.PanicOnError(err)
 
 	metric.Init(App, Version, cluster)
 
@@ -80,7 +80,7 @@ func main() {
 		gateway.WithMetricsEnabled(*metricsEnabledFlag),
 		gateway.WithPprofEnabled(*profilerEnabledFlag),
 	)
-	panicOnError(err)
+	util.PanicOnError(err)
 
 	metric.Info.Set(1.0)
 	logger.Info("started")
@@ -90,10 +90,4 @@ func main() {
 	cancel()
 	gateway.Wait()
 	logger.Info("done")
-}
-
-func panicOnError(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
