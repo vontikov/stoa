@@ -237,7 +237,7 @@ func (s *server) DictionaryRange(v *pb.Name, stream pb.Stoa_DictionaryRangeServe
 	}
 
 	// bypass Raft
-	ch, ok := s.cluster.Apply(&msg).(chan *pb.KeyValue)
+	ch, ok := s.cluster.Execute(&msg).(chan *pb.KeyValue)
 	if !ok {
 		panic(ErrIncorrectResponseType)
 	}

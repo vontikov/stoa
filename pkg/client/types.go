@@ -6,49 +6,16 @@ import (
 
 	cc "github.com/vontikov/go-concurrent"
 
+	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 	"google.golang.org/grpc"
 )
 
-// Client defines Stoa client methods.
-type Client interface {
-	Wait()
-	Queue(n string) Queue
-	Dictionary(n string) Dictionary
-	Mutex(n string) Mutex
-}
-
-// CallOption adds an option to the method call.
-type CallOption func(*callOptions)
-
-// WithTTL is used to set the element's TTL.
-func WithTTL(d time.Duration) CallOption {
-	return func(o *callOptions) {
-		o.ttlEnabled = true
-		o.ttl = d
-	}
-}
-
-// WithWaitingBarrier is used to block a call until all preceding have been
-// applied to the Raft Cluster.
-// An optional timeout limits the amount of time we wait for the command to be started.
-func WithWaitingBarrier(d time.Duration) CallOption {
-	return func(o *callOptions) {
-		o.barrierEnabled = true
-		o.barrier = d
-	}
-}
-
-// WithBarrier is used to block a call until all preceding have been
-// applied to the Raft Cluster.
-func WithBarrier() CallOption {
-	return func(o *callOptions) {
-		o.barrierEnabled = true
-	}
-}
-
-// Collection defines generic collection
+// Collection is a generic collection
 type Collection interface {
+
+	// Name returns the Collection name
+	Name() string
 
 	// Size returns the collection size
 	Size(ctx context.Context, opts ...CallOption) (uint32, error)
@@ -70,6 +37,9 @@ type Queue interface {
 
 	// Peek retrieves, but does not remove, the head of the queue; returns nil if the queue is empty
 	Peek(ctx context.Context, opts ...CallOption) ([]byte, error)
+
+	// Watch returns the Queue notification channel.
+	Watch() <-chan interface{}
 }
 
 // Dictionary represents a collection of key-value pairs.
@@ -99,21 +69,97 @@ type Dictionary interface {
 	Range(ctx context.Context, opts ...CallOption) (kv <-chan [][]byte, err <-chan error)
 }
 
-type MutexWatcher interface {
-	Apply(string, bool)
-}
-
-type MutexWatchProto struct {
-	Callback func(string, bool)
-}
-
-func (m MutexWatchProto) Apply(n string, v bool) { m.Callback(n, v) }
-
+// Mutex is a mutual exclusion lock.
 type Mutex interface {
 	TryLock(ctx context.Context, opts ...CallOption) (bool, error)
 	Unlock(ctx context.Context, opts ...CallOption) (bool, error)
-	Watch(MutexWatcher)
-	Unwatch(MutexWatcher)
+}
+
+const (
+	defaultDialTimeout     = 30000 * time.Millisecond
+	defaultKeepAlivePeriod = 1000 * time.Millisecond
+	defaultRetryTimeout    = 15000 * time.Millisecond
+	defaultClientIDSize    = 16
+	defaultLoggerName      = "stoa-client"
+)
+
+// Option is a function applied to an options to change the options' default values.
+type Option func(*client)
+
+func WithCallOptions(v ...grpc.CallOption) Option   { return func(o *client) { o.callOptions = v } }
+func WithContext(v context.Context) Option          { return func(o *client) { o.ctx = v } }
+func WithDialTimeout(v time.Duration) Option        { return func(o *client) { o.dialTimeout = v } }
+func WithFailFast(v bool) Option                    { return func(o *client) { o.failFast = v } }
+func WithID(v string) Option                        { return func(o *client) { o.id = v } }
+func WithIdleStrategyFast(v cc.IdleStrategy) Option { return func(o *client) { o.idleStrategy = v } }
+func WithKeepAlivePeriod(v time.Duration) Option    { return func(o *client) { o.keepAlivePeriod = v } }
+func WithLogLevel(v string) Option                  { return func(_ *client) { logging.SetLevel(v) } }
+func WithLoggerName(v string) Option                { return func(o *client) { o.logger = logging.NewLogger(v) } }
+func WithPeers(v string) Option                     { return func(o *client) { o.peers = v } }
+func WithRetryTimeout(v time.Duration) Option       { return func(o *client) { o.retryTimeout = v } }
+
+type State int
+
+type StateChan = <-chan State
+
+const (
+	Connecting State = iota + 100
+	Connected
+)
+
+func (s State) String() string {
+	switch s {
+	case Connecting:
+		return "CONNECTED"
+	case Connected:
+		return "CONNECTED"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+// Client defines Stoa client methods.
+type Client interface {
+	// Queue returns a Queue with the name n.
+	Queue(n string) Queue
+
+	// Dictionary returns a Dictionary with the name n.
+	Dictionary(n string) Dictionary
+
+	// Mutex returns a Mutex with the name n.
+	Mutex(n string) Mutex
+
+	// State returns a channel which reports the Client state changes.
+	State() StateChan
+}
+
+// CallOption adds an option to a method call.
+type CallOption func(*callOptions)
+
+// WithTTL is used to set the element's TTL.
+func WithTTL(d time.Duration) CallOption {
+	return func(o *callOptions) {
+		o.ttlEnabled = true
+		o.ttl = d
+	}
+}
+
+// WithWaitingBarrier is used to block a call until all preceding have been
+// applied to the Raft Cluster.
+// An optional timeout limits the amount of time we wait for the command to be started.
+func WithWaitingBarrier(d time.Duration) CallOption {
+	return func(o *callOptions) {
+		o.barrierEnabled = true
+		o.barrier = d
+	}
+}
+
+// WithBarrier is used to block a call until all preceding have been
+// applied to the Raft Cluster.
+func WithBarrier() CallOption {
+	return func(o *callOptions) {
+		o.barrierEnabled = true
+	}
 }
 
 type callOptions struct {
@@ -132,13 +178,18 @@ type base struct {
 	retryTimeout time.Duration
 }
 
-func createBase(name string, cfg *options, handle pb.StoaClient) base {
+func (c *client) createBase(name string) base {
 	return base{
 		name:         name,
-		handle:       handle,
-		callOptions:  cfg.callOptions,
-		failFast:     cfg.failFast,
-		idleStrategy: cfg.idleStrategy,
-		retryTimeout: cfg.retryTimeout,
+		handle:       c.handle,
+		callOptions:  c.callOptions,
+		failFast:     c.failFast,
+		idleStrategy: c.idleStrategy,
+		retryTimeout: c.retryTimeout,
 	}
+}
+
+// Name implements Collection.Name.
+func (b *base) Name() string {
+	return b.name
 }

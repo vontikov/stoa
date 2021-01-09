@@ -76,6 +76,7 @@ func (m *mutexRecord) touch(id string) bool {
 	return true
 }
 
+// TODO
 func (f *FSM) startMutexWatcher() {
 	go func() {
 		t := time.NewTicker(mutexCheckPeriod)
@@ -94,6 +95,7 @@ func (f *FSM) startMutexWatcher() {
 func mutex(f *FSM, n string) mutexRecordPtr {
 	v, ok := f.ms.ComputeIfAbsent(n, func() interface{} { return newMutexRecord() })
 	if ok {
+		// TODO
 		f.ms.once.Do(f.startMutexWatcher)
 	}
 	return v.(mutexRecordPtr)
@@ -113,6 +115,7 @@ func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
 	return &pb.Result{Ok: r}
 }
 
+// TODO
 func checkExpiredMutexes(f *FSM) {
 	deadline := timeNow().Add(-mutexDeadline)
 	keys := f.ms.Keys()

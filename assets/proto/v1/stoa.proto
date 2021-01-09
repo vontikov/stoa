@@ -47,13 +47,25 @@ message MutexStatus {
 }
 
 message QueueStatus {
-  string name = 1;
+  string name   = 1;
+  bytes payload = 2;
+}
+
+message ClusterStatus {
+  Status s = 1;
+
+  enum Status {
+    RESERVED        = 0;
+    LEADERSHIP_LOST = 1;
+  }
 }
 
 message Status {
   oneof u {
-    MutexStatus m = 1;
-    QueueStatus q = 2;
+    ClusterStatus c  = 1;
+    ClientId      id = 2;
+    MutexStatus   m  = 3;
+    QueueStatus   q  = 4;
   }
 }
 
@@ -144,12 +156,6 @@ service Stoa {
   rpc MutexUnlock (Id) returns (Result) {
     option(google.api.http) = {
       post: "/v1/mutex/unlock",
-    };
-  }
-
-  rpc Ping (ClientId) returns (Empty) {
-    option(google.api.http) = {
-      post: "/v1/service/ping",
     };
   }
 

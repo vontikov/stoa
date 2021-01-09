@@ -1,7 +1,10 @@
 package client
 
 import (
+	"errors"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"bytes"
 	"context"
@@ -12,30 +15,26 @@ import (
 	"sync"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vontikov/stoa/internal/cluster"
+	"github.com/vontikov/stoa/internal/gateway"
 	"github.com/vontikov/stoa/internal/test"
 )
 
 func TestDictionary(t *testing.T) {
 	const (
-		dictName = "dict"
-		max      = 100
-		basePort = 2600
+		clusterSize = 3
+		basePort    = 2300
+		dictName    = "dict"
+		max         = 100
 	)
 
 	assert := assert.New(t)
 
-	addr1 := fmt.Sprintf("127.0.0.1:%d", basePort+1)
-	addr2 := fmt.Sprintf("127.0.0.1:%d", basePort+2)
-	addr3 := fmt.Sprintf("127.0.0.1:%d", basePort+3)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	test.RunTestCluster(ctx, t, basePort)
+	_, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
 
-	peers := strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)
-	client, err := New(WithContext(ctx), WithPeers(peers))
+	client, err := New(WithContext(ctx), WithPeers(bootstrap))
 	assert.Nil(err)
 
 	dict := client.Dictionary(dictName)
@@ -125,4 +124,125 @@ loop:
 	sz, err = dict.Size(ctx)
 	assert.Nil(err)
 	assert.Equal(uint32(0), sz)
+}
+
+func TestDictionaryRange(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode.")
+	}
+
+	const (
+		clusterSize = 3
+		basePort    = 2400
+		dictName    = "dict"
+		max         = 10000
+	)
+
+	assert := assert.New(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	peers, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
+	assert.Nil(err)
+
+	client, err := New(WithContext(ctx), WithPeers(bootstrap))
+	assert.Nil(err)
+
+	dict := client.Dictionary(dictName)
+
+	// populate
+	for i := 0; i < max; i++ {
+		k := strconv.Itoa(i)
+		v := strconv.Itoa(i + max)
+		ok, err := dict.PutIfAbsent(ctx, []byte(k), []byte(v))
+		assert.Nil(err)
+		assert.True(ok)
+	}
+
+	tctx, tcancel := context.WithTimeout(ctx, 30*time.Second)
+	defer tcancel()
+
+	// transfer leadership
+	var trs int32
+	go func() {
+		t := time.Tick(5 * time.Second)
+		for {
+			select {
+			case <-tctx.Done():
+				return
+			case <-t:
+				for _, c := range peers {
+					if c.IsLeader() {
+						err := c.LeadershipTransfer()
+						assert.Nil(err)
+						atomic.AddInt32(&trs, 1)
+					}
+				}
+			}
+		}
+	}()
+
+	var pos, neg int32
+
+	testFunc := func() {
+		m := make(map[int]int)
+		kvChan, errChan := dict.Range(ctx)
+
+	loop:
+		for {
+			select {
+			case err := <-errChan:
+				// happens while the new leader is being elected
+				assert.True(errors.Is(err, gateway.ErrNotLeader))
+				t.Logf("warn: %s", err)
+				atomic.AddInt32(&neg, 1)
+				return
+			case kv := <-kvChan:
+				if kv == nil {
+					break loop
+				}
+				k, err := strconv.Atoi(string(kv[0]))
+				assert.Nil(err)
+				v, err := strconv.Atoi(string(kv[1]))
+				assert.Nil(err)
+				m[k] = v
+			}
+		}
+
+		assert.Equal(max, len(m))
+		for i := 0; i < max; i++ {
+			assert.Equal(i+max, m[i])
+		}
+
+		atomic.AddInt32(&pos, 1)
+	}
+
+loop:
+	for {
+		select {
+		case <-tctx.Done():
+			break loop
+		default:
+			var wg sync.WaitGroup
+			for i := 0; i < 3; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					testFunc()
+					time.Sleep(1 * time.Second)
+				}()
+			}
+			wg.Wait()
+		}
+	}
+
+	t.Logf("trs=%d", trs)
+	assert.Less(int32(3), trs)
+
+	t.Logf("pos=%d", pos)
+	assert.Less(int32(60), pos)
+
+	t.Logf("neg=%d", neg)
+	assert.Greater(int32(20), neg)
 }

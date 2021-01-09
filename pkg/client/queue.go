@@ -3,20 +3,27 @@ package client
 import (
 	"context"
 	"encoding/binary"
+	"sync"
 
 	"google.golang.org/grpc/metadata"
 
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
+const queueWatchChanSize = 1024
+
 type queue struct {
 	base
+
+	mu    sync.RWMutex // protects following fields
+	watch chan interface{}
 }
 
-func newQueue(name string, cfg *options, handle pb.StoaClient) *queue {
-	return &queue{base: createBase(name, cfg, handle)}
+func (c *client) newQueue(name string) *queue {
+	return &queue{base: c.createBase(name)}
 }
 
+// Size implements Queue.Size.
 func (q *queue) Size(ctx context.Context, opts ...CallOption) (r uint32, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -47,6 +54,7 @@ func (q *queue) Size(ctx context.Context, opts ...CallOption) (r uint32, err err
 	return
 }
 
+// Clear implements Queue.Clear.
 func (q *queue) Clear(ctx context.Context, opts ...CallOption) (err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -68,6 +76,7 @@ func (q *queue) Clear(ctx context.Context, opts ...CallOption) (err error) {
 	return
 }
 
+// Offer implements Queue.Offer.
 func (q *queue) Offer(ctx context.Context, e []byte, opts ...CallOption) (err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -92,6 +101,7 @@ func (q *queue) Offer(ctx context.Context, e []byte, opts ...CallOption) (err er
 	return
 }
 
+// Poll implements Queue.Poll.
 func (q *queue) Poll(ctx context.Context, opts ...CallOption) (r []byte, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -121,6 +131,7 @@ func (q *queue) Poll(ctx context.Context, opts ...CallOption) (r []byte, err err
 	return
 }
 
+// Peek implements Queue.Peek.
 func (q *queue) Peek(ctx context.Context, opts ...CallOption) (r []byte, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -148,4 +159,14 @@ func (q *queue) Peek(ctx context.Context, opts ...CallOption) (r []byte, err err
 		q.retryTimeout, q.idleStrategy,
 	)
 	return
+}
+
+// Watch implements Queue.Watch.
+func (q *queue) Watch() <-chan interface{} {
+	q.mu.Lock()
+	if q.watch == nil {
+		q.watch = make(chan interface{}, queueWatchChanSize)
+	}
+	q.mu.Unlock()
+	return q.watch
 }

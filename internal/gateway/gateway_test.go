@@ -30,7 +30,7 @@ func init() {
 	logging.SetLevel(testLogLevel)
 }
 
-func RunTestCluster(ctx context.Context, t *testing.T) {
+func startCluster(ctx context.Context, t *testing.T) {
 	const (
 		addr1 = "127.0.0.1:3501"
 		addr2 = "127.0.0.1:3502"
@@ -54,7 +54,7 @@ func RunTestCluster(ctx context.Context, t *testing.T) {
 	for _, p := range peers {
 		wg.Add(1)
 		go func(grpcPort, httpPort int, peers string) {
-			cluster, err := cluster.New(cluster.WithPeers(peers))
+			cluster, err := cluster.New(ctx, cluster.WithPeers(peers))
 			if err != nil {
 				t.Logf("cluster error: %v", err)
 				t.Fail()
@@ -62,7 +62,12 @@ func RunTestCluster(ctx context.Context, t *testing.T) {
 			m.Lock()
 			clusters = append(clusters, cluster)
 			m.Unlock()
-			gateway, err := New(ctx, "localhost", grpcPort, httpPort, cluster)
+
+			gateway, err := New(ctx, cluster,
+				WithGRPCPort(grpcPort),
+				WithHTTPPort(httpPort),
+			)
+
 			if err != nil {
 				t.Logf("gateway error: %v", err)
 				t.Fail()
@@ -71,7 +76,6 @@ func RunTestCluster(ctx context.Context, t *testing.T) {
 
 			<-ctx.Done()
 			gateway.Wait()
-			cluster.Shutdown()
 		}(p.grpcPort, p.httpPort, p.peers)
 	}
 	wg.Wait()
@@ -101,7 +105,7 @@ func TestGateway(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	RunTestCluster(ctx, t)
+	startCluster(ctx, t)
 
 	kv := pb.KeyValue{
 		Name:  "test",

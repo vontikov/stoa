@@ -3,8 +3,6 @@ package client
 import (
 	"context"
 
-	cc "github.com/vontikov/go-concurrent"
-
 	"github.com/vontikov/stoa/pkg/pb"
 	"google.golang.org/grpc/metadata"
 )
@@ -12,14 +10,12 @@ import (
 type mutex struct {
 	base
 	clientID string
-	watchers cc.List
 }
 
-func newMutex(name string, cfg *options, handle pb.StoaClient) *mutex {
+func (c *client) newMutex(name string) *mutex {
 	return &mutex{
-		base:     createBase(name, cfg, handle),
-		clientID: cfg.id,
-		watchers: cc.NewSynchronizedList(0),
+		base:     c.createBase(name),
+		clientID: c.id,
 	}
 }
 
@@ -87,12 +83,4 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err err
 		m.retryTimeout, m.idleStrategy,
 	)
 	return
-}
-
-func (m *mutex) Watch(w MutexWatcher) {
-	m.watchers.Add(w)
-}
-
-func (m *mutex) Unwatch(w MutexWatcher) {
-	m.watchers.Remove(w, func(l, r interface{}) bool { return l == r })
 }

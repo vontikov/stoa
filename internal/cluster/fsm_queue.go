@@ -155,12 +155,13 @@ func queueClear(f *FSM, m *pb.ClusterCommand) interface{} {
 
 func queueOffer(f *FSM, m *pb.ClusterCommand) interface{} {
 	v := m.GetValue()
-	q := queue(f, v.Name)
-	e := entry{
-		Value:     v.Value,
-		TTLMillis: m.TtlMillis,
+	n := v.Name
+	q := queue(f, n)
+	q.Offer(&entry{v.Value, m.TtlMillis})
+	// TODO
+	if f.isLeader() {
+		f.status() <- &pb.Status{U: &pb.Status_Q{Q: &pb.QueueStatus{Name: n, Payload: v.Value}}}
 	}
-	q.Offer(&e)
 	return nil
 }
 

@@ -14,8 +14,8 @@ type dictionary struct {
 	base
 }
 
-func newDictionary(name string, cfg *options, handle pb.StoaClient) *dictionary {
-	return &dictionary{base: createBase(name, cfg, handle)}
+func (c *client) newDictionary(name string) *dictionary {
+	return &dictionary{base: c.createBase(name)}
 }
 
 // Size implements Dictionary.Size.

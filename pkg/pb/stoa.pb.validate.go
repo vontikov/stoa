@@ -576,6 +576,8 @@ func (m *QueueStatus) Validate() error {
 
 	// no validation rules for Name
 
+	// no validation rules for Payload
+
 	return nil
 }
 
@@ -633,6 +635,73 @@ var _ interface {
 	ErrorName() string
 } = QueueStatusValidationError{}
 
+// Validate checks the field values on ClusterStatus with the rules defined in
+// the proto definition for this message. If any rules are violated, an error
+// is returned.
+func (m *ClusterStatus) Validate() error {
+	if m == nil {
+		return nil
+	}
+
+	// no validation rules for S
+
+	return nil
+}
+
+// ClusterStatusValidationError is the validation error returned by
+// ClusterStatus.Validate if the designated constraints aren't met.
+type ClusterStatusValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ClusterStatusValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ClusterStatusValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ClusterStatusValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ClusterStatusValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ClusterStatusValidationError) ErrorName() string { return "ClusterStatusValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ClusterStatusValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sClusterStatus.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ClusterStatusValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ClusterStatusValidationError{}
+
 // Validate checks the field values on Status with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *Status) Validate() error {
@@ -641,6 +710,30 @@ func (m *Status) Validate() error {
 	}
 
 	switch m.U.(type) {
+
+	case *Status_C:
+
+		if v, ok := interface{}(m.GetC()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StatusValidationError{
+					field:  "C",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *Status_Id:
+
+		if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return StatusValidationError{
+					field:  "Id",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
 
 	case *Status_M:
 

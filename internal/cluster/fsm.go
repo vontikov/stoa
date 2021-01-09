@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"sync/atomic"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/raft"
@@ -16,18 +17,26 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
+var statusChanSize = 1024
+
 // ErrUnknownCommand is the error returned by fsm.Apply if the command is
 // unknown.
 var ErrUnknownCommand = errors.New("unknown command")
 
 // FSM implements raft.FSM
 type FSM struct {
-	sync.Mutex
 	logger logging.Logger
 	ctx    context.Context
-	qs     queueMapPtr
-	ds     dictMapPtr
-	ms     mutexMapPtr
+
+	mu sync.RWMutex // protects following fields
+	qs queueMapPtr
+	ds dictMapPtr
+	ms mutexMapPtr
+
+	statusMutex sync.Mutex // protects following fields
+	statusChan  chan *pb.Status
+
+	leadership int32 // must not be accessed directly
 }
 
 type fsmCommand func(*FSM, *pb.ClusterCommand) interface{}
@@ -65,21 +74,46 @@ func init() {
 	}
 }
 
+func (f *FSM) leader(v bool) {
+	var t int32
+	if v {
+		t = 1
+	}
+	atomic.StoreInt32(&f.leadership, t)
+}
+
+func (f *FSM) isLeader() bool {
+	return atomic.LoadInt32(&f.leadership) == 1
+}
+
+func (f *FSM) status() chan *pb.Status {
+	if ch := f.statusChan; ch != nil {
+		return ch
+	}
+
+	f.statusMutex.Lock()
+	if f.statusChan == nil {
+		f.statusChan = make(chan *pb.Status, statusChanSize)
+	}
+	f.statusMutex.Unlock()
+	return f.statusChan
+}
+
 // Apply log is invoked once a log entry is committed.
 func (f *FSM) Apply(l *raft.Log) interface{} {
 	var c pb.ClusterCommand
 	if err := proto.Unmarshal(l.Data, &c); err != nil {
 		return err
 	}
-	f.Lock()
-	defer f.Unlock()
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return fsmCommands[c.Command](f, &c)
 }
 
 // Execute executes the command c.
 func (f *FSM) Execute(c *pb.ClusterCommand) interface{} {
-	f.Lock()
-	defer f.Unlock()
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return fsmCommands[c.Command](f, c)
 }
 
@@ -90,8 +124,8 @@ func (f *FSM) Snapshot() (raft.FSMSnapshot, error) {
 
 // Persist implements raft.SnapshotSink.Persist.
 func (f *FSM) Persist(sink raft.SnapshotSink) error {
-	f.Lock()
-	defer f.Unlock()
+	f.mu.Lock()
+	defer f.mu.Unlock()
 
 	err := func() error {
 		var b bytes.Buffer
@@ -112,8 +146,8 @@ func (f *FSM) Persist(sink raft.SnapshotSink) error {
 
 // Restore is used to restore an FSM from a snapshot.
 func (f *FSM) Restore(rc io.ReadCloser) error {
-	f.Lock()
-	defer f.Unlock()
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	return gob.NewDecoder(rc).Decode(f)
 }
 
@@ -187,10 +221,10 @@ func (f *FSM) UnmarshalBinary(data []byte) error {
 	}
 	f.logger.Debug("dictionaries unmarshalled", "size", sz)
 
-	f.Lock()
+	f.mu.Lock()
 	f.qs = qs
 	f.ds = ds
-	f.Unlock()
+	f.mu.Unlock()
 
 	f.logger.Debug("unmarshalling complete")
 	return nil

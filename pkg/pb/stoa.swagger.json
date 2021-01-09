@@ -422,28 +422,6 @@
         ]
       }
     },
-    "/v1/service/ping": {
-      "post": {
-        "operationId": "Stoa_Ping",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1Empty"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "tags": [
-          "Stoa"
-        ]
-      }
-    },
     "/v1/service/watch": {
       "post": {
         "operationId": "Stoa_Watch",
@@ -454,13 +432,13 @@
               "type": "object",
               "properties": {
                 "result": {
-                  "$ref": "#/definitions/v1Status"
+                  "$ref": "#/definitions/stoav1Status"
                 },
                 "error": {
                   "$ref": "#/definitions/runtimeStreamError"
                 }
               },
-              "title": "Stream result of v1Status"
+              "title": "Stream result of stoav1Status"
             }
           },
           "default": {
@@ -535,6 +513,47 @@
         }
       }
     },
+    "stoav1Status": {
+      "type": "object",
+      "properties": {
+        "c": {
+          "$ref": "#/definitions/v1ClusterStatus"
+        },
+        "id": {
+          "$ref": "#/definitions/v1ClientId"
+        },
+        "m": {
+          "$ref": "#/definitions/v1MutexStatus"
+        },
+        "q": {
+          "$ref": "#/definitions/v1QueueStatus"
+        }
+      }
+    },
+    "v1ClientId": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "v1ClusterStatus": {
+      "type": "object",
+      "properties": {
+        "s": {
+          "$ref": "#/definitions/v1ClusterStatusStatus"
+        }
+      }
+    },
+    "v1ClusterStatusStatus": {
+      "type": "string",
+      "enum": [
+        "RESERVED",
+        "LEADERSHIP_LOST"
+      ],
+      "default": "RESERVED"
+    },
     "v1Empty": {
       "type": "object",
       "description": "Empty contains no data."
@@ -572,6 +591,10 @@
       "properties": {
         "name": {
           "type": "string"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
         }
       }
     },
@@ -583,17 +606,6 @@
         }
       },
       "description": "Result contains an operation result."
-    },
-    "v1Status": {
-      "type": "object",
-      "properties": {
-        "m": {
-          "$ref": "#/definitions/v1MutexStatus"
-        },
-        "q": {
-          "$ref": "#/definitions/v1QueueStatus"
-        }
-      }
     },
     "v1Value": {
       "type": "object",

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -11,24 +12,28 @@ import (
 	"github.com/vontikov/stoa/internal/common"
 )
 
-type retryFunc func() error
-
 // TimeNowInMillis returns current time in milliseconds.
 var TimeNowInMillis = func() int64 { return time.Now().UnixNano() / int64(time.Millisecond) }
 
-func retry(ctx context.Context, f retryFunc, t time.Duration, s concurrent.IdleStrategy) error {
-	ctx, cancel := context.WithTimeout(ctx, t)
+type retryFunc func() error
+type idleFunc func()
+
+func retry(ctx context.Context, fn retryFunc, timeout time.Duration, idle concurrent.IdleStrategy, onIdleFn ...idleFunc) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			err := f()
+			err := fn()
 			if err == nil {
 				return nil
 			}
-			s.Idle()
+			idle.Idle()
+			for _, f := range onIdleFn {
+				f()
+			}
 		}
 	}
 }
@@ -48,4 +53,16 @@ func MetadataFromCallOptions(opts ...CallOption) metadata.MD {
 		md[common.MetaKeyTTL] = []string{strconv.Itoa(int(ttl))}
 	}
 	return md
+}
+
+var runes = []rune("abcdef0123456789")
+
+// randString returns random string of length n.
+func randString(n int) string {
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = runes[rand.Intn(len(runes))]
+	}
+	return string(b)
 }

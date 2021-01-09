@@ -16,8 +16,11 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-const defaultBindPort = 3499
-const defaultBindAddress = "0.0.0.0"
+const (
+	defaultBindPort    = 3499
+	defaultBindAddress = "0.0.0.0"
+	defaultLoggerName  = "stoa-raft"
+)
 
 // Cluster is a higher level representation of raft.Raft cluster endpoint.
 type Cluster interface {
@@ -39,16 +42,19 @@ type Cluster interface {
 	// LeadershipTransfer will transfer leadership to another Cluster.
 	LeadershipTransfer() error
 
-	// WatchLeadership returns a channel which signals on acquiring or losing
+	// Leader returns a channel which signals on acquiring or losing
 	// leadership.  It sends true if the Cluster become the leader, otherwise it
 	// returns false.
-	WatchLeadership() <-chan bool
+	Leader() <-chan bool
 
-	// Apply executes the command c bypassing Raft node.
-	Apply(c *pb.ClusterCommand) interface{}
+	// Execute executes the command c bypassing Raft node.
+	Execute(c *pb.ClusterCommand) interface{}
 
 	// Done returns a channel that's closed when the Cluster is shutdown.
 	Done() <-chan error
+
+	// Status returns a channel with the Cluster's status messages.
+	Status() <-chan *pb.Status
 }
 
 // ErrDeadlineExceeded is the error returned if a timeout is specified.
@@ -68,8 +74,11 @@ type cluster struct {
 	id     string
 	f      *FSM
 
-	mu   sync.Mutex
-	done chan error
+	doneMutex sync.Mutex // protects following fields
+	doneChan  chan error
+
+	leaderMutex sync.RWMutex // protects following fields
+	leaderChan  chan bool
 }
 
 // PeerListSep separates peer definitions in the peer list.
@@ -130,9 +139,9 @@ func parsePeers(in string) ([]*peer, error) {
 }
 
 type options struct {
-	autoDiscovery bool
-	bindAddr      string
-	peers         []*peer
+	bindAddr   string
+	peers      []*peer
+	loggerName string
 }
 
 func newOptions(opts ...Option) (*options, error) {
@@ -142,11 +151,11 @@ func newOptions(opts ...Option) (*options, error) {
 			return nil, err
 		}
 	}
-	if !cfg.autoDiscovery && len(cfg.peers) == 0 {
-		return nil, ErrClusterConfig
-	}
 	if cfg.bindAddr == "" {
 		cfg.bindAddr = defaultBindAddress
+	}
+	if cfg.loggerName == "" {
+		cfg.loggerName = defaultLoggerName
 	}
 	return cfg, nil
 }
@@ -174,6 +183,14 @@ func WithBindAddress(v string) Option {
 	}
 }
 
+// WithLoggerName sets the Cluster logger name.
+func WithLoggerName(v string) Option {
+	return func(o *options) error {
+		o.loggerName = v
+		return nil
+	}
+}
+
 // New creates a new Cluster instance.
 func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 	cfg, err := newOptions(opts...)
@@ -181,7 +198,7 @@ func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 		return nil, err
 	}
 
-	logger := logging.NewLogger("raft")
+	logger := logging.NewLogger(cfg.loggerName)
 
 	p := cfg.peers[0]
 	bindAddr := fmt.Sprintf("%s:%d", cfg.bindAddr, p.port)
@@ -211,6 +228,35 @@ func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 		return nil, err
 	}
 
+	cl := &cluster{
+		logger: logger,
+		r:      r,
+		id:     p.id,
+		f:      fsm,
+	}
+
+	go func() {
+		logger.Debug("leadership watcher started")
+		defer logger.Debug("leadership watcher stopped")
+
+		ch := r.LeaderCh()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case leader := <-ch:
+				fsm.leader(leader)
+
+				logger.Debug("leadership signal", "status", leader)
+				cl.leaderMutex.RLock()
+				if cl.leaderChan != nil {
+					cl.leaderChan <- leader
+				}
+				cl.leaderMutex.RUnlock()
+			}
+		}
+	}()
+
 	if len(cfg.peers) > 1 {
 		logger.Debug("bootstrap cluster")
 
@@ -239,25 +285,16 @@ func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 		}
 	}
 
-	cl := &cluster{
-		logger: logger,
-		r:      r,
-		id:     p.id,
-		f:      fsm,
-	}
-
 	go func() {
 		<-ctx.Done()
 
-		cl.mu.Lock()
-		if cl.done == nil {
-			cl.done = make(chan error, 1)
+		e := r.Shutdown().Error()
+		cl.doneMutex.Lock()
+		if cl.doneChan != nil {
+			cl.doneChan <- e
+			close(cl.doneChan)
 		}
-		d := cl.done
-		cl.mu.Unlock()
-
-		d <- r.Shutdown().Error()
-		close(d)
+		cl.doneMutex.Unlock()
 		logger.Info("shutdown")
 	}()
 
@@ -297,24 +334,36 @@ func (c *cluster) LeadershipTransfer() error {
 	return c.r.LeadershipTransfer().Error()
 }
 
-// WatchLeadership implements Cluster.WatchLeadership.
-func (c *cluster) WatchLeadership() <-chan bool {
-	return c.r.LeaderCh()
+// Leader implements Cluster.Leader.
+func (c *cluster) Leader() <-chan bool {
+	// TODO
+	c.leaderMutex.Lock()
+	if c.leaderChan == nil {
+		c.leaderChan = make(chan bool, 1)
+	}
+	ch := c.leaderChan
+	c.leaderMutex.Unlock()
+	return ch
 }
 
-// Apply implements Cluster.Apply.
-func (c *cluster) Apply(cmd *pb.ClusterCommand) interface{} {
+// Execute implements Cluster.Execute.
+func (c *cluster) Execute(cmd *pb.ClusterCommand) interface{} {
 	return c.f.Execute(cmd)
 }
 
 // Done implements Cluster.Done.
 func (c *cluster) Done() <-chan error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.done == nil {
-		c.done = make(chan error, 1)
+	c.doneMutex.Lock()
+	defer c.doneMutex.Unlock()
+	if c.doneChan == nil {
+		c.doneChan = make(chan error, 1)
 	}
-	return c.done
+	return c.doneChan
+}
+
+// Status implements Cluster.Status.
+func (c *cluster) Status() <-chan *pb.Status {
+	return c.f.status()
 }
 
 func peerID(bindAddr string, bindPort int) string {

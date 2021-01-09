@@ -31,7 +31,6 @@ type StoaClient interface {
 	DictionaryRange(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error)
 	MutexTryLock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
 	MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
-	Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error)
 	Watch(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (Stoa_WatchClient, error)
 }
 
@@ -192,15 +191,6 @@ func (c *stoaClient) MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *stoaClient) Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/Ping", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *stoaClient) Watch(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (Stoa_WatchClient, error) {
 	stream, err := c.cc.NewStream(ctx, &_Stoa_serviceDesc.Streams[1], "/github.com.vontikov.stoa.v1.Stoa/Watch", opts...)
 	if err != nil {
@@ -251,7 +241,6 @@ type StoaServer interface {
 	DictionaryRange(*Name, Stoa_DictionaryRangeServer) error
 	MutexTryLock(context.Context, *Id) (*Result, error)
 	MutexUnlock(context.Context, *Id) (*Result, error)
-	Ping(context.Context, *ClientId) (*Empty, error)
 	Watch(*ClientId, Stoa_WatchServer) error
 	mustEmbedUnimplementedStoaServer()
 }
@@ -301,9 +290,6 @@ func (UnimplementedStoaServer) MutexTryLock(context.Context, *Id) (*Result, erro
 }
 func (UnimplementedStoaServer) MutexUnlock(context.Context, *Id) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MutexUnlock not implemented")
-}
-func (UnimplementedStoaServer) Ping(context.Context, *ClientId) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 func (UnimplementedStoaServer) Watch(*ClientId, Stoa_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
@@ -576,24 +562,6 @@ func _Stoa_MutexUnlock_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Stoa_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClientId)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StoaServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/Ping",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).Ping(ctx, req.(*ClientId))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Stoa_Watch_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ClientId)
 	if err := stream.RecvMsg(m); err != nil {
@@ -670,10 +638,6 @@ var _Stoa_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MutexUnlock",
 			Handler:    _Stoa_MutexUnlock_Handler,
-		},
-		{
-			MethodName: "Ping",
-			Handler:    _Stoa_Ping_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

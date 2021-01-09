@@ -112,7 +112,7 @@ func queueIn(ctx context.Context, client stoa.Client) func() error {
 				if err != nil {
 					return err
 				}
-				log.Printf("poll: ", n)
+				log.Println("poll: ", n)
 			}
 		}
 	}

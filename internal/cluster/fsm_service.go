@@ -4,6 +4,7 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
+// TODO
 func processPing(f *FSM, m *pb.ClusterCommand) interface{} {
 	cid := m.GetCid()
 	id := cid.Id

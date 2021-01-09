@@ -25,7 +25,7 @@ GO_LDFLAGS = "-s -w -X main.Version=$(VERSION)"
 MOCKFILES  = \
   $(GOPATH)/src/github.com/hashicorp/raft/fsm.go \
 
-TEST_OPTS  = -count=1 -timeout 120s -cover -failfast
+TEST_OPTS  = -timeout 300s -cover -coverprofile=$(COVERAGE_FILE) -failfast
 
 TEST_PKGS  = \
   ./internal/cluster         \
@@ -54,20 +54,13 @@ help: Makefile
 	@echo "Choose a command in "$(PROJECTNAME)":"
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 
-## test [TEST_TAGS=all] [TEST_OPTS=...]: Runs unit tests.
+## test: Runs unit tests.
 test: $(TEST_MARKER)
 
 $(TEST_MARKER): mocks $(GO_FILES)
 	@echo "Executing unit tests..."
 	@mkdir -p $(BIN_DIR)
-	@GOBIN=$(BIN_DIR); go test \
-	  -failfast \
-	  -count=1 \
-	  -timeout 120s \
-	  -cover \
-	  -coverprofile=$(COVERAGE_FILE) \
-	  -tags=$(TEST_TAGS) $(TEST_OPTS) \
-	  $(TEST_PKGS)
+	@GOBIN=$(BIN_DIR); go test $(TEST_OPTS) $(TEST_PKGS)
 	@mkdir -p $(@D)
 	@touch $@
 

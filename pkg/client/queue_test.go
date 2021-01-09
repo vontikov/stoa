@@ -1,7 +1,6 @@
 package client
 
 import (
-	"strings"
 	"testing"
 
 	"bytes"
@@ -11,30 +10,26 @@ import (
 	"fmt"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/test"
 )
 
 func TestQueue(t *testing.T) {
 	const (
-		queueName = "queue"
-		max       = 100
-		basePort  = 2700
+		clusterSize = 3
+		basePort    = 2000
+		queueName   = "queue"
+		max         = 100
 	)
 
 	assert := assert.New(t)
 
-	addr1 := fmt.Sprintf("127.0.0.1:%d", basePort+1)
-	addr2 := fmt.Sprintf("127.0.0.1:%d", basePort+2)
-	addr3 := fmt.Sprintf("127.0.0.1:%d", basePort+3)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	test.RunTestCluster(ctx, t, basePort)
+	_, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
+	assert.Nil(err)
 
-	peers := strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)
-	client, err := New(WithContext(ctx), WithPeers(peers))
+	client, err := New(WithContext(ctx), WithPeers(bootstrap))
 	assert.Nil(err)
 
 	queue := client.Queue(queueName)

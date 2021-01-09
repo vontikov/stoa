@@ -22,9 +22,10 @@ import (
 )
 
 type options struct {
-	ip              string
 	grpcPort        int
 	httpPort        int
+	ip              string
+	loggerName      string
 	metricsEnabled  bool
 	profilerEnabled bool
 }
@@ -35,33 +36,21 @@ type Gateway = errgroup.Group
 // Option defines a Gateway configuration option.
 type Option func(*options)
 
-func WithListenAddress(v string) Option {
-	return func(o *options) { o.ip = v }
-}
-
-func WithGRPCPort(v int) Option {
-	return func(o *options) { o.grpcPort = v }
-}
-
-func WithHTTPPort(v int) Option {
-	return func(o *options) { o.httpPort = v }
-}
-
-func WithMetricsEnabled(v bool) Option {
-	return func(o *options) { o.metricsEnabled = v }
-}
-
-func WithPprofEnabled(v bool) Option {
-	return func(o *options) { o.profilerEnabled = v }
-}
+func WithListenAddress(v string) Option { return func(o *options) { o.ip = v } }
+func WithGRPCPort(v int) Option         { return func(o *options) { o.grpcPort = v } }
+func WithHTTPPort(v int) Option         { return func(o *options) { o.httpPort = v } }
+func WithMetricsEnabled(v bool) Option  { return func(o *options) { o.metricsEnabled = v } }
+func WithPprofEnabled(v bool) Option    { return func(o *options) { o.profilerEnabled = v } }
+func WithLoggerName(v string) Option    { return func(o *options) { o.loggerName = v } }
 
 // New creates new Gateway instance
 func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway, error) {
-	logger := logging.NewLogger("gateway")
 	cfg := &options{}
 	for _, o := range opts {
 		o(cfg)
 	}
+
+	logger := logging.NewLogger(cfg.loggerName)
 
 	grpcAddr := fmt.Sprintf("%s:%d", cfg.ip, cfg.grpcPort)
 	httpAddr := fmt.Sprintf("%s:%d", cfg.ip, cfg.httpPort)
@@ -71,8 +60,9 @@ func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway
 		return nil, err
 	}
 
+	stoaServer := newServer(ctx, cluster, logger)
 	grpcServer := grpc.NewServer()
-	pb.RegisterStoaServer(grpcServer, newServer(cluster))
+	pb.RegisterStoaServer(grpcServer, stoaServer)
 	grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
 
 	gwMux := runtime.NewServeMux()
@@ -94,12 +84,12 @@ func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		logger.Info("serving gRPC", "address", grpcAddr)
-		defer logger.Info("gRPC stopped")
+		logger.Info("serving grpc", "address", grpcAddr)
+		defer logger.Info("grpc stopped")
 		return grpcServer.Serve(lis)
 	})
 	g.Go(func() error {
-		logger.Info("serving HTTP", "address", httpAddr)
+		logger.Info("serving http", "address", httpAddr)
 		defer logger.Info("http stopped")
 		return httpServer.ListenAndServe()
 	})
