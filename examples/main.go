@@ -65,7 +65,7 @@ func main() {
 
 	<-signals
 	cancel()
-	g.Wait()
+	_ = g.Wait()
 }
 
 func queueOut(ctx context.Context, client stoa.Client) func() error {

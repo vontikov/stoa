@@ -69,7 +69,7 @@ loop:
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			r.conn.SetReadDeadline(time.Now().Add(duration))
+			_ = r.conn.SetReadDeadline(time.Now().Add(duration))
 			n, src, err := r.conn.ReadFromUDP(buf)
 			if err != nil {
 				if e, ok := err.(net.Error); !ok || !e.Timeout() {

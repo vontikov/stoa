@@ -95,7 +95,7 @@ func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway
 	})
 	g.Go(func() error {
 		<-ctx.Done()
-		httpServer.Close()
+		_ = httpServer.Close()
 		grpcServer.GracefulStop()
 		return nil
 	})

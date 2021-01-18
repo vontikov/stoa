@@ -232,7 +232,7 @@ func (c *client) cleanup() {
 	})
 
 	c.mu.Lock()
-	c.conn.Close()
+	_ = c.conn.Close()
 	c.logger.Debug("connection closed")
 	c.mu.Unlock()
 }

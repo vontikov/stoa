@@ -90,7 +90,7 @@ func StartCluster(ctx context.Context, basePort int, peerNum int) (peers []clust
 
 			go func() {
 				<-ctx.Done()
-				gateway.Wait()
+				_ = gateway.Wait()
 			}()
 
 			return nil

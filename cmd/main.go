@@ -88,6 +88,6 @@ func main() {
 	sig := <-signals
 	logger.Debug("received signal", "type", sig)
 	cancel()
-	gateway.Wait()
+	_ = gateway.Wait()
 	logger.Info("done")
 }

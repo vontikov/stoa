@@ -2,7 +2,8 @@ package client
 
 import (
 	"context"
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -59,10 +60,11 @@ var runes = []rune("abcdef0123456789")
 
 // randString returns random string of length n.
 func randString(n int) string {
-	rand.Seed(time.Now().UnixNano())
+	max := big.NewInt(int64(len(runes)))
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = runes[rand.Intn(len(runes))]
+		idx, _ := rand.Int(rand.Reader, max)
+		b[i] = runes[idx.Uint64()]
 	}
 	return string(b)
 }
