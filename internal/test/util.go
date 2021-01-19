@@ -81,9 +81,11 @@ func StartCluster(ctx context.Context, basePort int, peerNum int) (peers []clust
 			peers = append(peers, cluster)
 			m.Unlock()
 			gateway, err := gateway.New(ctx, cluster,
-				gateway.WithListenAddress("localhost"),
+				gateway.WithListenAddress("0.0.0.0"),
 				gateway.WithGRPCPort(p.grpcPort),
-				gateway.WithHTTPPort(p.httpPort))
+				gateway.WithHTTPPort(p.httpPort),
+				gateway.WithMetricsEnabled(true),
+				gateway.WithPprofEnabled(true))
 			if err != nil {
 				return err
 			}

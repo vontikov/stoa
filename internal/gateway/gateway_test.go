@@ -1,20 +1,23 @@
 package gateway
 
 import (
+	"bytes"
+	"encoding/base64"
+	"errors"
 	"io/ioutil"
 	"testing"
 
-	"bytes"
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb"
+	"golang.org/x/sync/errgroup"
 
-	"github.com/hashicorp/raft"
+	"github.com/gogo/protobuf/jsonpb"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vontikov/stoa/internal/cluster"
@@ -30,123 +33,239 @@ func init() {
 	logging.SetLevel(testLogLevel)
 }
 
-func startCluster(ctx context.Context, t *testing.T) {
+func startCluster(ctx context.Context, basePort int, peerNum int) (peers []cluster.Cluster, bootstrap string, err error) {
+	if peerNum <= 0 {
+		panic("peer number must be greater then 0")
+	}
+	if peerNum > 9 {
+		panic("peer number must not be greater then 9")
+	}
+	if peerNum%2 == 0 {
+		panic("peer number must not be even")
+	}
+
 	const (
-		addr1 = "127.0.0.1:3501"
-		addr2 = "127.0.0.1:3502"
-		addr3 = "127.0.0.1:3503"
+		grpcPortShift = 1
+		httpPortShift = 21
+		bindPortShift = 11
 	)
 
-	peers := []struct {
+	type peer struct {
 		grpcPort int
 		httpPort int
 		peers    string
-	}{
-
-		{2501, 2601, strings.Join([]string{addr1, addr2, addr3}, cluster.PeerListSep)},
-		{2502, 2602, strings.Join([]string{addr2}, cluster.PeerListSep)},
-		{2503, 2603, strings.Join([]string{addr3}, cluster.PeerListSep)},
 	}
 
-	var wg sync.WaitGroup
+	var bindAddrs, bsAddrs []string
+	var peerList []peer
+
+	for i := 0; i < peerNum; i++ {
+		bsAddrs = append(bsAddrs, fmt.Sprintf("127.0.0.1:%d", basePort+grpcPortShift+i))
+		bindAddrs = append(bindAddrs, fmt.Sprintf("127.0.0.1:%d", basePort+bindPortShift+i))
+	}
+
+	for i := 0; i < peerNum; i++ {
+		b := bindAddrs[i]
+		if i == 0 {
+			b = strings.Join(bindAddrs, cluster.PeerListSep)
+		}
+		peerList = append(peerList, peer{basePort + grpcPortShift + i, basePort + i + httpPortShift + i, b})
+	}
+
 	var m sync.Mutex
-	var clusters []cluster.Cluster
-	for _, p := range peers {
-		wg.Add(1)
-		go func(grpcPort, httpPort int, peers string) {
-			cluster, err := cluster.New(ctx, cluster.WithPeers(peers))
+	var g errgroup.Group
+
+	for i, p := range peerList {
+		idx := i
+		p := p
+		g.Go(func() error {
+			cluster, err := cluster.New(ctx,
+				cluster.WithPeers(p.peers),
+				cluster.WithLoggerName(fmt.Sprintf("raft-%d", idx)),
+			)
 			if err != nil {
-				t.Logf("cluster error: %v", err)
-				t.Fail()
+				return err
 			}
 			m.Lock()
-			clusters = append(clusters, cluster)
+			peers = append(peers, cluster)
 			m.Unlock()
-
 			gateway, err := New(ctx, cluster,
-				WithGRPCPort(grpcPort),
-				WithHTTPPort(httpPort),
-			)
-
+				WithListenAddress("0.0.0.0"),
+				WithGRPCPort(p.grpcPort),
+				WithHTTPPort(p.httpPort),
+				WithMetricsEnabled(true),
+				WithPprofEnabled(true))
 			if err != nil {
-				t.Logf("gateway error: %v", err)
-				t.Fail()
+				return err
 			}
-			wg.Done()
 
-			<-ctx.Done()
-			gateway.Wait()
-		}(p.grpcPort, p.httpPort, p.peers)
+			go func() {
+				<-ctx.Done()
+				_ = gateway.Wait()
+			}()
+
+			return nil
+		})
 	}
-	wg.Wait()
+
+	err = g.Wait()
+	if err != nil {
+		return
+	}
 
 	// make sure the leader is the same on all the peers
-	timeout := time.After(10 * time.Second)
-loop:
+	m.Lock()
+	defer m.Unlock()
+	leader, err := getLeader(peers, 10*time.Second)
+	if err != nil {
+		return
+	}
+	if leader != bindAddrs[0] {
+		err = errors.New("unexpected leader address")
+	}
+
+	bootstrap = strings.Join(bsAddrs, cluster.PeerListSep)
+	return
+}
+
+func getLeader(clusters []cluster.Cluster, timeout time.Duration) (leader string, err error) {
+	t := time.After(timeout)
 	for {
 		select {
-		case <-timeout:
-			t.Logf("Election timeout")
-			t.Fail()
+		case <-t:
+			err = errors.New("election timeout")
+			return
 		default:
+			r := true
 			for _, c := range clusters {
-				if c.LeaderAddress() != addr1 {
-					continue loop
+				l := c.LeaderAddress()
+				if l == "" {
+					r = false
+					break
+				}
+				if l != leader {
+					leader = l
+					r = false
+					break
 				}
 			}
-			break loop
+			if r {
+				return
+			}
 		}
 	}
 }
 
-func TestGateway(t *testing.T) {
+func TestGatewayHTTP(t *testing.T) {
+	const (
+		clusterSize = 3
+		basePort    = 3100
+		dictName    = "dict"
+
+		leaderPort   = basePort + 21
+		followerPort = basePort + 23
+	)
+
 	assert := assert.New(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	startCluster(ctx, t)
-
-	kv := pb.KeyValue{
-		Name:  "test",
-		Key:   []byte("foo"),
-		Value: []byte("bar"),
-	}
-
-	const url = "http://127.0.0.1:%d/v1/dictionary/put"
-	const contType = "application/json"
-
-	var buf bytes.Buffer
-	m := jsonpb.Marshaler{}
-
-	// OK
-	err := m.Marshal(&buf, &kv)
+	_, _, err := startCluster(ctx, basePort, clusterSize)
 	assert.Nil(err)
-	resp1, err := http.Post(fmt.Sprintf(url, 2601), contType, &buf)
-	assert.Nil(err)
-	defer resp1.Body.Close()
-	assert.Equal(200, resp1.StatusCode)
 
-	// valid request to a follower
-	err = m.Marshal(&buf, &kv)
-	assert.Nil(err)
-	resp2, err := http.Post(fmt.Sprintf(url, 2602), contType, &buf)
-	assert.Nil(err)
-	defer resp2.Body.Close()
-	assert.Equal(400, resp2.StatusCode)
-	body, err := ioutil.ReadAll(resp2.Body)
-	assert.Nil(err)
-	assert.True(strings.Contains(string(body), raft.ErrNotLeader.Error()))
+	t.Run("metric endpoint ", func(t *testing.T) {
+		// leader
+		func() {
+			url := fmt.Sprintf("http://127.0.0.1:%d/metrics", leaderPort)
+			resp, err := http.Get(url)
+			assert.Nil(err)
+			defer resp.Body.Close()
+			assert.Equal(http.StatusOK, resp.StatusCode)
+		}()
 
-	// invalid request to a follower
-	resp3, err := http.Post(fmt.Sprintf(url, 2603), contType, &buf)
-	assert.Nil(err)
-	defer resp3.Body.Close()
-	assert.Equal(500, resp3.StatusCode)
+		// follower
+		func() {
+			url := fmt.Sprintf("http://127.0.0.1:%d/metrics", followerPort)
+			resp, err := http.Get(url)
+			assert.Nil(err)
+			defer resp.Body.Close()
+			assert.Equal(http.StatusOK, resp.StatusCode)
+		}()
+	})
 
-	// invalid request to a follower
-	resp1, err = http.Post(fmt.Sprintf(url, 2601), contType, &buf)
-	assert.Nil(err)
-	defer resp1.Body.Close()
-	assert.Equal(500, resp1.StatusCode)
+	t.Run("leader dictionary", func(t *testing.T) {
+		key := []byte("foo")
+		value := []byte("bar")
+
+		func() {
+			kv := pb.KeyValue{
+				Name:  dictName,
+				Key:   key,
+				Value: value,
+			}
+
+			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/put", leaderPort)
+
+			var buf bytes.Buffer
+			m := jsonpb.Marshaler{}
+			err := m.Marshal(&buf, &kv)
+			assert.Nil(err)
+
+			resp, err := http.Post(url, "application/json", &buf)
+			assert.Nil(err)
+			defer resp.Body.Close()
+			assert.Equal(http.StatusOK, resp.StatusCode)
+		}()
+
+		func() {
+			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/get/%s/%s", leaderPort,
+				dictName, url.QueryEscape(base64.StdEncoding.EncodeToString(key)))
+
+			resp, err := http.Get(url)
+			assert.Nil(err)
+			defer resp.Body.Close()
+			assert.Equal(http.StatusOK, resp.StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Body)
+			assert.Nil(err)
+
+			v := pb.Value{}
+			m := jsonpb.Unmarshaler{}
+			err = m.Unmarshal(bytes.NewBuffer(body), &v)
+			assert.Nil(err)
+			assert.Equal(value, v.Value)
+		}()
+	})
+
+	t.Run("follower dictionary", func(t *testing.T) {
+		key := []byte("foo")
+		value := []byte("bar")
+
+		func() {
+			kv := pb.KeyValue{
+				Name:  dictName,
+				Key:   key,
+				Value: value,
+			}
+
+			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/put", followerPort)
+
+			var buf bytes.Buffer
+			m := jsonpb.Marshaler{}
+			err := m.Marshal(&buf, &kv)
+			assert.Nil(err)
+
+			resp, err := http.Post(url, "application/json", &buf)
+			assert.Nil(err)
+			defer resp.Body.Close()
+			assert.Equal(http.StatusBadRequest, resp.StatusCode)
+
+			body, err := ioutil.ReadAll(resp.Body)
+			assert.Nil(err)
+
+			expectedBody := `{"code":9, "message":"node is not the leader", "details":[]}`
+			assert.Equal(expectedBody, string(body))
+		}()
+	})
 }

@@ -29,6 +29,7 @@ TEST_OPTS  = -timeout 300s -cover -coverprofile=$(COVERAGE_FILE) -failfast
 
 TEST_PKGS  = \
   ./internal/cluster         \
+  ./internal/gateway         \
   ./internal/util            \
   ./pkg/client               \
 

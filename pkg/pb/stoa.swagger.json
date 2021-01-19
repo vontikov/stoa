@@ -11,7 +11,7 @@
     "application/json"
   ],
   "paths": {
-    "/storage/dictionary/delete/{key}": {
+    "/storage/dictionary/delete/{name}/{key}": {
       "post": {
         "operationId": "Stoa_DictionaryRemove",
         "responses": {
@@ -29,6 +29,12 @@
           }
         },
         "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
           {
             "name": "key",
             "in": "path",
@@ -64,7 +70,7 @@
         ]
       }
     },
-    "/v1/dictionary/get/{key}": {
+    "/v1/dictionary/get/{name}/{key}": {
       "get": {
         "operationId": "Stoa_DictionaryGet",
         "responses": {
@@ -83,17 +89,17 @@
         },
         "parameters": [
           {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "key",
             "in": "path",
             "required": true,
             "type": "string",
             "format": "byte"
-          },
-          {
-            "name": "name",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [

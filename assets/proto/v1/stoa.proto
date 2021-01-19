@@ -131,13 +131,13 @@ service Stoa {
 
   rpc DictionaryGet (Key) returns (Value) {
     option(google.api.http) = {
-      get: "/v1/dictionary/get/{key}",
+      get: "/v1/dictionary/get/{name}/{key}",
     };
   }
 
   rpc DictionaryRemove (Key) returns (Result) {
     option(google.api.http) = {
-      post: "/storage/dictionary/delete/{key}",
+      post: "/storage/dictionary/delete/{name}/{key}",
     };
   }
 

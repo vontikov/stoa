@@ -75,7 +75,9 @@ func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway
 	}
 
 	router := mux.NewRouter()
-	registerServiceHandlers(router, gwMux, cfg)
+
+	router.PathPrefix("/v1").Handler(gwMux)
+	registerServiceHandlers(router, cfg)
 
 	httpServer := &http.Server{
 		Addr:    httpAddr,
@@ -103,9 +105,7 @@ func New(ctx context.Context, cluster cluster.Cluster, opts ...Option) (*Gateway
 	return g, nil
 }
 
-func registerServiceHandlers(router *mux.Router, gwMux *runtime.ServeMux, cfg *options) {
-	router.Handle("/", gwMux)
-
+func registerServiceHandlers(router *mux.Router, cfg *options) {
 	if cfg.metricsEnabled {
 		router.HandleFunc("/metrics", promhttp.Handler().ServeHTTP)
 	}

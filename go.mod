@@ -6,6 +6,7 @@ require (
 	github.com/armon/go-metrics v0.3.6 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.4.1
 	github.com/fatih/color v1.10.0 // indirect
+	github.com/gogo/protobuf v1.2.1
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.2

@@ -10,18 +10,24 @@ services:
     command: stoa -log-level trace -bootstrap stoa0,stoa1,stoa2
     networks:
       - stoa
+    ports:
+      - 3501:3501
   stoa1:
     image: github.com/vontikov/stoa:0.0.1
     hostname: stoa1
     command: stoa -log-level trace
     networks:
       - stoa
+    ports:
+      - 3502:3501
   stoa2:
     image: github.com/vontikov/stoa:0.0.1
     hostname: stoa2
     command: stoa -log-level trace
     networks:
       - stoa
+    ports:
+      - 3503:3501
 
   client0:
     image: github.com/vontikov/stoa-example:0.0.1
