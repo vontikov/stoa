@@ -33,17 +33,17 @@ func newQueueMap() queueMapPtr {
 // MarshalBinary implements encoding.BinaryMarshaler.MarshalBinary
 // (https://golang.org/pkg/encoding/#BinaryMarshaler).
 func (m queueMapPtr) MarshalBinary() ([]byte, error) {
+	// number of elements
 	data := make([]byte, 4)
 	sz := m.Size()
-	// number of elements
 	binary.LittleEndian.PutUint32(data, uint32(sz))
 	idx := 4
 
 	m.Range(func(k, v interface{}) bool {
 		n := k.(string)
-		q := v.(queueRecordPtr)
+		r := v.(queueRecordPtr)
 
-		// queue name
+		// name
 		sz := len(n)
 		data = append(data, make([]byte, 4+sz)...)
 		binary.LittleEndian.PutUint32(data[idx:], uint32(sz))
@@ -51,13 +51,13 @@ func (m queueMapPtr) MarshalBinary() ([]byte, error) {
 		idx += copy(data[idx:], []byte(n))
 
 		// number of elements in the queue
-		sz = q.Size()
+		sz = r.Size()
 		data = append(data, make([]byte, 4)...)
 		binary.LittleEndian.PutUint32(data[idx:], uint32(sz))
 		idx += 4
 
 		// elements
-		q.Range(func(v interface{}) bool {
+		r.Range(func(v interface{}) bool {
 			elm := v.(entryPtr)
 			elmSz := len(elm.Value)
 
@@ -110,7 +110,7 @@ func (m queueMapPtr) UnmarshalBinary(data []byte) error {
 		sz = int(binary.LittleEndian.Uint32(data[idx:]))
 		idx += 4
 
-		q := newQueueRecord()
+		r := newQueueRecord()
 
 		// elements
 		for j := 0; j < sz; j++ {
@@ -126,10 +126,10 @@ func (m queueMapPtr) UnmarshalBinary(data []byte) error {
 			e.TTLMillis = int64(binary.LittleEndian.Uint64(data[idx:]))
 			idx += 8
 
-			q.Offer(&e)
+			r.Offer(&e)
 		}
 
-		m.Put(n, q)
+		m.Put(n, r)
 	}
 
 	return nil

@@ -100,3 +100,111 @@ func TestFsmMutexWatcher(t *testing.T) {
 		assert.True(t, mx.isLocked())
 	})
 }
+
+func TestFSMMutexMarshalling(t *testing.T) {
+	assert := assert.New(t)
+
+	type md struct {
+		name string
+		r    mutexRecord
+	}
+
+	tests := []struct {
+		name             string
+		mutexes          []md
+		expectedDataSize int
+		expectedSize     int
+	}{
+		/*
+			{
+				name:             "No mutexes",
+				mutexes:          nil,
+				expectedDataSize: 4,
+				expectedSize:     0,
+			},
+			{
+				name: "One unlocked mutex",
+				mutexes: []md{
+					{"mx-name", mutexRecord{}},
+				},
+				expectedDataSize: 4 + // number of elements
+					4 + 7 + // mutex name
+					2 + // mutex locked
+					4 + // mutex lockedBy (empty)
+					4 + 15, // touched
+				expectedSize: 1,
+			},
+			{
+				name: "One locked mutex",
+				mutexes: []md{
+					{"mx-name", mutexRecord{locked: true, lockedBy: []byte("client")}},
+				},
+				expectedDataSize: 4 + // number of elements
+					4 + 7 + // mutex name
+					2 + // mutex locked
+					4 + 6 + // mutex lockedBy (non-empty)
+					4 + 15, // touched
+				expectedSize: 1,
+			},
+			{
+				name: "One locked and touched",
+				mutexes: []md{
+					{"mx-name", mutexRecord{locked: true, lockedBy: []byte("client"), touched: time.Now()}},
+				},
+				expectedDataSize: 4 + // number of elements
+					4 + 7 + // mutex name
+					2 + // mutex locked
+					4 + 6 + // mutex lockedBy (non-empty)
+					4 + 15, // touched
+				expectedSize: 1,
+			},
+		*/
+		{
+			name: "One unlocked and one locked and touched",
+			mutexes: []md{
+				{"mxname0", mutexRecord{}},
+				{"mxname1", mutexRecord{locked: true, lockedBy: []byte("client"), touched: time.Now()}},
+			},
+			expectedDataSize: 4 + // number of elements
+				// first
+				4 + 7 + // mutex name
+				2 + // mutex locked
+				4 + // mutex lockedBy (empty)
+				4 + 15 + // touched
+				// second
+				4 + 7 + // mutex name
+				2 + // mutex locked
+				4 + 6 + // mutex lockedBy (non-empty)
+				4 + 15, // touched
+			expectedSize: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newMutexMap()
+			for i := range tt.mutexes {
+				md := &tt.mutexes[i]
+				m.Put(md.name, &md.r)
+			}
+
+			data, err := m.MarshalBinary()
+			assert.Nil(err)
+			assert.Equal(tt.expectedDataSize, len(data))
+
+			dest := newMutexMap()
+			err = dest.UnmarshalBinary(data)
+			assert.Nil(err)
+			assert.Equal(tt.expectedSize, dest.Size())
+
+			for i := range tt.mutexes {
+				md := &tt.mutexes[i]
+				v := dest.Get(md.name)
+				assert.NotNil(v)
+				r := v.(mutexRecordPtr)
+				assert.Equal(md.r.locked, r.locked)
+				assert.Equal(md.r.lockedBy, r.lockedBy)
+			}
+		})
+	}
+}

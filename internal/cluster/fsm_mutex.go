@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"bytes"
+	"encoding/binary"
 	"sync"
 	"time"
 
@@ -23,6 +24,120 @@ type mutexMapPtr = *mutexMap
 
 func newMutexMap() mutexMapPtr {
 	return &mutexMap{Map: cc.NewSynchronizedMap(0)}
+}
+
+// MarshalBinary implements encoding.BinaryMarshaler.MarshalBinary
+// (https://golang.org/pkg/encoding/#BinaryMarshaler).
+func (m mutexMapPtr) MarshalBinary() ([]byte, error) {
+	// number of elements
+	data := make([]byte, 4)
+	sz := m.Size()
+	binary.LittleEndian.PutUint32(data, uint32(sz))
+	idx := 4
+
+	var err error
+	m.Range(func(k, v interface{}) bool {
+		n := k.(string)
+		r := v.(mutexRecordPtr)
+
+		// name
+		sz := len(n)
+		data = append(data, make([]byte, 4+sz)...)
+		binary.LittleEndian.PutUint32(data[idx:], uint32(sz))
+		idx += 4
+		idx += copy(data[idx:], []byte(n))
+
+		// locked
+		var locked uint16
+		if r.locked {
+			locked = 1
+		}
+		data = append(data, make([]byte, 2)...)
+		binary.LittleEndian.PutUint16(data[idx:], locked)
+		idx += 2
+
+		// lockedBy
+		sz = len(r.lockedBy)
+		data = append(data, make([]byte, 4+sz)...)
+		binary.LittleEndian.PutUint32(data[idx:], uint32(sz))
+		idx += 4
+		idx += copy(data[idx:], []byte(r.lockedBy))
+
+		// touched
+		var touched []byte
+		touched, err = r.touched.MarshalBinary()
+		if err != nil {
+			return false
+		}
+		sz = len(touched)
+		data = append(data, make([]byte, 4+sz)...)
+		binary.LittleEndian.PutUint32(data[idx:], uint32(sz))
+		idx += 4
+		idx += copy(data[idx:], touched)
+
+		return true
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+// UnmarshalBinary implements encoding.BinaryUnmarshaler.UnmarshalBinary
+// (https://golang.org/pkg/encoding/#BinaryUnmarshaler).
+func (m mutexMapPtr) UnmarshalBinary(data []byte) error {
+	m.Clear()
+	idx := 0
+
+	// number of elements
+	sz := int(binary.LittleEndian.Uint32(data[idx:]))
+	if sz == 0 {
+		return nil
+	}
+	idx += 4
+
+	for i := 0; i < sz; i++ {
+		// name
+		sz := int(binary.LittleEndian.Uint32(data[idx:]))
+		idx += 4
+		b := make([]byte, sz)
+		copy(b, data[idx:idx+sz])
+		n := string(b)
+		idx += sz
+
+		r := newMutexRecord()
+
+		// locked
+		locked := binary.LittleEndian.Uint16(data[idx:])
+		idx += 2
+		if locked == 1 {
+			r.locked = true
+		}
+
+		// lockedBy
+		sz = int(binary.LittleEndian.Uint32(data[idx:]))
+		idx += 4
+		if sz > 0 {
+			b = make([]byte, sz)
+			copy(b, data[idx:idx+sz])
+			r.lockedBy = b
+			idx += sz
+		}
+
+		// touched
+		sz = int(binary.LittleEndian.Uint32(data[idx:]))
+		idx += 4
+		if err := r.touched.UnmarshalBinary(data[idx : idx+sz]); err != nil {
+			return err
+		}
+		idx += sz
+
+		m.Put(n, r)
+	}
+
+	return nil
 }
 
 type mutexRecord struct {

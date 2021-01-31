@@ -159,36 +159,48 @@ func (f *FSM) Release() {}
 func (f *FSM) MarshalBinary() ([]byte, error) {
 	f.logger.Debug("start marshalling")
 
+	// queues
 	qb, err := f.qs.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	qbSz := len(qb)
-	f.logger.Debug("queues marshalled", "size", qbSz)
+	qsz := len(qb)
+	f.logger.Debug("queues marshalled", "size", qsz)
 
+	// dictionaries
 	db, err := f.ds.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	dbSz := len(db)
-	f.logger.Debug("dictionaries marshalled", "size", qbSz)
+	dsz := len(db)
+	f.logger.Debug("dictionaries marshalled", "size", dsz)
 
-	data := make([]byte, 4+qbSz+4+dbSz)
+	// mutexes
+	mb, err := f.ms.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	msz := len(mb)
+	f.logger.Debug("mutexes marshalled", "size", msz)
 
+	// put together
+	data := make([]byte, 4+qsz+4+dsz+4+msz)
 	idx := 0
 
-	// queues size
-	binary.LittleEndian.PutUint32(data[idx:], uint32(qbSz))
-	idx += 4
 	// queues
+	binary.LittleEndian.PutUint32(data[idx:], uint32(qsz))
+	idx += 4
 	idx += copy(data[idx:], qb)
 
-	// dictionaries size
-	binary.LittleEndian.PutUint32(data[idx:], uint32(dbSz))
-	idx += 4
-
 	// dictionaries
-	copy(data[idx:], db)
+	binary.LittleEndian.PutUint32(data[idx:], uint32(dsz))
+	idx += 4
+	idx += copy(data[idx:], db)
+
+	// mutexes
+	binary.LittleEndian.PutUint32(data[idx:], uint32(msz))
+	idx += 4
+	copy(data[idx:], mb)
 
 	f.logger.Debug("marshalling complete", "size", len(data))
 	return data, nil
@@ -200,10 +212,9 @@ func (f *FSM) UnmarshalBinary(data []byte) error {
 	f.logger.Debug("start unmarshalling", "size", len(data))
 	idx := 0
 
-	// queues size
+	// queues
 	sz := int(binary.LittleEndian.Uint32(data[idx:]))
 	idx += 4
-	// queues
 	qs := newQueueMap()
 	if err := qs.UnmarshalBinary(data[idx : idx+sz]); err != nil {
 		return err
@@ -211,20 +222,28 @@ func (f *FSM) UnmarshalBinary(data []byte) error {
 	idx += sz
 	f.logger.Debug("queues unmarshalled", "size", sz)
 
-	// dictionaries size
+	// dictionaries
 	sz = int(binary.LittleEndian.Uint32(data[idx:]))
 	idx += 4
-	// dictionaries
 	ds := newDictMap()
 	if err := ds.UnmarshalBinary(data[idx : idx+sz]); err != nil {
 		return err
 	}
+	idx += sz
 	f.logger.Debug("dictionaries unmarshalled", "size", sz)
 
-	f.mu.Lock()
+	// mutexes
+	sz = int(binary.LittleEndian.Uint32(data[idx:]))
+	idx += 4
+	ms := newMutexMap()
+	if err := ms.UnmarshalBinary(data[idx : idx+sz]); err != nil {
+		return err
+	}
+	f.logger.Debug("mutexes unmarshalled", "size", sz)
+
 	f.qs = qs
 	f.ds = ds
-	f.mu.Unlock()
+	f.ms = ms
 
 	f.logger.Debug("unmarshalling complete")
 	return nil
