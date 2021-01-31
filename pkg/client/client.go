@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/vontikov/stoa/internal/client/balancer"
 	"github.com/vontikov/stoa/internal/client/resolver"
+	"github.com/vontikov/stoa/internal/common"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
@@ -32,11 +34,11 @@ var ErrWatchHandshake = errors.New("watch handshake")
 
 // client is the Client implementation.
 type client struct {
+	id              []byte
 	callOptions     []grpc.CallOption
 	ctx             context.Context
 	dialTimeout     time.Duration
 	failFast        bool
-	id              string
 	idleStrategy    cc.IdleStrategy
 	keepAlivePeriod time.Duration
 	logger          logging.Logger
@@ -59,11 +61,11 @@ type client struct {
 // New creates and returns a new Client instance.
 func New(opts ...Option) (Client, error) {
 	c := client{
+		id: genID(common.ClientIDSize),
 
 		callOptions:     []grpc.CallOption{grpc.WaitForReady(true)},
 		ctx:             context.Background(),
 		dialTimeout:     defaultDialTimeout,
-		id:              randString(defaultClientIDSize),
 		idleStrategy:    cc.NewSleepingIdleStrategy(200 * time.Millisecond),
 		keepAlivePeriod: defaultKeepAlivePeriod,
 		retryTimeout:    defaultRetryTimeout,
@@ -316,7 +318,7 @@ func (c *client) handshake(stream pb.Stoa_WatchClient) error {
 		c.logger.Error("watch handshake unexpected type")
 		return ErrWatchHandshake
 	}
-	if id.Id != c.id {
+	if !bytes.Equal(id.Id, c.id) {
 		c.logger.Error("watch handshake unexpected Client ID", "actual", id.Id)
 		return ErrWatchHandshake
 	}

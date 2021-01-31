@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"bytes"
 	"sync"
 	"time"
 
@@ -27,7 +28,7 @@ func newMutexMap() mutexMapPtr {
 type mutexRecord struct {
 	sync.RWMutex
 	locked   bool
-	lockedBy string
+	lockedBy []byte
 	touched  time.Time
 }
 
@@ -37,7 +38,7 @@ func newMutexRecord() mutexRecordPtr {
 	return &mutexRecord{}
 }
 
-func (m *mutexRecord) tryLock(id string) bool {
+func (m *mutexRecord) tryLock(id []byte) bool {
 	m.Lock()
 	defer m.Unlock()
 	if m.locked {
@@ -49,14 +50,14 @@ func (m *mutexRecord) tryLock(id string) bool {
 	return true
 }
 
-func (m *mutexRecord) unlock(id string) bool {
+func (m *mutexRecord) unlock(id []byte) bool {
 	m.Lock()
 	defer m.Unlock()
-	if !m.locked || m.lockedBy != id {
+	if !m.locked || !bytes.Equal(m.lockedBy, id) {
 		return false
 	}
 	m.locked = false
-	m.lockedBy = ""
+	m.lockedBy = nil
 	return true
 }
 
@@ -66,10 +67,10 @@ func (m *mutexRecord) isLocked() bool {
 	return m.locked
 }
 
-func (m *mutexRecord) touch(id string) bool {
+func (m *mutexRecord) touch(id []byte) bool {
 	m.Lock()
 	defer m.Unlock()
-	if !m.locked || m.lockedBy != id {
+	if !m.locked || !bytes.Equal(m.lockedBy, id) {
 		return false
 	}
 	m.touched = timeNow()

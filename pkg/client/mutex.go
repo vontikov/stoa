@@ -9,7 +9,7 @@ import (
 
 type mutex struct {
 	base
-	clientID string
+	clientID []byte
 }
 
 func (c *client) newMutex(name string) *mutex {

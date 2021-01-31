@@ -14,8 +14,8 @@ message Name {
 
 // Id contains ID.
 message Id {
-  string name     = 1 [(validate.rules).string.min_len=1];
-  string id       = 2 [(validate.rules).string.min_len=1];
+  string name = 1 [(validate.rules).string.min_len=1];
+  bytes id    = 2 [(validate.rules).bytes.min_len=1];
 }
 
 // Value contains an arbitrary data.
@@ -38,7 +38,7 @@ message KeyValue {
 }
 
 message ClientId {
-  string id = 1 [(validate.rules).string.min_len=1];
+  bytes id = 1 [(validate.rules).bytes.min_len=1];
 }
 
 message MutexStatus {

@@ -121,10 +121,10 @@ func (m *Id) Validate() error {
 		}
 	}
 
-	if utf8.RuneCountInString(m.GetId()) < 1 {
+	if len(m.GetId()) < 1 {
 		return IdValidationError{
 			field:  "Id",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 1 bytes",
 		}
 	}
 
@@ -433,10 +433,10 @@ func (m *ClientId) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetId()) < 1 {
+	if len(m.GetId()) < 1 {
 		return ClientIdValidationError{
 			field:  "Id",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 1 bytes",
 		}
 	}
 

@@ -90,7 +90,7 @@ func WithCallOptions(v ...grpc.CallOption) Option   { return func(o *client) { o
 func WithContext(v context.Context) Option          { return func(o *client) { o.ctx = v } }
 func WithDialTimeout(v time.Duration) Option        { return func(o *client) { o.dialTimeout = v } }
 func WithFailFast(v bool) Option                    { return func(o *client) { o.failFast = v } }
-func WithID(v string) Option                        { return func(o *client) { o.id = v } }
+func WithID(v []byte) Option                        { return func(o *client) { o.id = v } }
 func WithIdleStrategyFast(v cc.IdleStrategy) Option { return func(o *client) { o.idleStrategy = v } }
 func WithKeepAlivePeriod(v time.Duration) Option    { return func(o *client) { o.keepAlivePeriod = v } }
 func WithLogLevel(v string) Option                  { return func(_ *client) { logging.SetLevel(v) } }

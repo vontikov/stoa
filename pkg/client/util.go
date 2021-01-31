@@ -56,15 +56,15 @@ func MetadataFromCallOptions(opts ...CallOption) metadata.MD {
 	return md
 }
 
-var runes = []rune("abcdef0123456789")
+var idSrc = []byte("abcdef0123456789")
 
-// randString returns random string of length n.
-func randString(n int) string {
-	max := big.NewInt(int64(len(runes)))
-	b := make([]rune, n)
+// genID returns random ID of length n.
+func genID(n int) []byte {
+	max := big.NewInt(int64(len(idSrc)))
+	b := make([]byte, n)
 	for i := range b {
 		idx, _ := rand.Int(rand.Reader, max)
-		b[i] = runes[idx.Uint64()]
+		b[i] = idSrc[idx.Uint64()]
 	}
-	return string(b)
+	return b
 }

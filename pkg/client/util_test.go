@@ -82,3 +82,10 @@ func TestMetadataFromCallOptions(t *testing.T) {
 			assert.Equal(t, "42000", v[0], "Should be 42000 milliseconds")
 		})
 }
+
+func TestGenID(t *testing.T) {
+	const length = 16
+
+	id := genID(length)
+	assert.Equal(t, length, len(id))
+}

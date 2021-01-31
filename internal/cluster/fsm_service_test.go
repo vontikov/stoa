@@ -11,10 +11,8 @@ import (
 )
 
 func TestFSMPing(t *testing.T) {
-	const (
-		id1 = "id1"
-		id2 = "id2"
-	)
+	id1 := []byte("id1")
+	id2 := []byte("id2")
 
 	te := time.Time{}
 	tt := te

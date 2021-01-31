@@ -31,8 +31,8 @@ func TestFsmMutex(t *testing.T) {
 }
 
 func TestFsmMutexTryLockUnlock(t *testing.T) {
+	id := []byte("test-id")
 	const muxName = "test-mutex"
-	const id = "test-id"
 	const max = 100
 
 	f := NewFSM(context.Background())
@@ -51,7 +51,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 		go func(n int) {
 			m := &pb.ClusterCommand{
 				Command: pb.ClusterCommand_MUTEX_TRY_LOCK,
-				Payload: &pb.ClusterCommand_Id{Id: &pb.Id{Id: uuid.New().String()}},
+				Payload: &pb.ClusterCommand_Id{Id: &pb.Id{Id: []byte(uuid.New().String())}},
 			}
 
 			r := mutexTryLock(f, m).(*pb.Result)
@@ -79,7 +79,7 @@ func TestFsmMutexWatcher(t *testing.T) {
 
 		f := NewFSM(ctx)
 		mx := mutex(f, "muxName")
-		r := mx.tryLock("lockId")
+		r := mx.tryLock([]byte("lockId"))
 		assert.True(t, r)
 		time.Sleep(mutexDeadline << 1)
 		assert.False(t, mx.isLocked())
@@ -94,7 +94,7 @@ func TestFsmMutexWatcher(t *testing.T) {
 
 		f := NewFSM(ctx)
 		mx := mutex(f, "muxName")
-		r := mx.tryLock("lockId")
+		r := mx.tryLock([]byte("lockId"))
 		assert.True(t, r)
 		time.Sleep(mutexDeadline << 1)
 		assert.True(t, mx.isLocked())

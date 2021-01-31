@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"sync"
 	"time"
@@ -13,7 +14,7 @@ import (
 var checkLeadershipPeriod = 500 * time.Millisecond
 
 type streamRecord struct {
-	id string
+	id []byte
 	ch chan *pb.Status
 }
 
@@ -60,7 +61,7 @@ func (s *server) Watch(v *pb.ClientId, stream pb.Stoa_WatchServer) error {
 	defer func() {
 		s.mu.Lock()
 		for i, r := range s.streams {
-			if r.id == id {
+			if bytes.Equal(r.id, id) {
 				s.streams = append(s.streams[:i], s.streams[i+1:]...)
 				break
 			}
@@ -98,7 +99,7 @@ func (s *server) Watch(v *pb.ClientId, stream pb.Stoa_WatchServer) error {
 	}
 }
 
-func (s *server) handshake(clientID string, stream pb.Stoa_WatchServer) (err error) {
+func (s *server) handshake(clientID []byte, stream pb.Stoa_WatchServer) (err error) {
 	if err = stream.Send(&pb.Status{U: &pb.Status_Id{Id: &pb.ClientId{Id: clientID}}}); err != nil {
 		s.logger.Debug("watch handshake failed", "id", clientID, "message", err)
 		return
