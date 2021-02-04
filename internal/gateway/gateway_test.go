@@ -2,17 +2,17 @@ package gateway
 
 import (
 	"bytes"
-	"encoding/base64"
-	"errors"
-	"io/ioutil"
-	"testing"
-
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -264,8 +264,15 @@ func TestGatewayHTTP(t *testing.T) {
 			body, err := ioutil.ReadAll(resp.Body)
 			assert.Nil(err)
 
-			expectedBody := `{"code":9, "message":"node is not the leader", "details":[]}`
-			assert.Equal(expectedBody, string(body))
+			type rd struct {
+				Code    int
+				Message string
+			}
+
+			var actualBody rd
+			err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&actualBody)
+			assert.Nil(err)
+			assert.Equal(rd{9, "node is not the leader"}, actualBody)
 		}()
 	})
 }
