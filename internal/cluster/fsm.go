@@ -52,26 +52,22 @@ func NewFSM(ctx context.Context) *FSM {
 	}
 }
 
-var fsmCommands [pb.ClusterCommand_MAX_INDEX]fsmCommand
-
-func init() {
-	fsmCommands = [...]fsmCommand{
-		pb.ClusterCommand_QUEUE_SIZE:               queueSize,
-		pb.ClusterCommand_QUEUE_CLEAR:              queueClear,
-		pb.ClusterCommand_QUEUE_OFFER:              queueOffer,
-		pb.ClusterCommand_QUEUE_POLL:               queuePoll,
-		pb.ClusterCommand_QUEUE_PEEK:               queuePeek,
-		pb.ClusterCommand_DICTIONARY_SIZE:          dictionarySize,
-		pb.ClusterCommand_DICTIONARY_CLEAR:         dictionaryClear,
-		pb.ClusterCommand_DICTIONARY_PUT:           dictionaryPut,
-		pb.ClusterCommand_DICTIONARY_PUT_IF_ABSENT: dictionaryPutIfAbsent,
-		pb.ClusterCommand_DICTIONARY_GET:           dictionaryGet,
-		pb.ClusterCommand_DICTIONARY_REMOVE:        dictionaryRemove,
-		pb.ClusterCommand_DICTIONARY_RANGE:         dictionaryRange,
-		pb.ClusterCommand_MUTEX_TRY_LOCK:           mutexTryLock,
-		pb.ClusterCommand_MUTEX_UNLOCK:             mutexUnlock,
-		pb.ClusterCommand_SERVICE_PING:             processPing,
-	}
+var fsmCommands [pb.ClusterCommand_MAX_INDEX]fsmCommand = [...]fsmCommand{
+	pb.ClusterCommand_QUEUE_SIZE:               queueSize,
+	pb.ClusterCommand_QUEUE_CLEAR:              queueClear,
+	pb.ClusterCommand_QUEUE_OFFER:              queueOffer,
+	pb.ClusterCommand_QUEUE_POLL:               queuePoll,
+	pb.ClusterCommand_QUEUE_PEEK:               queuePeek,
+	pb.ClusterCommand_DICTIONARY_SIZE:          dictionarySize,
+	pb.ClusterCommand_DICTIONARY_CLEAR:         dictionaryClear,
+	pb.ClusterCommand_DICTIONARY_PUT:           dictionaryPut,
+	pb.ClusterCommand_DICTIONARY_PUT_IF_ABSENT: dictionaryPutIfAbsent,
+	pb.ClusterCommand_DICTIONARY_GET:           dictionaryGet,
+	pb.ClusterCommand_DICTIONARY_REMOVE:        dictionaryRemove,
+	pb.ClusterCommand_DICTIONARY_RANGE:         dictionaryRange,
+	pb.ClusterCommand_MUTEX_TRY_LOCK:           mutexTryLock,
+	pb.ClusterCommand_MUTEX_UNLOCK:             mutexUnlock,
+	pb.ClusterCommand_SERVICE_PING:             processPing,
 }
 
 func (f *FSM) leader(v bool) {
