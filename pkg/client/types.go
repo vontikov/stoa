@@ -1,7 +1,13 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
+	"net"
+	"sort"
+	"strings"
 	"time"
 
 	cc "github.com/vontikov/go-concurrent"
@@ -10,6 +16,9 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 	"google.golang.org/grpc"
 )
+
+// ErrDeadlineExceeded is the error returned if a timeout is specified.
+var ErrDeadlineExceeded = errors.New("deadline exceeded")
 
 // Collection is a generic collection
 type Collection interface {
@@ -81,22 +90,92 @@ const (
 	defaultRetryTimeout    = 15000 * time.Millisecond
 	defaultClientIDSize    = 16
 	defaultLoggerName      = "stoa-client"
+	peerListSep            = ","
 )
 
 // Option is a function applied to an options to change the options' default values.
-type Option func(*client)
+type Option func(*client) error
 
-func WithCallOptions(v ...grpc.CallOption) Option   { return func(o *client) { o.callOptions = v } }
-func WithContext(v context.Context) Option          { return func(o *client) { o.ctx = v } }
-func WithDialTimeout(v time.Duration) Option        { return func(o *client) { o.dialTimeout = v } }
-func WithFailFast(v bool) Option                    { return func(o *client) { o.failFast = v } }
-func WithID(v []byte) Option                        { return func(o *client) { o.id = v } }
-func WithIdleStrategyFast(v cc.IdleStrategy) Option { return func(o *client) { o.idleStrategy = v } }
-func WithKeepAlivePeriod(v time.Duration) Option    { return func(o *client) { o.keepAlivePeriod = v } }
-func WithLogLevel(v string) Option                  { return func(_ *client) { logging.SetLevel(v) } }
-func WithLoggerName(v string) Option                { return func(o *client) { o.logger = logging.NewLogger(v) } }
-func WithPeers(v string) Option                     { return func(o *client) { o.peers = v } }
-func WithRetryTimeout(v time.Duration) Option       { return func(o *client) { o.retryTimeout = v } }
+func WithCallOptions(v ...grpc.CallOption) Option {
+	return func(o *client) error { o.callOptions = v; return nil }
+}
+
+func WithContext(v context.Context) Option {
+	return func(o *client) error { o.ctx = v; return nil }
+}
+
+func WithDialTimeout(v time.Duration) Option {
+	return func(o *client) error { o.dialTimeout = v; return nil }
+}
+
+func WithFailFast(v bool) Option {
+	return func(o *client) error { o.failFast = v; return nil }
+}
+
+func WithID(v []byte) Option {
+	return func(o *client) error { o.id = v; return nil }
+}
+
+func WithIdleStrategyFast(v cc.IdleStrategy) Option {
+	return func(o *client) error { o.idleStrategy = v; return nil }
+}
+
+func WithKeepAlivePeriod(v time.Duration) Option {
+	return func(o *client) error { o.keepAlivePeriod = v; return nil }
+}
+
+func WithLogLevel(v string) Option {
+	return func(_ *client) error { logging.SetLevel(v); return nil }
+}
+
+func WithLoggerName(v string) Option {
+	return func(o *client) error { o.logger = logging.NewLogger(v); return nil }
+}
+
+func WithPeers(v string) Option {
+	return func(o *client) error { o.peers = v; return nil }
+}
+
+func WithRetryTimeout(v time.Duration) Option {
+	return func(o *client) error { o.retryTimeout = v; return nil }
+}
+
+func WithDNS(host string, expectedSize int, timeout time.Duration) Option {
+	return func(o *client) error {
+		if expectedSize < 3 || expectedSize%2 == 0 {
+			return fmt.Errorf("incorrect cluster size: %d", expectedSize)
+		}
+
+		t := time.After(timeout)
+		for {
+			select {
+			case <-t:
+				return ErrDeadlineExceeded
+
+			default:
+				ips, err := net.LookupIP(host)
+				if err != nil {
+					return err
+				}
+				sz := len(ips)
+				if sz != expectedSize {
+					break
+				}
+
+				sort.Slice(ips, func(i, j int) bool { return bytes.Compare(ips[i], ips[j]) < 0 })
+				b := strings.Builder{}
+				for _, ip := range ips {
+					b.WriteString(ip.To4().String())
+					b.WriteString(peerListSep)
+				}
+				o.peers = strings.TrimSuffix(b.String(), peerListSep)
+				return nil
+
+			}
+		}
+
+	}
+}
 
 type State int
 

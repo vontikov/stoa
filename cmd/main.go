@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/gateway"
@@ -31,6 +32,10 @@ var (
 	logLevelFlag        = flag.String("log-level", "info", "Log level: trace|debug|info|warn|error|none")
 	metricsEnabledFlag  = flag.Bool("metrics", true, "Enable Prometheus metrics")
 	profilerEnabledFlag = flag.Bool("profiler", false, "Enable profiler")
+
+	dnsEnabledFlag = flag.Bool("dns", false, "Enable DNS lookup")
+	dnsRecordsFlag = flag.Int("dns-records", 3, "Minimum number of DNS records to wait")
+	dnsTimeoutFlag = flag.Int("dns-timeout", 30, "DNS lookup timeout in seconds")
 )
 
 func main() {
@@ -56,11 +61,18 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
+	var peers string
 	var err error
-	peers := *bootstrapFlag
-	if peers == "" {
-		peers, err = os.Hostname()
+	if *dnsEnabledFlag {
+		peers, err = util.DNSBootstrap(*dnsRecordsFlag,
+			time.Duration(*dnsTimeoutFlag)*time.Second, cluster.PeerListSep)
 		util.PanicOnError(err)
+	} else {
+		peers = *bootstrapFlag
+		if peers == "" {
+			peers, err = os.Hostname()
+			util.PanicOnError(err)
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

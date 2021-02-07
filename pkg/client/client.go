@@ -78,7 +78,9 @@ func New(opts ...Option) (Client, error) {
 	}
 
 	for _, o := range opts {
-		o(&c)
+		if err := o(&c); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := c.dial(); err != nil {
