@@ -13,6 +13,7 @@
   "paths": {
     "/storage/dictionary/delete/{name}/{key}": {
       "post": {
+        "summary": "DictionaryRemove removes from the Dictionary the key-value pair specified\nby the Key.",
         "operationId": "Stoa_DictionaryRemove",
         "responses": {
           "200": {
@@ -50,6 +51,7 @@
     },
     "/v1/dictionary/clear": {
       "post": {
+        "summary": "DictionaryClear clears the Dictionary specified by the Name.",
         "operationId": "Stoa_DictionaryClear",
         "responses": {
           "200": {
@@ -72,6 +74,7 @@
     },
     "/v1/dictionary/get/{name}/{key}": {
       "get": {
+        "summary": "DictionaryGet returns from the Dictionary the Value specified by the Key.",
         "operationId": "Stoa_DictionaryGet",
         "responses": {
           "200": {
@@ -109,6 +112,7 @@
     },
     "/v1/dictionary/put": {
       "post": {
+        "summary": "DictionaryPut puts into the Dictionary the KeyValue and returns the old\nValue.",
         "operationId": "Stoa_DictionaryPut",
         "responses": {
           "200": {
@@ -141,6 +145,7 @@
     },
     "/v1/dictionary/putIfAbsent": {
       "post": {
+        "summary": "DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is\nnot present.",
         "operationId": "Stoa_DictionaryPutIfAbsent",
         "responses": {
           "200": {
@@ -173,6 +178,7 @@
     },
     "/v1/dictionary/range": {
       "get": {
+        "summary": "DictionaryRange returns from the Dictionary all the key-value pairs.",
         "operationId": "Stoa_DictionaryRange",
         "responses": {
           "200": {
@@ -212,6 +218,7 @@
     },
     "/v1/dictionary/size": {
       "get": {
+        "summary": "DictionarySize returns size of the Dictionary specified by the Name.",
         "operationId": "Stoa_DictionarySize",
         "responses": {
           "200": {
@@ -242,6 +249,7 @@
     },
     "/v1/mutex/trylock": {
       "post": {
+        "summary": "MutexTryLock tries to lock the Mutex.",
         "operationId": "Stoa_MutexTryLock",
         "responses": {
           "200": {
@@ -264,6 +272,7 @@
     },
     "/v1/mutex/unlock": {
       "post": {
+        "summary": "MutexUnlock unlocks the Mutex.",
         "operationId": "Stoa_MutexUnlock",
         "responses": {
           "200": {
@@ -286,6 +295,7 @@
     },
     "/v1/queue/clear": {
       "post": {
+        "summary": "QueueClear cleares the Queue specified by the Name.",
         "operationId": "Stoa_QueueClear",
         "responses": {
           "200": {
@@ -308,6 +318,7 @@
     },
     "/v1/queue/offer": {
       "post": {
+        "summary": "QueueOffer offers the Value to the Queue.",
         "operationId": "Stoa_QueueOffer",
         "responses": {
           "200": {
@@ -340,6 +351,7 @@
     },
     "/v1/queue/peek": {
       "get": {
+        "summary": "QueuePeek returns the head of the Queue specified by the Name.",
         "operationId": "Stoa_QueuePeek",
         "responses": {
           "200": {
@@ -370,6 +382,7 @@
     },
     "/v1/queue/poll": {
       "get": {
+        "summary": "QueuePoll removes and returns the head of the Queue specified by the Name.",
         "operationId": "Stoa_QueuePoll",
         "responses": {
           "200": {
@@ -400,6 +413,7 @@
     },
     "/v1/queue/size": {
       "get": {
+        "summary": "QueueSize returns size of the Queue specified by the Name.",
         "operationId": "Stoa_QueueSize",
         "responses": {
           "200": {
@@ -430,6 +444,7 @@
     },
     "/v1/service/watch": {
       "post": {
+        "summary": "Watch watches the Cluster status.",
         "operationId": "Stoa_Watch",
         "responses": {
           "200": {
@@ -534,16 +549,21 @@
         "q": {
           "$ref": "#/definitions/v1QueueStatus"
         }
-      }
+      },
+      "description": "Status contains one of status messages."
     },
     "v1ClientId": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "id": {
           "type": "string",
           "format": "byte"
         }
-      }
+      },
+      "description": "ClientId contains a Client ID."
     },
     "v1ClusterStatus": {
       "type": "object",
@@ -551,7 +571,8 @@
         "s": {
           "$ref": "#/definitions/v1ClusterStatusStatus"
         }
-      }
+      },
+      "description": "ClusterStatus contains a Mutex status returned by Watch call."
     },
     "v1ClusterStatusStatus": {
       "type": "string",
@@ -591,19 +612,17 @@
         "locked": {
           "type": "boolean"
         }
-      }
+      },
+      "description": "MutexStatus contains a Mutex status returned by Watch call."
     },
     "v1QueueStatus": {
       "type": "object",
       "properties": {
         "name": {
           "type": "string"
-        },
-        "payload": {
-          "type": "string",
-          "format": "byte"
         }
-      }
+      },
+      "description": "QueueStatus contains a Mutex status returned by Watch call."
     },
     "v1Result": {
       "type": "object",

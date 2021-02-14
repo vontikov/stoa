@@ -180,24 +180,12 @@ func (m *ClusterCommand) Validate() error {
 			}
 		}
 
-	case *ClusterCommand_Id:
+	case *ClusterCommand_ClientId:
 
-		if v, ok := interface{}(m.GetId()).(interface{ Validate() error }); ok {
+		if v, ok := interface{}(m.GetClientId()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ClusterCommandValidationError{
-					field:  "Id",
-					reason: "embedded message failed validation",
-					cause:  err,
-				}
-			}
-		}
-
-	case *ClusterCommand_Cid:
-
-		if v, ok := interface{}(m.GetCid()).(interface{ Validate() error }); ok {
-			if err := v.Validate(); err != nil {
-				return ClusterCommandValidationError{
-					field:  "Cid",
+					field:  "ClientId",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

@@ -218,14 +218,14 @@ func mutex(f *FSM, n string) mutexRecordPtr {
 }
 
 func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
-	id := m.GetId()
+	id := m.GetClientId()
 	mx := mutex(f, id.Name)
 	r := mx.tryLock(id.Id)
 	return &pb.Result{Ok: r}
 }
 
 func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
-	id := m.GetId()
+	id := m.GetClientId()
 	mx := mutex(f, id.Name)
 	r := mx.unlock(id.Id)
 	return &pb.Result{Ok: r}

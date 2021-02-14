@@ -6,7 +6,7 @@ import (
 
 // TODO
 func processPing(f *FSM, m *pb.ClusterCommand) interface{} {
-	cid := m.GetCid()
+	cid := m.GetClientId()
 	id := cid.Id
 	if f.logger.IsTrace() {
 		f.logger.Trace("ping received", "id", id)

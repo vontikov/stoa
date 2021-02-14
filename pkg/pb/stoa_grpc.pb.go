@@ -17,20 +17,38 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StoaClient interface {
+	// QueueSize returns size of the Queue specified by the Name.
 	QueueSize(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
+	// QueueClear cleares the Queue specified by the Name.
 	QueueClear(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Empty, error)
+	// QueueOffer offers the Value to the Queue.
 	QueueOffer(ctx context.Context, in *Value, opts ...grpc.CallOption) (*Result, error)
+	// QueuePoll removes and returns the head of the Queue specified by the Name.
 	QueuePoll(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
+	// QueuePeek returns the head of the Queue specified by the Name.
 	QueuePeek(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
+	// DictionarySize returns size of the Dictionary specified by the Name.
 	DictionarySize(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
+	// DictionaryClear clears the Dictionary specified by the Name.
 	DictionaryClear(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Empty, error)
+	// DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is
+	// not present.
 	DictionaryPutIfAbsent(ctx context.Context, in *KeyValue, opts ...grpc.CallOption) (*Result, error)
+	// DictionaryPut puts into the Dictionary the KeyValue and returns the old
+	// Value.
 	DictionaryPut(ctx context.Context, in *KeyValue, opts ...grpc.CallOption) (*Value, error)
+	// DictionaryGet returns from the Dictionary the Value specified by the Key.
 	DictionaryGet(ctx context.Context, in *Key, opts ...grpc.CallOption) (*Value, error)
+	// DictionaryRemove removes from the Dictionary the key-value pair specified
+	// by the Key.
 	DictionaryRemove(ctx context.Context, in *Key, opts ...grpc.CallOption) (*Result, error)
+	// DictionaryRange returns from the Dictionary all the key-value pairs.
 	DictionaryRange(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error)
-	MutexTryLock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
-	MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error)
+	// MutexTryLock tries to lock the Mutex.
+	MutexTryLock(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Result, error)
+	// MutexUnlock unlocks the Mutex.
+	MutexUnlock(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Result, error)
+	// Watch watches the Cluster status.
 	Watch(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (Stoa_WatchClient, error)
 }
 
@@ -173,7 +191,7 @@ func (x *stoaDictionaryRangeClient) Recv() (*KeyValue, error) {
 	return m, nil
 }
 
-func (c *stoaClient) MutexTryLock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error) {
+func (c *stoaClient) MutexTryLock(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Result, error) {
 	out := new(Result)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/MutexTryLock", in, out, opts...)
 	if err != nil {
@@ -182,7 +200,7 @@ func (c *stoaClient) MutexTryLock(ctx context.Context, in *Id, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *stoaClient) MutexUnlock(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Result, error) {
+func (c *stoaClient) MutexUnlock(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Result, error) {
 	out := new(Result)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/MutexUnlock", in, out, opts...)
 	if err != nil {
@@ -227,20 +245,38 @@ func (x *stoaWatchClient) Recv() (*Status, error) {
 // All implementations must embed UnimplementedStoaServer
 // for forward compatibility
 type StoaServer interface {
+	// QueueSize returns size of the Queue specified by the Name.
 	QueueSize(context.Context, *Name) (*Value, error)
+	// QueueClear cleares the Queue specified by the Name.
 	QueueClear(context.Context, *Name) (*Empty, error)
+	// QueueOffer offers the Value to the Queue.
 	QueueOffer(context.Context, *Value) (*Result, error)
+	// QueuePoll removes and returns the head of the Queue specified by the Name.
 	QueuePoll(context.Context, *Name) (*Value, error)
+	// QueuePeek returns the head of the Queue specified by the Name.
 	QueuePeek(context.Context, *Name) (*Value, error)
+	// DictionarySize returns size of the Dictionary specified by the Name.
 	DictionarySize(context.Context, *Name) (*Value, error)
+	// DictionaryClear clears the Dictionary specified by the Name.
 	DictionaryClear(context.Context, *Name) (*Empty, error)
+	// DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is
+	// not present.
 	DictionaryPutIfAbsent(context.Context, *KeyValue) (*Result, error)
+	// DictionaryPut puts into the Dictionary the KeyValue and returns the old
+	// Value.
 	DictionaryPut(context.Context, *KeyValue) (*Value, error)
+	// DictionaryGet returns from the Dictionary the Value specified by the Key.
 	DictionaryGet(context.Context, *Key) (*Value, error)
+	// DictionaryRemove removes from the Dictionary the key-value pair specified
+	// by the Key.
 	DictionaryRemove(context.Context, *Key) (*Result, error)
+	// DictionaryRange returns from the Dictionary all the key-value pairs.
 	DictionaryRange(*Name, Stoa_DictionaryRangeServer) error
-	MutexTryLock(context.Context, *Id) (*Result, error)
-	MutexUnlock(context.Context, *Id) (*Result, error)
+	// MutexTryLock tries to lock the Mutex.
+	MutexTryLock(context.Context, *ClientId) (*Result, error)
+	// MutexUnlock unlocks the Mutex.
+	MutexUnlock(context.Context, *ClientId) (*Result, error)
+	// Watch watches the Cluster status.
 	Watch(*ClientId, Stoa_WatchServer) error
 	mustEmbedUnimplementedStoaServer()
 }
@@ -285,10 +321,10 @@ func (UnimplementedStoaServer) DictionaryRemove(context.Context, *Key) (*Result,
 func (UnimplementedStoaServer) DictionaryRange(*Name, Stoa_DictionaryRangeServer) error {
 	return status.Errorf(codes.Unimplemented, "method DictionaryRange not implemented")
 }
-func (UnimplementedStoaServer) MutexTryLock(context.Context, *Id) (*Result, error) {
+func (UnimplementedStoaServer) MutexTryLock(context.Context, *ClientId) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MutexTryLock not implemented")
 }
-func (UnimplementedStoaServer) MutexUnlock(context.Context, *Id) (*Result, error) {
+func (UnimplementedStoaServer) MutexUnlock(context.Context, *ClientId) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MutexUnlock not implemented")
 }
 func (UnimplementedStoaServer) Watch(*ClientId, Stoa_WatchServer) error {
@@ -527,7 +563,7 @@ func (x *stoaDictionaryRangeServer) Send(m *KeyValue) error {
 }
 
 func _Stoa_MutexTryLock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Id)
+	in := new(ClientId)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -539,13 +575,13 @@ func _Stoa_MutexTryLock_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/MutexTryLock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).MutexTryLock(ctx, req.(*Id))
+		return srv.(StoaServer).MutexTryLock(ctx, req.(*ClientId))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Stoa_MutexUnlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Id)
+	in := new(ClientId)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -557,7 +593,7 @@ func _Stoa_MutexUnlock_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/MutexUnlock",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).MutexUnlock(ctx, req.(*Id))
+		return srv.(StoaServer).MutexUnlock(ctx, req.(*ClientId))
 	}
 	return interceptor(ctx, in, info, handler)
 }

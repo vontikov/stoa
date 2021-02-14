@@ -526,7 +526,7 @@ var (
 )
 
 func request_Stoa_MutexTryLock_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Id
+	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -542,7 +542,7 @@ func request_Stoa_MutexTryLock_0(ctx context.Context, marshaler runtime.Marshale
 }
 
 func local_request_Stoa_MutexTryLock_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Id
+	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -562,7 +562,7 @@ var (
 )
 
 func request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Id
+	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
@@ -578,7 +578,7 @@ func request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Marshaler
 }
 
 func local_request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Id
+	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {

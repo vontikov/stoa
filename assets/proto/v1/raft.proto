@@ -28,8 +28,7 @@ message ClusterCommand {
     Value    value     = 7;
     Key      key       = 8;
     KeyValue key_value = 9;
-    Id       id        = 10;
-    ClientId cid       = 11;
+    ClientId client_id = 10;
   }
 
   // Type is a Raft claster command type.

@@ -8,14 +8,14 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-func (s *server) MutexTryLock(ctx context.Context, v *pb.Id) (*pb.Result, error) {
+func (s *server) MutexTryLock(ctx context.Context, v *pb.ClientId) (*pb.Result, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_MUTEX_TRY_LOCK,
-		Payload: &pb.ClusterCommand_Id{Id: v},
+		Payload: &pb.ClusterCommand_ClientId{ClientId: v},
 	}
 
 	if err := processMetadata(ctx, &msg); err != nil {
@@ -43,14 +43,14 @@ func (s *server) MutexTryLock(ctx context.Context, v *pb.Id) (*pb.Result, error)
 	panic(ErrIncorrectResponseType)
 }
 
-func (s *server) MutexUnlock(ctx context.Context, v *pb.Id) (*pb.Result, error) {
+func (s *server) MutexUnlock(ctx context.Context, v *pb.ClientId) (*pb.Result, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_MUTEX_UNLOCK,
-		Payload: &pb.ClusterCommand_Id{Id: v},
+		Payload: &pb.ClusterCommand_ClientId{ClientId: v},
 	}
 
 	if err := processMetadata(ctx, &msg); err != nil {

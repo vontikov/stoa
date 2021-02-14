@@ -360,7 +360,6 @@ func (c *client) watchLoop(ctx context.Context, stream pb.Stoa_WatchClient) erro
 			}
 			c.logger.Warn("status error", "message", err)
 			return err
-
 		}
 	}
 }

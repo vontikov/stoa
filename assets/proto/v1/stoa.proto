@@ -7,14 +7,14 @@ import "common.proto";
 import "google/api/annotations.proto";
 import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
 
-// Name contains no data.
+// Name contains an object name.
 message Name {
   string name = 1 [(validate.rules).string.min_len=1];
 }
 
-// Id contains ID.
-message Id {
-  string name = 1 [(validate.rules).string.min_len=1];
+// ClientId contains a Client ID.
+message ClientId {
+  string name = 1 [(validate.rules).string.min_len=0];
   bytes id    = 2 [(validate.rules).bytes.min_len=1];
 }
 
@@ -37,20 +37,18 @@ message KeyValue {
   bytes value = 3 [(validate.rules).bytes.min_len = 1];
 }
 
-message ClientId {
-  bytes id = 1 [(validate.rules).bytes.min_len=1];
-}
-
+// MutexStatus contains a Mutex status returned by Watch call.
 message MutexStatus {
   string name = 1;
   bool locked = 2;
 }
 
+// QueueStatus contains a Mutex status returned by Watch call.
 message QueueStatus {
   string name   = 1;
-  bytes payload = 2;
 }
 
+// ClusterStatus contains a Mutex status returned by Watch call.
 message ClusterStatus {
   Status s = 1;
 
@@ -60,6 +58,7 @@ message ClusterStatus {
   }
 }
 
+// Status contains one of status messages.
 message Status {
   oneof u {
     ClusterStatus c  = 1;
@@ -72,18 +71,21 @@ message Status {
 // Stoa performs the storage operations.
 service Stoa {
 
+  // QueueSize returns size of the Queue specified by the Name.
   rpc QueueSize (Name) returns (Value) {
     option(google.api.http) = {
       get: "/v1/queue/size",
     };
   }
 
+  // QueueClear cleares the Queue specified by the Name.
   rpc QueueClear (Name) returns (Empty) {
     option(google.api.http) = {
       post: "/v1/queue/clear",
     };
   }
 
+  // QueueOffer offers the Value to the Queue.
   rpc QueueOffer (Value) returns (Result) {
     option(google.api.http) = {
       post: "/v1/queue/offer",
@@ -91,30 +93,36 @@ service Stoa {
     };
   }
 
+  // QueuePoll removes and returns the head of the Queue specified by the Name.
   rpc QueuePoll (Name) returns (Value) {
     option(google.api.http) = {
       get: "/v1/queue/poll",
     };
   }
 
+  // QueuePeek returns the head of the Queue specified by the Name.
   rpc QueuePeek (Name) returns (Value) {
     option(google.api.http) = {
       get: "/v1/queue/peek",
     };
   }
 
+  // DictionarySize returns size of the Dictionary specified by the Name.
   rpc DictionarySize (Name) returns (Value) {
     option(google.api.http) = {
       get: "/v1/dictionary/size",
     };
   }
 
+  // DictionaryClear clears the Dictionary specified by the Name.
   rpc DictionaryClear (Name) returns (Empty) {
     option(google.api.http) = {
       post: "/v1/dictionary/clear",
     };
   }
 
+  // DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is
+  // not present.
   rpc DictionaryPutIfAbsent (KeyValue) returns (Result) {
     option(google.api.http) = {
       post: "/v1/dictionary/putIfAbsent",
@@ -122,6 +130,8 @@ service Stoa {
     };
   }
 
+  // DictionaryPut puts into the Dictionary the KeyValue and returns the old
+  // Value.
   rpc DictionaryPut (KeyValue) returns (Value) {
     option(google.api.http) = {
       post: "/v1/dictionary/put",
@@ -129,36 +139,43 @@ service Stoa {
     };
   }
 
+  // DictionaryGet returns from the Dictionary the Value specified by the Key.
   rpc DictionaryGet (Key) returns (Value) {
     option(google.api.http) = {
       get: "/v1/dictionary/get/{name}/{key}",
     };
   }
 
+  // DictionaryRemove removes from the Dictionary the key-value pair specified
+  // by the Key.
   rpc DictionaryRemove (Key) returns (Result) {
     option(google.api.http) = {
       post: "/storage/dictionary/delete/{name}/{key}",
     };
   }
 
+  // DictionaryRange returns from the Dictionary all the key-value pairs.
   rpc DictionaryRange (Name) returns (stream KeyValue) {
     option(google.api.http) = {
       get: "/v1/dictionary/range",
     };
   }
 
-  rpc MutexTryLock (Id) returns (Result) {
+  // MutexTryLock tries to lock the Mutex.
+  rpc MutexTryLock (ClientId) returns (Result) {
     option(google.api.http) = {
       post: "/v1/mutex/trylock",
     };
   }
 
-  rpc MutexUnlock (Id) returns (Result) {
+  // MutexUnlock unlocks the Mutex.
+  rpc MutexUnlock (ClientId) returns (Result) {
     option(google.api.http) = {
       post: "/v1/mutex/unlock",
     };
   }
 
+  // Watch watches the Cluster status.
   rpc Watch (ClientId) returns (stream Status) {
     option(google.api.http) = {
       post: "/v1/service/watch",

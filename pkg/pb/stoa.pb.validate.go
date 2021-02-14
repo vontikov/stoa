@@ -107,22 +107,22 @@ var _ interface {
 	ErrorName() string
 } = NameValidationError{}
 
-// Validate checks the field values on Id with the rules defined in the proto
-// definition for this message. If any rules are violated, an error is returned.
-func (m *Id) Validate() error {
+// Validate checks the field values on ClientId with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *ClientId) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		return IdValidationError{
+	if utf8.RuneCountInString(m.GetName()) < 0 {
+		return ClientIdValidationError{
 			field:  "Name",
-			reason: "value length must be at least 1 runes",
+			reason: "value length must be at least 0 runes",
 		}
 	}
 
 	if len(m.GetId()) < 1 {
-		return IdValidationError{
+		return ClientIdValidationError{
 			field:  "Id",
 			reason: "value length must be at least 1 bytes",
 		}
@@ -131,9 +131,9 @@ func (m *Id) Validate() error {
 	return nil
 }
 
-// IdValidationError is the validation error returned by Id.Validate if the
-// designated constraints aren't met.
-type IdValidationError struct {
+// ClientIdValidationError is the validation error returned by
+// ClientId.Validate if the designated constraints aren't met.
+type ClientIdValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -141,22 +141,22 @@ type IdValidationError struct {
 }
 
 // Field function returns field value.
-func (e IdValidationError) Field() string { return e.field }
+func (e ClientIdValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e IdValidationError) Reason() string { return e.reason }
+func (e ClientIdValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e IdValidationError) Cause() error { return e.cause }
+func (e ClientIdValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e IdValidationError) Key() bool { return e.key }
+func (e ClientIdValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e IdValidationError) ErrorName() string { return "IdValidationError" }
+func (e ClientIdValidationError) ErrorName() string { return "ClientIdValidationError" }
 
 // Error satisfies the builtin error interface
-func (e IdValidationError) Error() string {
+func (e ClientIdValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -168,14 +168,14 @@ func (e IdValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sId.%s: %s%s",
+		"invalid %sClientId.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = IdValidationError{}
+var _ error = ClientIdValidationError{}
 
 var _ interface {
 	Field() string
@@ -183,7 +183,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = IdValidationError{}
+} = ClientIdValidationError{}
 
 // Validate checks the field values on Value with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -426,77 +426,6 @@ var _ interface {
 	ErrorName() string
 } = KeyValueValidationError{}
 
-// Validate checks the field values on ClientId with the rules defined in the
-// proto definition for this message. If any rules are violated, an error is returned.
-func (m *ClientId) Validate() error {
-	if m == nil {
-		return nil
-	}
-
-	if len(m.GetId()) < 1 {
-		return ClientIdValidationError{
-			field:  "Id",
-			reason: "value length must be at least 1 bytes",
-		}
-	}
-
-	return nil
-}
-
-// ClientIdValidationError is the validation error returned by
-// ClientId.Validate if the designated constraints aren't met.
-type ClientIdValidationError struct {
-	field  string
-	reason string
-	cause  error
-	key    bool
-}
-
-// Field function returns field value.
-func (e ClientIdValidationError) Field() string { return e.field }
-
-// Reason function returns reason value.
-func (e ClientIdValidationError) Reason() string { return e.reason }
-
-// Cause function returns cause value.
-func (e ClientIdValidationError) Cause() error { return e.cause }
-
-// Key function returns key value.
-func (e ClientIdValidationError) Key() bool { return e.key }
-
-// ErrorName returns error name.
-func (e ClientIdValidationError) ErrorName() string { return "ClientIdValidationError" }
-
-// Error satisfies the builtin error interface
-func (e ClientIdValidationError) Error() string {
-	cause := ""
-	if e.cause != nil {
-		cause = fmt.Sprintf(" | caused by: %v", e.cause)
-	}
-
-	key := ""
-	if e.key {
-		key = "key for "
-	}
-
-	return fmt.Sprintf(
-		"invalid %sClientId.%s: %s%s",
-		key,
-		e.field,
-		e.reason,
-		cause)
-}
-
-var _ error = ClientIdValidationError{}
-
-var _ interface {
-	Field() string
-	Reason() string
-	Key() bool
-	Cause() error
-	ErrorName() string
-} = ClientIdValidationError{}
-
 // Validate checks the field values on MutexStatus with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
@@ -575,8 +504,6 @@ func (m *QueueStatus) Validate() error {
 	}
 
 	// no validation rules for Name
-
-	// no validation rules for Payload
 
 	return nil
 }

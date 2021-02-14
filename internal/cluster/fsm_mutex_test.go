@@ -39,7 +39,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 
 	m := &pb.ClusterCommand{
 		Command: pb.ClusterCommand_MUTEX_TRY_LOCK,
-		Payload: &pb.ClusterCommand_Id{Id: &pb.Id{Id: id}},
+		Payload: &pb.ClusterCommand_ClientId{ClientId: &pb.ClientId{Id: id}},
 	}
 
 	r := mutexTryLock(f, m).(*pb.Result)
@@ -51,7 +51,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 		go func(n int) {
 			m := &pb.ClusterCommand{
 				Command: pb.ClusterCommand_MUTEX_TRY_LOCK,
-				Payload: &pb.ClusterCommand_Id{Id: &pb.Id{Id: []byte(uuid.New().String())}},
+				Payload: &pb.ClusterCommand_ClientId{ClientId: &pb.ClientId{Id: []byte(uuid.New().String())}},
 			}
 
 			r := mutexTryLock(f, m).(*pb.Result)

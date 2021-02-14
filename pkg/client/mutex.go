@@ -24,7 +24,7 @@ func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err er
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	msg := pb.Id{
+	msg := pb.ClientId{
 		Name: m.name,
 		Id:   m.clientID,
 	}
@@ -57,7 +57,7 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err err
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	msg := pb.Id{
+	msg := pb.ClientId{
 		Name: m.name,
 		Id:   m.clientID,
 	}

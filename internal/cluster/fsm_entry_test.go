@@ -37,5 +37,4 @@ func TestFSMEntryMarshalling(t *testing.T) {
 		assert.Nil(err)
 		assert.Equal(src, dst)
 	}
-
 }
