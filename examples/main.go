@@ -45,10 +45,7 @@ func main() {
 	if *bootstrap == "" {
 		log.Fatal("bootstrap must not be empty")
 	}
-	client, err = stoa.New(
-		stoa.WithContext(ctx),
-		stoa.WithPeers(*bootstrap),
-	)
+	client, err = stoa.New(ctx, stoa.WithBootstrap(*bootstrap))
 	if err != nil {
 		log.Fatal("client error: ", err)
 	}

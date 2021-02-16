@@ -44,7 +44,7 @@ type client struct {
 	logger          logging.Logger
 	loggingLevel    string
 	loggerName      string
-	peers           string
+	bootstrap       string
 	pingPeriod      time.Duration
 	retryTimeout    time.Duration
 
@@ -61,10 +61,10 @@ type client struct {
 }
 
 // New creates and returns a new Client instance.
-func New(opts ...Option) (Client, error) {
+func New(ctx context.Context, opts ...Option) (Client, error) {
 	c := client{
+		ctx:             ctx,
 		callOptions:     []grpc.CallOption{grpc.WaitForReady(true)},
-		ctx:             context.Background(),
 		dialTimeout:     defaultDialTimeout,
 		id:              genID(common.ClientIDSize),
 		idleStrategy:    cc.NewSleepingIdleStrategy(200 * time.Millisecond),
@@ -163,7 +163,7 @@ func (c *client) dial() error {
 
 	target := fmt.Sprintf("%s:///%s", resolver.Scheme, "stoa")
 
-	resolver, err := resolver.New(c.peers)
+	resolver, err := resolver.New(c.bootstrap)
 	if err != nil {
 		return err
 	}

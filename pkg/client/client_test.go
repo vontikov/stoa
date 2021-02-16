@@ -29,7 +29,7 @@ func TestClientStart(t *testing.T) {
 	_, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
 	assert.Nil(err)
 
-	client, err := New(WithContext(ctx), WithPeers(bootstrap))
+	client, err := New(ctx, WithBootstrap(bootstrap))
 	assert.Nil(err)
 
 	dict := client.Dictionary(dictName)
@@ -88,8 +88,8 @@ func TestClientWatch(t *testing.T) {
 		clientCtx, clientCancel := context.WithCancel(context.Background())
 		defer clientCancel()
 		client, err := New(
-			WithContext(clientCtx),
-			WithPeers(bootstrap),
+			clientCtx,
+			WithBootstrap(bootstrap),
 			WithLoggerName("stoa-consumer"),
 		)
 		assert.Nil(err)
@@ -139,8 +139,8 @@ func TestClientWatch(t *testing.T) {
 		defer clientCancel()
 
 		client, err := New(
-			WithContext(clientCtx),
-			WithPeers(bootstrap),
+			clientCtx,
+			WithBootstrap(bootstrap),
 			WithLoggerName("stoa-producer"),
 		)
 		assert.Nil(err)
@@ -210,7 +210,7 @@ func TestMutexExpiration(t *testing.T) {
 	g.Go(func() error {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		client, err := New(WithContext(ctx), WithPeers(bootstrap))
+		client, err := New(ctx, WithBootstrap(bootstrap))
 		if err != nil {
 			return err
 		}
@@ -242,7 +242,7 @@ func TestMutexExpiration(t *testing.T) {
 	g.Go(func() error {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		client, err := New(WithContext(ctx), WithPeers(bootstrap))
+		client, err := New(ctx, WithBootstrap(bootstrap))
 		if err != nil {
 			return err
 		}

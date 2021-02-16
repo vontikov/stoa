@@ -23,7 +23,7 @@ func TestMutex(t *testing.T) {
 
 	_, peers, err := test.StartCluster(ctx, basePort, clusterSize)
 
-	client0, err := New(WithContext(ctx), WithPeers(peers))
+	client0, err := New(ctx, WithBootstrap(peers))
 	assert.Nil(err)
 
 	mx0 := client0.Mutex(muxName)
@@ -35,7 +35,7 @@ func TestMutex(t *testing.T) {
 	assert.Nil(err)
 	assert.False(ok)
 
-	client1, err := New(WithContext(ctx), WithPeers(peers))
+	client1, err := New(ctx, WithBootstrap(peers))
 	assert.Nil(err)
 
 	mx1 := client1.Mutex(muxName)

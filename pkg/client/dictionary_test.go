@@ -34,7 +34,7 @@ func TestDictionary(t *testing.T) {
 
 	_, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
 
-	client, err := New(WithContext(ctx), WithPeers(bootstrap))
+	client, err := New(ctx, WithBootstrap(bootstrap))
 	assert.Nil(err)
 
 	dict := client.Dictionary(dictName)
@@ -146,7 +146,7 @@ func TestDictionaryRange(t *testing.T) {
 	peers, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
 	assert.Nil(err)
 
-	client, err := New(WithContext(ctx), WithPeers(bootstrap))
+	client, err := New(ctx, WithBootstrap(bootstrap))
 	assert.Nil(err)
 
 	dict := client.Dictionary(dictName)

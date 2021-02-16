@@ -29,7 +29,7 @@ func TestQueue(t *testing.T) {
 	_, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
 	assert.Nil(err)
 
-	client, err := New(WithContext(ctx), WithPeers(bootstrap))
+	client, err := New(ctx, WithBootstrap(bootstrap))
 	assert.Nil(err)
 
 	queue := client.Queue(queueName)

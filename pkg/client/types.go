@@ -98,11 +98,6 @@ type Option func(*client)
 // WithCallOptions sets gRPC call options.
 func WithCallOptions(v ...grpc.CallOption) Option { return func(o *client) { o.callOptions = v } }
 
-// XXX remove
-// WithContext explicitly provides the context.Context which carries the
-// Client's termination signal.
-func WithContext(v context.Context) Option { return func(o *client) { o.ctx = v } }
-
 // WithDialTimeout changes the default gRPC dial timeout.
 func WithDialTimeout(v time.Duration) Option { return func(o *client) { o.dialTimeout = v } }
 
@@ -125,8 +120,8 @@ func WithLoggingLevel(v string) Option { return func(o *client) { o.loggingLevel
 // WithLoggerName sets the Client's logger name.
 func WithLoggerName(v string) Option { return func(o *client) { o.loggerName = v } }
 
-// WithPeers sets the Cluster peers to connect to.
-func WithPeers(v string) Option { return func(o *client) { o.peers = v } }
+// WithBootstrap sets the Cluster peers to connect to.
+func WithBootstrap(v string) Option { return func(o *client) { o.bootstrap = v } }
 
 // WithRetryTimeout defines the timeout to retry the call to the Cluster
 // within.
