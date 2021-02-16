@@ -9,6 +9,7 @@ import (
 	"io"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/raft"
@@ -16,6 +17,8 @@ import (
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
+
+var timeNow = time.Now
 
 var statusChanSize = 1024
 

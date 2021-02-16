@@ -442,6 +442,29 @@
         ]
       }
     },
+    "/v1/service/ping": {
+      "post": {
+        "summary": "Ping pings the Cluster.",
+        "operationId": "Stoa_Ping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1Empty"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "tags": [
+          "Stoa"
+        ]
+      }
+    },
     "/v1/service/watch": {
       "post": {
         "summary": "Watch watches the Cluster status.",
@@ -622,7 +645,7 @@
           "type": "string"
         }
       },
-      "description": "QueueStatus contains a Mutex status returned by Watch call."
+      "description": "QueueStatus contains a Queue status returned by Watch call."
     },
     "v1Result": {
       "type": "object",

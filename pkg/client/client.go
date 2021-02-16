@@ -34,16 +34,18 @@ var ErrWatchHandshake = errors.New("watch handshake")
 
 // client is the Client implementation.
 type client struct {
-	id              []byte
 	callOptions     []grpc.CallOption
 	ctx             context.Context
 	dialTimeout     time.Duration
 	failFast        bool
+	id              []byte
 	idleStrategy    cc.IdleStrategy
 	keepAlivePeriod time.Duration
 	logger          logging.Logger
+	loggingLevel    string
 	loggerName      string
 	peers           string
+	pingPeriod      time.Duration
 	retryTimeout    time.Duration
 
 	qs cc.Map
@@ -61,16 +63,16 @@ type client struct {
 // New creates and returns a new Client instance.
 func New(opts ...Option) (Client, error) {
 	c := client{
-		id: genID(common.ClientIDSize),
-
 		callOptions:     []grpc.CallOption{grpc.WaitForReady(true)},
 		ctx:             context.Background(),
 		dialTimeout:     defaultDialTimeout,
+		id:              genID(common.ClientIDSize),
 		idleStrategy:    cc.NewSleepingIdleStrategy(200 * time.Millisecond),
 		keepAlivePeriod: defaultKeepAlivePeriod,
+		loggingLevel:    defaultLoggerLevel,
+		loggerName:      defaultLoggerName,
+		pingPeriod:      defaultPingPeriod,
 		retryTimeout:    defaultRetryTimeout,
-
-		logger: logging.NewLogger(defaultLoggerName),
 
 		qs: cc.NewSynchronizedMap(0),
 		ds: cc.NewSynchronizedMap(0),
@@ -81,6 +83,9 @@ func New(opts ...Option) (Client, error) {
 		o(&c)
 	}
 
+	logging.SetLevel(c.loggingLevel)
+	c.logger = logging.NewLogger(c.loggerName)
+
 	if err := c.dial(); err != nil {
 		return nil, err
 	}
@@ -89,10 +94,8 @@ func New(opts ...Option) (Client, error) {
 		return nil, err
 	}
 
-	go func() {
-		<-c.ctx.Done()
-		c.cleanup()
-	}()
+	go c.ping()
+	go c.cleanup()
 
 	return &c, nil
 }
@@ -212,7 +215,29 @@ func (c *client) dial() error {
 	return g.Wait()
 }
 
+func (c *client) ping() {
+	ctx := c.ctx
+	t := time.NewTicker(c.pingPeriod)
+	m := pb.ClientId{Id: c.id}
+	for {
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return
+		case <-t.C:
+			if c.logger.IsTrace() {
+				c.logger.Trace("sending ping", "id", c.id)
+			}
+			_, err := c.handle.Ping(ctx, &m, c.callOptions...)
+			if err != nil {
+				c.logger.Warn("ping error", "message", err)
+			}
+		}
+	}
+}
+
 func (c *client) cleanup() {
+	<-c.ctx.Done()
 	c.logger.Debug("cleaninig up...")
 
 	c.stateMutex.Lock()
@@ -375,17 +400,34 @@ func (c *client) processStatus(st *pb.Status) error {
 			return errors.New("leadership lost")
 		}
 	case *pb.Status_Q:
-		if v := c.qs.Get(st.GetQ().Name); v != nil {
+		qs := st.GetQ()
+		if v := c.qs.Get(qs.Name); v != nil {
 			q := v.(*queue)
 			q.mu.RLock()
-			if w := q.watch; w != nil {
+			w := q.watch
+			q.mu.RUnlock()
+			if w != nil {
 				select {
-				case w <- st:
+				case w <- qs:
 				default:
-					c.logger.Warn("channel blocked")
+					c.logger.Warn("queue watch channel blocked", "name", qs.Name)
 				}
 			}
-			q.mu.RUnlock()
+		}
+	case *pb.Status_M:
+		ms := st.GetM()
+		if v := c.ms.Get(ms.Name); v != nil {
+			m := v.(*mutex)
+			m.mu.RLock()
+			w := m.watch
+			m.mu.RUnlock()
+			if w != nil {
+				select {
+				case w <- ms:
+				default:
+					c.logger.Warn("mutex watch channel blocked", "name", ms.Name)
+				}
+			}
 		}
 	}
 	return nil

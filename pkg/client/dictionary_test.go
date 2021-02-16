@@ -128,7 +128,7 @@ loop:
 
 func TestDictionaryRange(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping test in short mode.")
+		t.Skip("skipping in short mode")
 	}
 
 	const (

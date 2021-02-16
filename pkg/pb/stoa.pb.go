@@ -409,7 +409,7 @@ func (x *MutexStatus) GetLocked() bool {
 	return false
 }
 
-// QueueStatus contains a Mutex status returned by Watch call.
+// QueueStatus contains a Queue status returned by Watch call.
 type QueueStatus struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -676,7 +676,7 @@ var file_stoa_proto_rawDesc = []byte{
 	0x01, 0x71, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75,
 	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73,
 	0x74, 0x6f, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x74, 0x61, 0x74,
-	0x75, 0x73, 0x48, 0x00, 0x52, 0x01, 0x71, 0x42, 0x03, 0x0a, 0x01, 0x75, 0x32, 0x89, 0x0e, 0x0a,
+	0x75, 0x73, 0x48, 0x00, 0x52, 0x01, 0x71, 0x42, 0x03, 0x0a, 0x01, 0x75, 0x32, 0xf6, 0x0e, 0x0a,
 	0x04, 0x53, 0x74, 0x6f, 0x61, 0x12, 0x6a, 0x0a, 0x09, 0x51, 0x75, 0x65, 0x75, 0x65, 0x53, 0x69,
 	0x7a, 0x65, 0x12, 0x21, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2e,
 	0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f, 0x61, 0x2e, 0x76, 0x31,
@@ -789,8 +789,15 @@ var file_stoa_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f,
 	0x61, 0x2e, 0x76, 0x31, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x22, 0x19, 0x82, 0xd3, 0xe4,
 	0x93, 0x02, 0x13, 0x22, 0x11, 0x2f, 0x76, 0x31, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
-	0x2f, 0x77, 0x61, 0x74, 0x63, 0x68, 0x30, 0x01, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x3b, 0x70, 0x62,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x2f, 0x77, 0x61, 0x74, 0x63, 0x68, 0x30, 0x01, 0x12, 0x6b, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67,
+	0x12, 0x25, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f,
+	0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74, 0x6f, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x43,
+	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x1a, 0x22, 0x2e, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2e, 0x76, 0x6f, 0x6e, 0x74, 0x69, 0x6b, 0x6f, 0x76, 0x2e, 0x73, 0x74,
+	0x6f, 0x61, 0x2e, 0x76, 0x31, 0x2e, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x22, 0x18, 0x82, 0xd3, 0xe4,
+	0x93, 0x02, 0x12, 0x22, 0x10, 0x2f, 0x76, 0x31, 0x2f, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65,
+	0x2f, 0x70, 0x69, 0x6e, 0x67, 0x42, 0x06, 0x5a, 0x04, 0x2e, 0x3b, 0x70, 0x62, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -842,23 +849,25 @@ var file_stoa_proto_depIdxs = []int32{
 	2,  // 17: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:input_type -> github.com.vontikov.stoa.v1.ClientId
 	2,  // 18: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:input_type -> github.com.vontikov.stoa.v1.ClientId
 	2,  // 19: github.com.vontikov.stoa.v1.Stoa.Watch:input_type -> github.com.vontikov.stoa.v1.ClientId
-	3,  // 20: github.com.vontikov.stoa.v1.Stoa.QueueSize:output_type -> github.com.vontikov.stoa.v1.Value
-	10, // 21: github.com.vontikov.stoa.v1.Stoa.QueueClear:output_type -> github.com.vontikov.stoa.v1.Empty
-	11, // 22: github.com.vontikov.stoa.v1.Stoa.QueueOffer:output_type -> github.com.vontikov.stoa.v1.Result
-	3,  // 23: github.com.vontikov.stoa.v1.Stoa.QueuePoll:output_type -> github.com.vontikov.stoa.v1.Value
-	3,  // 24: github.com.vontikov.stoa.v1.Stoa.QueuePeek:output_type -> github.com.vontikov.stoa.v1.Value
-	3,  // 25: github.com.vontikov.stoa.v1.Stoa.DictionarySize:output_type -> github.com.vontikov.stoa.v1.Value
-	10, // 26: github.com.vontikov.stoa.v1.Stoa.DictionaryClear:output_type -> github.com.vontikov.stoa.v1.Empty
-	11, // 27: github.com.vontikov.stoa.v1.Stoa.DictionaryPutIfAbsent:output_type -> github.com.vontikov.stoa.v1.Result
-	3,  // 28: github.com.vontikov.stoa.v1.Stoa.DictionaryPut:output_type -> github.com.vontikov.stoa.v1.Value
-	3,  // 29: github.com.vontikov.stoa.v1.Stoa.DictionaryGet:output_type -> github.com.vontikov.stoa.v1.Value
-	11, // 30: github.com.vontikov.stoa.v1.Stoa.DictionaryRemove:output_type -> github.com.vontikov.stoa.v1.Result
-	5,  // 31: github.com.vontikov.stoa.v1.Stoa.DictionaryRange:output_type -> github.com.vontikov.stoa.v1.KeyValue
-	11, // 32: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:output_type -> github.com.vontikov.stoa.v1.Result
-	11, // 33: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:output_type -> github.com.vontikov.stoa.v1.Result
-	9,  // 34: github.com.vontikov.stoa.v1.Stoa.Watch:output_type -> github.com.vontikov.stoa.v1.Status
-	20, // [20:35] is the sub-list for method output_type
-	5,  // [5:20] is the sub-list for method input_type
+	2,  // 20: github.com.vontikov.stoa.v1.Stoa.Ping:input_type -> github.com.vontikov.stoa.v1.ClientId
+	3,  // 21: github.com.vontikov.stoa.v1.Stoa.QueueSize:output_type -> github.com.vontikov.stoa.v1.Value
+	10, // 22: github.com.vontikov.stoa.v1.Stoa.QueueClear:output_type -> github.com.vontikov.stoa.v1.Empty
+	11, // 23: github.com.vontikov.stoa.v1.Stoa.QueueOffer:output_type -> github.com.vontikov.stoa.v1.Result
+	3,  // 24: github.com.vontikov.stoa.v1.Stoa.QueuePoll:output_type -> github.com.vontikov.stoa.v1.Value
+	3,  // 25: github.com.vontikov.stoa.v1.Stoa.QueuePeek:output_type -> github.com.vontikov.stoa.v1.Value
+	3,  // 26: github.com.vontikov.stoa.v1.Stoa.DictionarySize:output_type -> github.com.vontikov.stoa.v1.Value
+	10, // 27: github.com.vontikov.stoa.v1.Stoa.DictionaryClear:output_type -> github.com.vontikov.stoa.v1.Empty
+	11, // 28: github.com.vontikov.stoa.v1.Stoa.DictionaryPutIfAbsent:output_type -> github.com.vontikov.stoa.v1.Result
+	3,  // 29: github.com.vontikov.stoa.v1.Stoa.DictionaryPut:output_type -> github.com.vontikov.stoa.v1.Value
+	3,  // 30: github.com.vontikov.stoa.v1.Stoa.DictionaryGet:output_type -> github.com.vontikov.stoa.v1.Value
+	11, // 31: github.com.vontikov.stoa.v1.Stoa.DictionaryRemove:output_type -> github.com.vontikov.stoa.v1.Result
+	5,  // 32: github.com.vontikov.stoa.v1.Stoa.DictionaryRange:output_type -> github.com.vontikov.stoa.v1.KeyValue
+	11, // 33: github.com.vontikov.stoa.v1.Stoa.MutexTryLock:output_type -> github.com.vontikov.stoa.v1.Result
+	11, // 34: github.com.vontikov.stoa.v1.Stoa.MutexUnlock:output_type -> github.com.vontikov.stoa.v1.Result
+	9,  // 35: github.com.vontikov.stoa.v1.Stoa.Watch:output_type -> github.com.vontikov.stoa.v1.Status
+	10, // 36: github.com.vontikov.stoa.v1.Stoa.Ping:output_type -> github.com.vontikov.stoa.v1.Empty
+	21, // [21:37] is the sub-list for method output_type
+	5,  // [5:21] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name

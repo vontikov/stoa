@@ -4,12 +4,11 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-// TODO
 func processPing(f *FSM, m *pb.ClusterCommand) interface{} {
-	cid := m.GetClientId()
-	id := cid.Id
+	id := m.GetClientId().Id
+
 	if f.logger.IsTrace() {
-		f.logger.Trace("ping received", "id", id)
+		f.logger.Trace("ping received", "id", string(id))
 	}
 
 	for _, k := range f.ms.Keys() {
@@ -17,5 +16,5 @@ func processPing(f *FSM, m *pb.ClusterCommand) interface{} {
 			v.(*mutexRecord).touch(id)
 		}
 	}
-	return &pb.Empty{}
+	return nil
 }

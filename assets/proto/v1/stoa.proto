@@ -43,7 +43,7 @@ message MutexStatus {
   bool locked = 2;
 }
 
-// QueueStatus contains a Mutex status returned by Watch call.
+// QueueStatus contains a Queue status returned by Watch call.
 message QueueStatus {
   string name   = 1;
 }
@@ -179,6 +179,13 @@ service Stoa {
   rpc Watch (ClientId) returns (stream Status) {
     option(google.api.http) = {
       post: "/v1/service/watch",
+    };
+  }
+
+  // Ping pings the Cluster.
+  rpc Ping (ClientId) returns (Empty) {
+    option(google.api.http) = {
+      post: "/v1/service/ping",
     };
   }
 }

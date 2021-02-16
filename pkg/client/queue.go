@@ -10,13 +10,13 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-const queueWatchChanSize = 1024
+const watchChanSize = 1024
 
 type queue struct {
 	base
 
 	mu    sync.RWMutex // protects following fields
-	watch chan interface{}
+	watch chan *pb.QueueStatus
 }
 
 func (c *client) newQueue(name string) *queue {
@@ -162,10 +162,10 @@ func (q *queue) Peek(ctx context.Context, opts ...CallOption) (r []byte, err err
 }
 
 // Watch implements Queue.Watch.
-func (q *queue) Watch() <-chan interface{} {
+func (q *queue) Watch() <-chan *pb.QueueStatus {
 	q.mu.Lock()
 	if q.watch == nil {
-		q.watch = make(chan interface{}, queueWatchChanSize)
+		q.watch = make(chan *pb.QueueStatus, watchChanSize)
 	}
 	q.mu.Unlock()
 	return q.watch

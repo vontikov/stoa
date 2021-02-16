@@ -20,6 +20,7 @@ const (
 	defaultBindPort    = 3499
 	defaultBindAddress = "0.0.0.0"
 	defaultLoggerName  = "stoa-raft"
+	defaultPingPeriod  = 1000 * time.Millisecond
 )
 
 // Cluster is a higher level representation of raft.Raft cluster endpoint.
@@ -140,22 +141,22 @@ func parsePeers(in string) ([]*peer, error) {
 
 type options struct {
 	bindAddr   string
-	peers      []*peer
 	loggerName string
+	peers      []*peer
+	pingPeriod time.Duration
 }
 
 func newOptions(opts ...Option) (*options, error) {
-	cfg := &options{}
+	cfg := &options{
+		bindAddr:   defaultBindAddress,
+		loggerName: defaultLoggerName,
+		pingPeriod: defaultPingPeriod,
+	}
+
 	for _, o := range opts {
 		if err := o(cfg); err != nil {
 			return nil, err
 		}
-	}
-	if cfg.bindAddr == "" {
-		cfg.bindAddr = defaultBindAddress
-	}
-	if cfg.loggerName == "" {
-		cfg.loggerName = defaultLoggerName
 	}
 	return cfg, nil
 }
@@ -187,6 +188,14 @@ func WithBindAddress(v string) Option {
 func WithLoggerName(v string) Option {
 	return func(o *options) error {
 		o.loggerName = v
+		return nil
+	}
+}
+
+// WithPingPeriod sets the Cluster ping period.
+func WithPingPeriod(v time.Duration) Option {
+	return func(o *options) error {
+		o.pingPeriod = v
 		return nil
 	}
 }
@@ -235,31 +244,8 @@ func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 		f:      fsm,
 	}
 
-	go func() {
-		logger.Debug("leadership watcher started")
-		defer logger.Debug("leadership watcher stopped")
-
-		ch := r.LeaderCh()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case leader := <-ch:
-				fsm.leader(leader)
-
-				logger.Debug("leadership signal", "status", leader)
-				cl.leaderMutex.RLock()
-				if cl.leaderChan != nil {
-					cl.leaderChan <- leader
-				}
-				cl.leaderMutex.RUnlock()
-			}
-		}
-	}()
-
 	if len(cfg.peers) > 1 {
 		logger.Debug("bootstrap cluster")
-
 		configuration := raft.Configuration{
 			Servers: []raft.Server{
 				{
@@ -285,21 +271,68 @@ func New(ctx context.Context, opts ...Option) (c Cluster, err error) {
 		}
 	}
 
-	go func() {
-		<-ctx.Done()
-
-		e := r.Shutdown().Error()
-		cl.doneMutex.Lock()
-		if cl.doneChan != nil {
-			cl.doneChan <- e
-			close(cl.doneChan)
-		}
-		cl.doneMutex.Unlock()
-		logger.Info("shutdown")
-	}()
+	go cl.watchLeadership(ctx)
+	go cl.watchExpiration(ctx, cfg)
+	go cl.cleanup(ctx)
 
 	c = cl
 	return
+}
+
+func (c *cluster) watchLeadership(ctx context.Context) {
+	logger := c.logger
+
+	logger.Debug("leadership watcher started")
+	defer logger.Debug("leadership watcher stopped")
+
+	ch := c.r.LeaderCh()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case leader := <-ch:
+			c.f.leader(leader)
+
+			logger.Debug("leadership signal", "status", leader)
+			c.leaderMutex.RLock()
+			if c.leaderChan != nil {
+				c.leaderChan <- leader
+			}
+			c.leaderMutex.RUnlock()
+		}
+	}
+}
+
+func (c *cluster) watchExpiration(ctx context.Context, cfg *options) {
+	logger := c.logger
+	pingPeriod := cfg.pingPeriod
+	expirationPeriod := pingPeriod * 3
+
+	logger.Debug("expiration watcher started", "ping", pingPeriod, "period", expirationPeriod)
+	defer logger.Debug("expiration watcher stopped")
+
+	t := time.NewTicker(cfg.pingPeriod)
+	for {
+		select {
+		case <-ctx.Done():
+			t.Stop()
+			return
+		case <-t.C:
+			_ = mutexUnlockExpired(c.f, expirationPeriod)
+		}
+	}
+}
+
+func (c *cluster) cleanup(ctx context.Context) {
+	<-ctx.Done()
+	e := c.r.Shutdown().Error()
+	c.doneMutex.Lock()
+	if c.doneChan != nil {
+		c.doneChan <- e
+		close(c.doneChan)
+	}
+	c.doneMutex.Unlock()
+	c.logger.Info("shutdown")
 }
 
 // Raft implements Cluster.Raft.

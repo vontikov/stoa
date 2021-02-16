@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/pkg/pb"
@@ -56,7 +57,7 @@ func (s *server) Watch(v *pb.ClientId, stream pb.Stoa_WatchServer) error {
 	s.mu.Lock()
 	s.streams = append(s.streams, streamRecord{id, ch})
 	s.mu.Unlock()
-	s.logger.Debug("watcher arrived", "id", id)
+	s.logger.Debug("watcher arrived", "id", string(id))
 
 	defer func() {
 		s.mu.Lock()
@@ -67,7 +68,7 @@ func (s *server) Watch(v *pb.ClientId, stream pb.Stoa_WatchServer) error {
 			}
 		}
 		s.mu.Unlock()
-		s.logger.Debug("watcher gone", "id", id)
+		s.logger.Debug("watcher gone", "id", string(id))
 	}()
 
 	checkLeadership := time.NewTicker(checkLeadershipPeriod)
@@ -93,7 +94,7 @@ func (s *server) Watch(v *pb.ClientId, stream pb.Stoa_WatchServer) error {
 				break
 			}
 			if s.logger.IsTrace() {
-				s.logger.Trace("status sent", "id", id, "data", st)
+				s.logger.Trace("status sent", "id", string(id), "message", st)
 			}
 		}
 	}
@@ -105,7 +106,7 @@ func (s *server) handshake(clientID []byte, stream pb.Stoa_WatchServer) (err err
 		return
 	}
 	if s.logger.IsTrace() {
-		s.logger.Trace("watch handshake OK", "id", clientID)
+		s.logger.Trace("watch handshake", "id", string(clientID))
 	}
 	return
 }
@@ -134,4 +135,26 @@ func (s *server) startStatusPoller() {
 		}
 	}()
 	s.logger.Debug("status poller started")
+}
+
+func (s *server) Ping(ctx context.Context, v *pb.ClientId) (*pb.Empty, error) {
+	if err := v.Validate(); err != nil {
+		return nil, err
+	}
+
+	msg := pb.ClusterCommand{
+		Command: pb.ClusterCommand_SERVICE_PING,
+		Payload: &pb.ClusterCommand_ClientId{ClientId: v},
+	}
+
+	cmd, err := proto.Marshal(&msg)
+	if err != nil {
+		return nil, err
+	}
+
+	fut := s.cluster.Raft().Apply(cmd, 0)
+	if err := fut.Error(); err != nil {
+		return nil, wrapError(err)
+	}
+	return &pb.Empty{}, nil
 }

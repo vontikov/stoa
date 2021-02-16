@@ -50,6 +50,8 @@ type StoaClient interface {
 	MutexUnlock(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Result, error)
 	// Watch watches the Cluster status.
 	Watch(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (Stoa_WatchClient, error)
+	// Ping pings the Cluster.
+	Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type stoaClient struct {
@@ -241,6 +243,15 @@ func (x *stoaWatchClient) Recv() (*Status, error) {
 	return m, nil
 }
 
+func (c *stoaClient) Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/Ping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StoaServer is the server API for Stoa service.
 // All implementations must embed UnimplementedStoaServer
 // for forward compatibility
@@ -278,6 +289,8 @@ type StoaServer interface {
 	MutexUnlock(context.Context, *ClientId) (*Result, error)
 	// Watch watches the Cluster status.
 	Watch(*ClientId, Stoa_WatchServer) error
+	// Ping pings the Cluster.
+	Ping(context.Context, *ClientId) (*Empty, error)
 	mustEmbedUnimplementedStoaServer()
 }
 
@@ -329,6 +342,9 @@ func (UnimplementedStoaServer) MutexUnlock(context.Context, *ClientId) (*Result,
 }
 func (UnimplementedStoaServer) Watch(*ClientId, Stoa_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedStoaServer) Ping(context.Context, *ClientId) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 func (UnimplementedStoaServer) mustEmbedUnimplementedStoaServer() {}
 
@@ -619,6 +635,24 @@ func (x *stoaWatchServer) Send(m *Status) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Stoa_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClientId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoaServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/Ping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoaServer).Ping(ctx, req.(*ClientId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Stoa_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "github.com.vontikov.stoa.v1.Stoa",
 	HandlerType: (*StoaServer)(nil),
@@ -674,6 +708,10 @@ var _Stoa_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MutexUnlock",
 			Handler:    _Stoa_MutexUnlock_Handler,
+		},
+		{
+			MethodName: "Ping",
+			Handler:    _Stoa_Ping_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

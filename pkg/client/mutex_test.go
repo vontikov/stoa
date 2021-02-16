@@ -53,6 +53,4 @@ func TestMutex(t *testing.T) {
 	ok, err = mx1.Unlock(ctx)
 	assert.Nil(err)
 	assert.False(ok)
-
-	cancel()
 }

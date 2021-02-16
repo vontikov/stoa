@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/internal/test"
+	"golang.org/x/sync/errgroup"
 )
 
 func TestClientStart(t *testing.T) {
@@ -180,4 +181,82 @@ func TestClientWatch(t *testing.T) {
 	wg.Wait()
 	disruptorCancel()
 	clusterCancel()
+}
+
+func TestMutexExpiration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping in short mode")
+	}
+
+	logging.SetLevel("trace")
+
+	const (
+		clusterSize = 3
+		basePort    = 2100
+		mutexName   = "test-mutex"
+	)
+
+	assert := assert.New(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, bootstrap, err := test.StartCluster(ctx, basePort, clusterSize)
+	assert.Nil(err)
+
+	g, ctx := errgroup.WithContext(ctx)
+	runChan := make(chan bool)
+
+	g.Go(func() error {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		client, err := New(WithContext(ctx), WithPeers(bootstrap))
+		if err != nil {
+			return err
+		}
+
+		mx := client.Mutex(mutexName)
+		watchChan := mx.Watch()
+
+		<-runChan
+		r, err := mx.TryLock(ctx)
+		if err != nil {
+			return err
+		}
+		assert.False(r, "should be locked by another client")
+
+		st := <-watchChan
+		assert.True(st.Locked, "should be locked by another client")
+		assert.Equal(mutexName, st.Name)
+
+		st = <-watchChan
+		assert.False(st.Locked, "should be unlocked by timeout after the first client is disconnected")
+		assert.Equal(mutexName, st.Name)
+
+		return nil
+	})
+
+	// make sure the first client is fully initialized
+	time.Sleep(200 * time.Millisecond)
+
+	g.Go(func() error {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		client, err := New(WithContext(ctx), WithPeers(bootstrap))
+		if err != nil {
+			return err
+		}
+		mx := client.Mutex(mutexName)
+
+		r, err := mx.TryLock(ctx)
+		if err != nil {
+			return err
+		}
+		assert.True(r)
+		runChan <- true
+		return nil
+	})
+
+	err = g.Wait()
+	assert.Nil(err)
 }

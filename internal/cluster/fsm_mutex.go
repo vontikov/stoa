@@ -11,13 +11,8 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-var timeNow = time.Now
-var mutexCheckPeriod = 200 * time.Millisecond
-var mutexDeadline = 5 * time.Second
-
 type mutexMap struct {
 	cc.Map
-	once sync.Once
 }
 
 type mutexMapPtr = *mutexMap
@@ -192,60 +187,52 @@ func (m *mutexRecord) touch(id []byte) bool {
 	return true
 }
 
-// TODO
-func (f *FSM) startMutexWatcher() {
-	go func() {
-		t := time.NewTicker(mutexCheckPeriod)
-		for {
-			select {
-			case <-f.ctx.Done():
-				return
-			case <-t.C:
-				checkExpiredMutexes(f)
-			}
-		}
-	}()
-	f.logger.Debug("Mutex watcher started")
-}
-
 func mutex(f *FSM, n string) mutexRecordPtr {
-	v, ok := f.ms.ComputeIfAbsent(n, func() interface{} { return newMutexRecord() })
-	if ok {
-		// TODO
-		f.ms.once.Do(f.startMutexWatcher)
-	}
+	v, _ := f.ms.ComputeIfAbsent(n, func() interface{} { return newMutexRecord() })
 	return v.(mutexRecordPtr)
 }
 
 func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetClientId()
-	mx := mutex(f, id.Name)
+	n := id.Name
+	mx := mutex(f, n)
 	r := mx.tryLock(id.Id)
+	if r && f.isLeader() {
+		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{Name: n, Locked: true}}}
+	}
 	return &pb.Result{Ok: r}
 }
 
 func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetClientId()
-	mx := mutex(f, id.Name)
+	n := id.Name
+	mx := mutex(f, n)
 	r := mx.unlock(id.Id)
+	if r && f.isLeader() {
+		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{Name: n, Locked: false}}}
+	}
 	return &pb.Result{Ok: r}
 }
 
-// TODO
-func checkExpiredMutexes(f *FSM) {
-	deadline := timeNow().Add(-mutexDeadline)
-	keys := f.ms.Keys()
-	for _, k := range keys {
-		v := f.ms.Get(k)
-		if v == nil {
-			continue
+func mutexUnlockExpired(f *FSM, expiration time.Duration) int {
+	deadline := timeNow().Add(-expiration)
+
+	n := 0
+	f.ms.Range(func(k, v interface{}) bool {
+		m := v.(mutexRecordPtr)
+		m.Lock()
+		defer m.Unlock()
+
+		if m.locked && m.touched.Before(deadline) {
+			m.locked = false
+			m.lockedBy = nil
+			if f.isLeader() {
+				f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{Name: k.(string), Locked: false}}}
+			}
+			n++
+			f.logger.Debug("expired mutex unlocked", "name", k)
 		}
-		mx := v.(mutexRecordPtr)
-		if mx.locked && mx.touched.Before(deadline) {
-			f.logger.Warn("Mutex expired",
-				"locked", mx.lockedBy, "locked by", mx.lockedBy, "touched", mx.touched)
-			mx.unlock(mx.lockedBy)
-			// TODO notifyMutex()
-		}
-	}
+		return true
+	})
+	return n
 }

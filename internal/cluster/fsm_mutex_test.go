@@ -31,6 +31,8 @@ func TestFsmMutex(t *testing.T) {
 }
 
 func TestFsmMutexTryLockUnlock(t *testing.T) {
+	assert := assert.New(t)
+
 	id := []byte("test-id")
 	const muxName = "test-mutex"
 	const max = 100
@@ -43,7 +45,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 	}
 
 	r := mutexTryLock(f, m).(*pb.Result)
-	assert.True(t, r.Ok)
+	assert.True(r.Ok)
 
 	var wg sync.WaitGroup
 	for i := 0; i < max; i++ {
@@ -55,10 +57,10 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 			}
 
 			r := mutexTryLock(f, m).(*pb.Result)
-			assert.False(t, r.Ok)
+			assert.False(r.Ok)
 
 			r = mutexUnlock(f, m).(*pb.Result)
-			assert.False(t, r.Ok)
+			assert.False(r.Ok)
 
 			wg.Done()
 		}(i)
@@ -66,39 +68,7 @@ func TestFsmMutexTryLockUnlock(t *testing.T) {
 	wg.Wait()
 
 	r = mutexUnlock(f, m).(*pb.Result)
-	assert.True(t, r.Ok)
-}
-
-func TestFsmMutexWatcher(t *testing.T) {
-	t.Run("Should expire", func(t *testing.T) {
-		mutexCheckPeriod = 10 * time.Millisecond
-		mutexDeadline = 50 * time.Millisecond
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		f := NewFSM(ctx)
-		mx := mutex(f, "muxName")
-		r := mx.tryLock([]byte("lockId"))
-		assert.True(t, r)
-		time.Sleep(mutexDeadline << 1)
-		assert.False(t, mx.isLocked())
-	})
-
-	t.Run("Should not expire", func(t *testing.T) {
-		mutexCheckPeriod = 50 * time.Millisecond
-		mutexDeadline = 10 * time.Millisecond
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		f := NewFSM(ctx)
-		mx := mutex(f, "muxName")
-		r := mx.tryLock([]byte("lockId"))
-		assert.True(t, r)
-		time.Sleep(mutexDeadline << 1)
-		assert.True(t, mx.isLocked())
-	})
+	assert.True(r.Ok)
 }
 
 func TestFSMMutexMarshalling(t *testing.T) {
@@ -115,50 +85,48 @@ func TestFSMMutexMarshalling(t *testing.T) {
 		expectedDataSize int
 		expectedSize     int
 	}{
-		/*
-			{
-				name:             "No mutexes",
-				mutexes:          nil,
-				expectedDataSize: 4,
-				expectedSize:     0,
+		{
+			name:             "No mutexes",
+			mutexes:          nil,
+			expectedDataSize: 4,
+			expectedSize:     0,
+		},
+		{
+			name: "One unlocked mutex",
+			mutexes: []md{
+				{"mx-name", mutexRecord{}},
 			},
-			{
-				name: "One unlocked mutex",
-				mutexes: []md{
-					{"mx-name", mutexRecord{}},
-				},
-				expectedDataSize: 4 + // number of elements
-					4 + 7 + // mutex name
-					2 + // mutex locked
-					4 + // mutex lockedBy (empty)
-					4 + 15, // touched
-				expectedSize: 1,
+			expectedDataSize: 4 + // number of elements
+				4 + 7 + // mutex name
+				2 + // mutex locked
+				4 + // mutex lockedBy (empty)
+				4 + 15, // touched
+			expectedSize: 1,
+		},
+		{
+			name: "One locked mutex",
+			mutexes: []md{
+				{"mx-name", mutexRecord{locked: true, lockedBy: []byte("client")}},
 			},
-			{
-				name: "One locked mutex",
-				mutexes: []md{
-					{"mx-name", mutexRecord{locked: true, lockedBy: []byte("client")}},
-				},
-				expectedDataSize: 4 + // number of elements
-					4 + 7 + // mutex name
-					2 + // mutex locked
-					4 + 6 + // mutex lockedBy (non-empty)
-					4 + 15, // touched
-				expectedSize: 1,
+			expectedDataSize: 4 + // number of elements
+				4 + 7 + // mutex name
+				2 + // mutex locked
+				4 + 6 + // mutex lockedBy (non-empty)
+				4 + 15, // touched
+			expectedSize: 1,
+		},
+		{
+			name: "One locked and touched",
+			mutexes: []md{
+				{"mx-name", mutexRecord{locked: true, lockedBy: []byte("client"), touched: time.Now()}},
 			},
-			{
-				name: "One locked and touched",
-				mutexes: []md{
-					{"mx-name", mutexRecord{locked: true, lockedBy: []byte("client"), touched: time.Now()}},
-				},
-				expectedDataSize: 4 + // number of elements
-					4 + 7 + // mutex name
-					2 + // mutex locked
-					4 + 6 + // mutex lockedBy (non-empty)
-					4 + 15, // touched
-				expectedSize: 1,
-			},
-		*/
+			expectedDataSize: 4 + // number of elements
+				4 + 7 + // mutex name
+				2 + // mutex locked
+				4 + 6 + // mutex lockedBy (non-empty)
+				4 + 15, // touched
+			expectedSize: 1,
+		},
 		{
 			name: "One unlocked and one locked and touched",
 			mutexes: []md{
@@ -207,4 +175,41 @@ func TestFSMMutexMarshalling(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMutexExpiration(t *testing.T) {
+	assert := assert.New(t)
+
+	const (
+		muxName = "test-mutex"
+	)
+
+	clientId := []byte("abc")
+
+	f := NewFSM(context.Background())
+	f.leader(true)
+
+	mx := mutex(f, muxName)
+	assert.NotNil(mx)
+
+	r := mx.tryLock(clientId)
+	assert.True(r)
+
+	expiration := 300 * time.Millisecond
+
+	time.Sleep(expiration / 2)
+	n := mutexUnlockExpired(f, expiration)
+	assert.Equal(0, n, "should not unlock yet")
+	assert.True(mx.isLocked())
+	assert.Equal(0, len(f.status()))
+
+	time.Sleep(expiration)
+	n = mutexUnlockExpired(f, expiration)
+	assert.Equal(1, n, "should unlock")
+	assert.False(mx.isLocked())
+	assert.Equal(1, len(f.status()))
+
+	s := <-f.status()
+	assert.Equal(muxName, s.GetM().Name)
+	assert.False(s.GetM().Locked)
 }

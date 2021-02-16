@@ -2,14 +2,19 @@ package client
 
 import (
 	"context"
+	"sync"
+
+	"google.golang.org/grpc/metadata"
 
 	"github.com/vontikov/stoa/pkg/pb"
-	"google.golang.org/grpc/metadata"
 )
 
 type mutex struct {
 	base
 	clientID []byte
+
+	mu    sync.RWMutex // protects following fields
+	watch chan *pb.MutexStatus
 }
 
 func (c *client) newMutex(name string) *mutex {
@@ -19,6 +24,7 @@ func (c *client) newMutex(name string) *mutex {
 	}
 }
 
+// TTryLock implements Mutex.TryLock.
 func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -52,6 +58,7 @@ func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err er
 	return
 }
 
+// Unlock implements Mutex.Unlock.
 func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
@@ -83,4 +90,14 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err err
 		m.retryTimeout, m.idleStrategy,
 	)
 	return
+}
+
+// Watch implements Mutex.Watch.
+func (m *mutex) Watch() <-chan *pb.MutexStatus {
+	m.mu.Lock()
+	if m.watch == nil {
+		m.watch = make(chan *pb.MutexStatus, watchChanSize)
+	}
+	m.mu.Unlock()
+	return m.watch
 }
