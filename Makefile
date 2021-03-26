@@ -71,6 +71,7 @@ vet: $(VET_MARKER)
 $(VET_MARKER): $(GO_FILES)
 	@echo "Running Go vet..."
 	@GOBIN=$(BIN_DIR); go vet $(GO_PKGS)
+	@gosec ./...
 	@mkdir -p $(@D)
 	@touch $@
 
@@ -141,10 +142,11 @@ deps:
 	@unzip -o -qq protoc-$(PB_VER)-linux-x86_64.zip -d $(PB_DIR)
 	@rm protoc-$(PB_VER)-linux-x86_64.zip
 	@go mod tidy
-	@go get github.com/golang/mock/mockgen@v1.4.4
+	@go install github.com/golang/mock/mockgen@v1.5.0
+	@go install github.com/securego/gosec/v2/cmd/gosec@latest
+	@go install github.com/envoyproxy/protoc-gen-validate
 	@go install \
       github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
       github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
       google.golang.org/protobuf/cmd/protoc-gen-go \
       google.golang.org/grpc/cmd/protoc-gen-go-grpc
-	@go get -d github.com/envoyproxy/protoc-gen-validate
