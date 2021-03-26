@@ -227,11 +227,11 @@ func TestMutexExpiration(t *testing.T) {
 
 		st := <-watchChan
 		assert.True(st.Locked, "should be locked by another client")
-		assert.Equal(mutexName, st.Name)
+		assert.Equal(mutexName, st.EntityName)
 
 		st = <-watchChan
 		assert.False(st.Locked, "should be unlocked by timeout after the first client is disconnected")
-		assert.Equal(mutexName, st.Name)
+		assert.Equal(mutexName, st.EntityName)
 
 		return nil
 	})

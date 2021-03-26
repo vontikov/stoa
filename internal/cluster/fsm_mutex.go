@@ -194,22 +194,22 @@ func mutex(f *FSM, n string) mutexRecordPtr {
 
 func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetClientId()
-	n := id.Name
+	n := id.EntityName
 	mx := mutex(f, n)
 	r := mx.tryLock(id.Id)
 	if r && f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{Name: n, Locked: true}}}
+		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{EntityName: n, Locked: true}}}
 	}
 	return &pb.Result{Ok: r}
 }
 
 func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
 	id := m.GetClientId()
-	n := id.Name
+	n := id.EntityName
 	mx := mutex(f, n)
 	r := mx.unlock(id.Id)
 	if r && f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{Name: n, Locked: false}}}
+		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{EntityName: n, Locked: false}}}
 	}
 	return &pb.Result{Ok: r}
 }
@@ -227,7 +227,7 @@ func mutexUnlockExpired(f *FSM, expiration time.Duration) int {
 			m.locked = false
 			m.lockedBy = nil
 			if f.isLeader() {
-				f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{Name: k.(string), Locked: false}}}
+				f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{EntityName: k.(string), Locked: false}}}
 			}
 			n++
 			f.logger.Debug("expired mutex unlocked", "name", k)

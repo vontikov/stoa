@@ -36,16 +36,16 @@ var (
 // define the regex for a UUID once up-front
 var _stoa_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
-// Validate checks the field values on Name with the rules defined in the proto
-// definition for this message. If any rules are violated, an error is returned.
-func (m *Name) Validate() error {
+// Validate checks the field values on Entity with the rules defined in the
+// proto definition for this message. If any rules are violated, an error is returned.
+func (m *Entity) Validate() error {
 	if m == nil {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
-		return NameValidationError{
-			field:  "Name",
+	if utf8.RuneCountInString(m.GetEntityName()) < 1 {
+		return EntityValidationError{
+			field:  "EntityName",
 			reason: "value length must be at least 1 runes",
 		}
 	}
@@ -53,9 +53,9 @@ func (m *Name) Validate() error {
 	return nil
 }
 
-// NameValidationError is the validation error returned by Name.Validate if the
-// designated constraints aren't met.
-type NameValidationError struct {
+// EntityValidationError is the validation error returned by Entity.Validate if
+// the designated constraints aren't met.
+type EntityValidationError struct {
 	field  string
 	reason string
 	cause  error
@@ -63,22 +63,22 @@ type NameValidationError struct {
 }
 
 // Field function returns field value.
-func (e NameValidationError) Field() string { return e.field }
+func (e EntityValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e NameValidationError) Reason() string { return e.reason }
+func (e EntityValidationError) Reason() string { return e.reason }
 
 // Cause function returns cause value.
-func (e NameValidationError) Cause() error { return e.cause }
+func (e EntityValidationError) Cause() error { return e.cause }
 
 // Key function returns key value.
-func (e NameValidationError) Key() bool { return e.key }
+func (e EntityValidationError) Key() bool { return e.key }
 
 // ErrorName returns error name.
-func (e NameValidationError) ErrorName() string { return "NameValidationError" }
+func (e EntityValidationError) ErrorName() string { return "EntityValidationError" }
 
 // Error satisfies the builtin error interface
-func (e NameValidationError) Error() string {
+func (e EntityValidationError) Error() string {
 	cause := ""
 	if e.cause != nil {
 		cause = fmt.Sprintf(" | caused by: %v", e.cause)
@@ -90,14 +90,14 @@ func (e NameValidationError) Error() string {
 	}
 
 	return fmt.Sprintf(
-		"invalid %sName.%s: %s%s",
+		"invalid %sEntity.%s: %s%s",
 		key,
 		e.field,
 		e.reason,
 		cause)
 }
 
-var _ error = NameValidationError{}
+var _ error = EntityValidationError{}
 
 var _ interface {
 	Field() string
@@ -105,7 +105,7 @@ var _ interface {
 	Key() bool
 	Cause() error
 	ErrorName() string
-} = NameValidationError{}
+} = EntityValidationError{}
 
 // Validate checks the field values on ClientId with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
@@ -114,12 +114,7 @@ func (m *ClientId) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 0 {
-		return ClientIdValidationError{
-			field:  "Name",
-			reason: "value length must be at least 0 runes",
-		}
-	}
+	// no validation rules for EntityName
 
 	if len(m.GetId()) < 1 {
 		return ClientIdValidationError{
@@ -127,6 +122,8 @@ func (m *ClientId) Validate() error {
 			reason: "value length must be at least 1 bytes",
 		}
 	}
+
+	// no validation rules for Payload
 
 	return nil
 }
@@ -192,9 +189,9 @@ func (m *Value) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetEntityName()) < 1 {
 		return ValueValidationError{
-			field:  "Name",
+			field:  "EntityName",
 			reason: "value length must be at least 1 runes",
 		}
 	}
@@ -270,9 +267,9 @@ func (m *Key) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetEntityName()) < 1 {
 		return KeyValidationError{
-			field:  "Name",
+			field:  "EntityName",
 			reason: "value length must be at least 1 runes",
 		}
 	}
@@ -348,9 +345,9 @@ func (m *KeyValue) Validate() error {
 		return nil
 	}
 
-	if utf8.RuneCountInString(m.GetName()) < 1 {
+	if utf8.RuneCountInString(m.GetEntityName()) < 1 {
 		return KeyValueValidationError{
-			field:  "Name",
+			field:  "EntityName",
 			reason: "value length must be at least 1 runes",
 		}
 	}
@@ -434,7 +431,7 @@ func (m *MutexStatus) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Name
+	// no validation rules for EntityName
 
 	// no validation rules for Locked
 
@@ -503,7 +500,7 @@ func (m *QueueStatus) Validate() error {
 		return nil
 	}
 
-	// no validation rules for Name
+	// no validation rules for EntityName
 
 	return nil
 }

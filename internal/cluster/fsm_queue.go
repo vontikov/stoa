@@ -141,31 +141,31 @@ func queue(f *FSM, n string) queueRecordPtr {
 }
 
 func queueSize(f *FSM, m *pb.ClusterCommand) interface{} {
-	q := queue(f, m.GetName().Name)
+	q := queue(f, m.GetEntity().EntityName)
 	v := make([]byte, 4)
 	binary.LittleEndian.PutUint32(v, uint32(q.Size()))
 	return &pb.Value{Value: v}
 }
 
 func queueClear(f *FSM, m *pb.ClusterCommand) interface{} {
-	q := queue(f, m.GetName().Name)
+	q := queue(f, m.GetEntity().EntityName)
 	q.Clear()
 	return nil
 }
 
 func queueOffer(f *FSM, m *pb.ClusterCommand) interface{} {
 	v := m.GetValue()
-	n := v.Name
+	n := v.EntityName
 	q := queue(f, n)
 	q.Offer(&entry{v.Value, m.TtlMillis})
 	if f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_Q{Q: &pb.QueueStatus{Name: n}}}
+		f.status() <- &pb.Status{U: &pb.Status_Q{Q: &pb.QueueStatus{EntityName: n}}}
 	}
 	return nil
 }
 
 func queuePoll(f *FSM, m *pb.ClusterCommand) interface{} {
-	q := queue(f, m.GetName().Name)
+	q := queue(f, m.GetEntity().EntityName)
 	if v := q.Poll(); v != nil {
 		return &pb.Value{Value: v.(entryPtr).Value}
 	}
@@ -173,7 +173,7 @@ func queuePoll(f *FSM, m *pb.ClusterCommand) interface{} {
 }
 
 func queuePeek(f *FSM, m *pb.ClusterCommand) interface{} {
-	q := queue(f, m.GetName().Name)
+	q := queue(f, m.GetEntity().EntityName)
 	if v := q.Peek(); v != nil {
 		return &pb.Value{Value: v.(entryPtr).Value}
 	}

@@ -132,12 +132,12 @@ func (m *ClusterCommand) Validate() error {
 
 	switch m.Payload.(type) {
 
-	case *ClusterCommand_Name:
+	case *ClusterCommand_Entity:
 
-		if v, ok := interface{}(m.GetName()).(interface{ Validate() error }); ok {
+		if v, ok := interface{}(m.GetEntity()).(interface{ Validate() error }); ok {
 			if err := v.Validate(); err != nil {
 				return ClusterCommandValidationError{
-					field:  "Name",
+					field:  "Entity",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}

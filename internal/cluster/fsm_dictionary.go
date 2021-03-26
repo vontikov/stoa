@@ -158,21 +158,21 @@ func dictionary(f *FSM, n string) dictRecordPtr {
 }
 
 func dictionarySize(f *FSM, m *pb.ClusterCommand) interface{} {
-	d := dictionary(f, m.GetName().Name)
+	d := dictionary(f, m.GetEntity().EntityName)
 	v := make([]byte, 4)
 	binary.LittleEndian.PutUint32(v, uint32(d.Size()))
 	return &pb.Value{Value: v}
 }
 
 func dictionaryClear(f *FSM, m *pb.ClusterCommand) interface{} {
-	d := dictionary(f, m.GetName().Name)
+	d := dictionary(f, m.GetEntity().EntityName)
 	d.Clear()
 	return nil
 }
 
 func dictionaryPut(f *FSM, m *pb.ClusterCommand) interface{} {
 	kv := m.GetKeyValue()
-	d := dictionary(f, kv.Name)
+	d := dictionary(f, kv.EntityName)
 	v := entry{
 		Value:     kv.Value,
 		TTLMillis: m.TtlMillis,
@@ -186,7 +186,7 @@ func dictionaryPut(f *FSM, m *pb.ClusterCommand) interface{} {
 
 func dictionaryPutIfAbsent(f *FSM, m *pb.ClusterCommand) interface{} {
 	kv := m.GetKeyValue()
-	d := dictionary(f, kv.Name)
+	d := dictionary(f, kv.EntityName)
 	v := entry{
 		Value:     kv.Value,
 		TTLMillis: m.TtlMillis,
@@ -197,7 +197,7 @@ func dictionaryPutIfAbsent(f *FSM, m *pb.ClusterCommand) interface{} {
 
 func dictionaryGet(f *FSM, m *pb.ClusterCommand) interface{} {
 	k := m.GetKey()
-	d := dictionary(f, k.Name)
+	d := dictionary(f, k.EntityName)
 	if v := d.Get(string(k.Key)); v != nil {
 		return &pb.Value{Value: v.(*entry).Value}
 	}
@@ -206,7 +206,7 @@ func dictionaryGet(f *FSM, m *pb.ClusterCommand) interface{} {
 
 func dictionaryRemove(f *FSM, m *pb.ClusterCommand) interface{} {
 	k := m.GetKey()
-	d := dictionary(f, k.Name)
+	d := dictionary(f, k.EntityName)
 	d.Remove(string(k.Key))
 	return nil
 }
@@ -214,7 +214,7 @@ func dictionaryRemove(f *FSM, m *pb.ClusterCommand) interface{} {
 func dictionaryRange(f *FSM, m *pb.ClusterCommand) interface{} {
 	ch := make(chan *pb.KeyValue)
 	go func() {
-		n := m.GetName().Name
+		n := m.GetEntity().EntityName
 		if f.logger.IsTrace() {
 			f.logger.Trace("dictionary scan", "name", n)
 		}

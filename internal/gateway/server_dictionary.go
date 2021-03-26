@@ -8,14 +8,14 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-func (s *server) DictionarySize(ctx context.Context, v *pb.Name) (*pb.Value, error) {
+func (s *server) DictionarySize(ctx context.Context, v *pb.Entity) (*pb.Value, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_DICTIONARY_SIZE,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 
 	if err := processMetadata(ctx, &msg); err != nil {
@@ -43,14 +43,14 @@ func (s *server) DictionarySize(ctx context.Context, v *pb.Name) (*pb.Value, err
 	return &pb.Value{}, nil
 }
 
-func (s *server) DictionaryClear(ctx context.Context, v *pb.Name) (*pb.Empty, error) {
+func (s *server) DictionaryClear(ctx context.Context, v *pb.Entity) (*pb.Empty, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_DICTIONARY_CLEAR,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 
 	if err := processMetadata(ctx, &msg); err != nil {
@@ -211,7 +211,7 @@ func (s *server) DictionaryRemove(ctx context.Context, v *pb.Key) (*pb.Result, e
 	return &pb.Result{Ok: true}, nil
 }
 
-func (s *server) DictionaryRange(v *pb.Name, stream pb.Stoa_DictionaryRangeServer) error {
+func (s *server) DictionaryRange(v *pb.Entity, stream pb.Stoa_DictionaryRangeServer) error {
 	if err := v.Validate(); err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (s *server) DictionaryRange(v *pb.Name, stream pb.Stoa_DictionaryRangeServe
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_DICTIONARY_RANGE,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 
 	if err := processMetadata(stream.Context(), &msg); err != nil {

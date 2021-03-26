@@ -11,7 +11,7 @@
     "application/json"
   ],
   "paths": {
-    "/storage/dictionary/delete/{name}/{key}": {
+    "/storage/dictionary/delete/{entity_name}/{key}": {
       "post": {
         "summary": "DictionaryRemove removes from the Dictionary the key-value pair specified\nby the Key.",
         "operationId": "Stoa_DictionaryRemove",
@@ -31,7 +31,7 @@
         },
         "parameters": [
           {
-            "name": "name",
+            "name": "entity_name",
             "in": "path",
             "required": true,
             "type": "string"
@@ -49,9 +49,9 @@
         ]
       }
     },
-    "/v1/dictionary/clear": {
+    "/v1/dictionary/clear/{entity_name}": {
       "post": {
-        "summary": "DictionaryClear clears the Dictionary specified by the Name.",
+        "summary": "DictionaryClear clears the Dictionary.",
         "operationId": "Stoa_DictionaryClear",
         "responses": {
           "200": {
@@ -67,12 +67,20 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Stoa"
         ]
       }
     },
-    "/v1/dictionary/get/{name}/{key}": {
+    "/v1/dictionary/get/{entity_name}/{key}": {
       "get": {
         "summary": "DictionaryGet returns from the Dictionary the Value specified by the Key.",
         "operationId": "Stoa_DictionaryGet",
@@ -92,7 +100,7 @@
         },
         "parameters": [
           {
-            "name": "name",
+            "name": "entity_name",
             "in": "path",
             "required": true,
             "type": "string"
@@ -110,7 +118,7 @@
         ]
       }
     },
-    "/v1/dictionary/put": {
+    "/v1/dictionary/put/{entity_name}": {
       "post": {
         "summary": "DictionaryPut puts into the Dictionary the KeyValue and returns the old\nValue.",
         "operationId": "Stoa_DictionaryPut",
@@ -130,6 +138,12 @@
         },
         "parameters": [
           {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
@@ -143,7 +157,7 @@
         ]
       }
     },
-    "/v1/dictionary/putIfAbsent": {
+    "/v1/dictionary/putIfAbsent/{entity_name}": {
       "post": {
         "summary": "DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is\nnot present.",
         "operationId": "Stoa_DictionaryPutIfAbsent",
@@ -163,6 +177,12 @@
         },
         "parameters": [
           {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
@@ -176,7 +196,7 @@
         ]
       }
     },
-    "/v1/dictionary/range": {
+    "/v1/dictionary/range/{entity_name}": {
       "get": {
         "summary": "DictionaryRange returns from the Dictionary all the key-value pairs.",
         "operationId": "Stoa_DictionaryRange",
@@ -205,9 +225,9 @@
         },
         "parameters": [
           {
-            "name": "name",
-            "in": "query",
-            "required": false,
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -216,9 +236,9 @@
         ]
       }
     },
-    "/v1/dictionary/size": {
+    "/v1/dictionary/size/{entity_name}": {
       "get": {
-        "summary": "DictionarySize returns size of the Dictionary specified by the Name.",
+        "summary": "DictionarySize returns size of the Dictionary.",
         "operationId": "Stoa_DictionarySize",
         "responses": {
           "200": {
@@ -236,9 +256,9 @@
         },
         "parameters": [
           {
-            "name": "name",
-            "in": "query",
-            "required": false,
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -247,7 +267,7 @@
         ]
       }
     },
-    "/v1/mutex/trylock": {
+    "/v1/mutex/trylock/{entity_name}": {
       "post": {
         "summary": "MutexTryLock tries to lock the Mutex.",
         "operationId": "Stoa_MutexTryLock",
@@ -265,12 +285,28 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ClientId"
+            }
+          }
+        ],
         "tags": [
           "Stoa"
         ]
       }
     },
-    "/v1/mutex/unlock": {
+    "/v1/mutex/unlock/{entity_name}": {
       "post": {
         "summary": "MutexUnlock unlocks the Mutex.",
         "operationId": "Stoa_MutexUnlock",
@@ -288,14 +324,30 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ClientId"
+            }
+          }
+        ],
         "tags": [
           "Stoa"
         ]
       }
     },
-    "/v1/queue/clear": {
+    "/v1/queue/clear/{entity_name}": {
       "post": {
-        "summary": "QueueClear cleares the Queue specified by the Name.",
+        "summary": "QueueClear cleares the Queue.",
         "operationId": "Stoa_QueueClear",
         "responses": {
           "200": {
@@ -311,12 +363,20 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Stoa"
         ]
       }
     },
-    "/v1/queue/offer": {
+    "/v1/queue/offer/{entity_name}": {
       "post": {
         "summary": "QueueOffer offers the Value to the Queue.",
         "operationId": "Stoa_QueueOffer",
@@ -336,6 +396,12 @@
         },
         "parameters": [
           {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
             "name": "body",
             "in": "body",
             "required": true,
@@ -349,9 +415,9 @@
         ]
       }
     },
-    "/v1/queue/peek": {
+    "/v1/queue/peek/{entity_name}": {
       "get": {
-        "summary": "QueuePeek returns the head of the Queue specified by the Name.",
+        "summary": "QueuePeek returns the head of the Queue.",
         "operationId": "Stoa_QueuePeek",
         "responses": {
           "200": {
@@ -369,9 +435,9 @@
         },
         "parameters": [
           {
-            "name": "name",
-            "in": "query",
-            "required": false,
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -380,9 +446,9 @@
         ]
       }
     },
-    "/v1/queue/poll": {
+    "/v1/queue/poll/{entity_name}": {
       "get": {
-        "summary": "QueuePoll removes and returns the head of the Queue specified by the Name.",
+        "summary": "QueuePoll removes and returns the head of the Queue.",
         "operationId": "Stoa_QueuePoll",
         "responses": {
           "200": {
@@ -400,9 +466,9 @@
         },
         "parameters": [
           {
-            "name": "name",
-            "in": "query",
-            "required": false,
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -411,9 +477,9 @@
         ]
       }
     },
-    "/v1/queue/size": {
+    "/v1/queue/size/{entity_name}": {
       "get": {
-        "summary": "QueueSize returns size of the Queue specified by the Name.",
+        "summary": "QueueSize returns size of the Queue.",
         "operationId": "Stoa_QueueSize",
         "responses": {
           "200": {
@@ -431,9 +497,9 @@
         },
         "parameters": [
           {
-            "name": "name",
-            "in": "query",
-            "required": false,
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -442,7 +508,7 @@
         ]
       }
     },
-    "/v1/service/ping": {
+    "/v1/service/ping/{entity_name}": {
       "post": {
         "summary": "Ping pings the Cluster.",
         "operationId": "Stoa_Ping",
@@ -460,12 +526,20 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Stoa"
         ]
       }
     },
-    "/v1/service/watch": {
+    "/v1/service/watch/{entity_name}": {
       "post": {
         "summary": "Watch watches the Cluster status.",
         "operationId": "Stoa_Watch",
@@ -492,6 +566,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "entity_name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Stoa"
         ]
@@ -578,15 +660,19 @@
     "v1ClientId": {
       "type": "object",
       "properties": {
-        "name": {
+        "entity_name": {
           "type": "string"
         },
         "id": {
           "type": "string",
           "format": "byte"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
         }
       },
-      "description": "ClientId contains a Client ID."
+      "description": "ClientId contains Client ID."
     },
     "v1ClusterStatus": {
       "type": "object",
@@ -595,7 +681,7 @@
           "$ref": "#/definitions/v1ClusterStatusStatus"
         }
       },
-      "description": "ClusterStatus contains a Mutex status returned by Watch call."
+      "description": "ClusterStatus contains Mutex status returned by Watch call."
     },
     "v1ClusterStatusStatus": {
       "type": "string",
@@ -612,7 +698,7 @@
     "v1KeyValue": {
       "type": "object",
       "properties": {
-        "name": {
+        "entity_name": {
           "type": "string"
         },
         "key": {
@@ -624,34 +710,38 @@
           "format": "byte"
         }
       },
-      "description": "KeyValue contains a Dictionary key-value pair."
+      "description": "KeyValue contains Dictionary key-value pair."
     },
     "v1MutexStatus": {
       "type": "object",
       "properties": {
-        "name": {
+        "entity_name": {
           "type": "string"
         },
         "locked": {
           "type": "boolean"
         }
       },
-      "description": "MutexStatus contains a Mutex status returned by Watch call."
+      "description": "MutexStatus contains Mutex status returned by Watch call."
     },
     "v1QueueStatus": {
       "type": "object",
       "properties": {
-        "name": {
+        "entity_name": {
           "type": "string"
         }
       },
-      "description": "QueueStatus contains a Queue status returned by Watch call."
+      "description": "QueueStatus contains Queue status returned by Watch call."
     },
     "v1Result": {
       "type": "object",
       "properties": {
         "ok": {
           "type": "boolean"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
         }
       },
       "description": "Result contains an operation result."
@@ -659,7 +749,7 @@
     "v1Value": {
       "type": "object",
       "properties": {
-        "name": {
+        "entity_name": {
           "type": "string"
         },
         "value": {

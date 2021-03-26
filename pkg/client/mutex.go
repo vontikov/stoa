@@ -31,7 +31,7 @@ func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err er
 	}
 
 	msg := pb.ClientId{
-		Name: m.name,
+		EntityName: m.name,
 		Id:   m.clientID,
 	}
 
@@ -65,7 +65,7 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err err
 	}
 
 	msg := pb.ClientId{
-		Name: m.name,
+		EntityName: m.name,
 		Id:   m.clientID,
 	}
 

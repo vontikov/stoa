@@ -8,14 +8,14 @@ import (
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-func (s *server) QueueSize(ctx context.Context, v *pb.Name) (*pb.Value, error) {
+func (s *server) QueueSize(ctx context.Context, v *pb.Entity) (*pb.Value, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_QUEUE_SIZE,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 
 	if err := processMetadata(ctx, &msg); err != nil {
@@ -44,14 +44,14 @@ func (s *server) QueueSize(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 	panic(ErrIncorrectResponseType)
 }
 
-func (s *server) QueueClear(ctx context.Context, v *pb.Name) (*pb.Empty, error) {
+func (s *server) QueueClear(ctx context.Context, v *pb.Entity) (*pb.Empty, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_QUEUE_CLEAR,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 
 	if err := processMetadata(ctx, &msg); err != nil {
@@ -107,14 +107,14 @@ func (s *server) QueueOffer(ctx context.Context, v *pb.Value) (*pb.Result, error
 	return &pb.Result{Ok: true}, nil
 }
 
-func (s *server) QueuePoll(ctx context.Context, v *pb.Name) (*pb.Value, error) {
+func (s *server) QueuePoll(ctx context.Context, v *pb.Entity) (*pb.Value, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_QUEUE_POLL,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 	if err := processMetadata(ctx, &msg); err != nil {
 		return nil, err
@@ -141,14 +141,14 @@ func (s *server) QueuePoll(ctx context.Context, v *pb.Name) (*pb.Value, error) {
 	panic(ErrIncorrectResponseType)
 }
 
-func (s *server) QueuePeek(ctx context.Context, v *pb.Name) (*pb.Value, error) {
+func (s *server) QueuePeek(ctx context.Context, v *pb.Entity) (*pb.Value, error) {
 	if err := v.Validate(); err != nil {
 		return nil, err
 	}
 
 	msg := pb.ClusterCommand{
 		Command: pb.ClusterCommand_QUEUE_PEEK,
-		Payload: &pb.ClusterCommand_Name{Name: v},
+		Payload: &pb.ClusterCommand_Entity{Entity: v},
 	}
 	if err := processMetadata(ctx, &msg); err != nil {
 		return nil, err

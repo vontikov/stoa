@@ -29,7 +29,7 @@ func (q *queue) Size(ctx context.Context, opts ...CallOption) (r uint32, err err
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	m := pb.Name{Name: q.name}
+	m := pb.Entity{EntityName: q.name}
 	v, err := q.handle.QueueSize(ctx, &m, q.callOptions...)
 	if err == nil {
 		r = binary.LittleEndian.Uint32(v.Value)
@@ -60,7 +60,7 @@ func (q *queue) Clear(ctx context.Context, opts ...CallOption) (err error) {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	m := pb.Name{Name: q.name}
+	m := pb.Entity{EntityName: q.name}
 	_, err = q.handle.QueueClear(ctx, &m, q.callOptions...)
 	if err == nil || q.failFast {
 		return
@@ -83,7 +83,7 @@ func (q *queue) Offer(ctx context.Context, e []byte, opts ...CallOption) (err er
 	}
 
 	m := pb.Value{
-		Name:  q.name,
+		EntityName:  q.name,
 		Value: e,
 	}
 	_, err = q.handle.QueueOffer(ctx, &m, q.callOptions...)
@@ -107,7 +107,7 @@ func (q *queue) Poll(ctx context.Context, opts ...CallOption) (r []byte, err err
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	m := pb.Name{Name: q.name}
+	m := pb.Entity{EntityName: q.name}
 	v, err := q.handle.QueuePoll(ctx, &m, q.callOptions...)
 	if err == nil {
 		r = v.Value
@@ -137,7 +137,7 @@ func (q *queue) Peek(ctx context.Context, opts ...CallOption) (r []byte, err err
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	m := pb.Name{Name: q.name}
+	m := pb.Entity{EntityName: q.name}
 	v, err := q.handle.QueuePeek(ctx, &m, q.callOptions...)
 	if err == nil {
 		r = v.Value

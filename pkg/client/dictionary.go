@@ -24,7 +24,7 @@ func (d *dictionary) Size(ctx context.Context, opts ...CallOption) (r uint32, er
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	m := pb.Name{Name: d.name}
+	m := pb.Entity{EntityName: d.name}
 	v, err := d.handle.DictionarySize(ctx, &m, d.callOptions...)
 	if err == nil {
 		r = binary.LittleEndian.Uint32(v.Value)
@@ -54,7 +54,7 @@ func (d *dictionary) Clear(ctx context.Context, opts ...CallOption) (err error) 
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
-	m := pb.Name{Name: d.name}
+	m := pb.Entity{EntityName: d.name}
 	_, err = d.handle.DictionaryClear(ctx, &m, d.callOptions...)
 	if err == nil || d.failFast {
 		return
@@ -77,8 +77,8 @@ func (d *dictionary) Put(ctx context.Context, k, v []byte, opts ...CallOption) (
 	}
 
 	m := pb.KeyValue{
-		Name: d.name,
-		Key:  k, Value: v,
+		EntityName: d.name,
+		Key:        k, Value: v,
 	}
 	o, err := d.handle.DictionaryPut(ctx, &m, d.callOptions...)
 	if err == nil {
@@ -110,8 +110,8 @@ func (d *dictionary) PutIfAbsent(ctx context.Context, k, v []byte, opts ...CallO
 	}
 
 	m := pb.KeyValue{
-		Name: d.name,
-		Key:  k, Value: v,
+		EntityName: d.name,
+		Key:        k, Value: v,
 	}
 	o, err := d.handle.DictionaryPutIfAbsent(ctx, &m, d.callOptions...)
 	if err == nil {
@@ -143,8 +143,8 @@ func (d *dictionary) Get(ctx context.Context, k []byte, opts ...CallOption) (r [
 	}
 
 	m := pb.Key{
-		Name: d.name,
-		Key:  k,
+		EntityName: d.name,
+		Key:        k,
 	}
 	o, err := d.handle.DictionaryGet(ctx, &m, d.callOptions...)
 	if err == nil {
@@ -176,8 +176,8 @@ func (d *dictionary) Remove(ctx context.Context, k []byte, opts ...CallOption) (
 	}
 
 	m := pb.Key{
-		Name: d.name,
-		Key:  k,
+		EntityName: d.name,
+		Key:        k,
 	}
 	_, err = d.handle.DictionaryRemove(ctx, &m, d.callOptions...)
 	if err == nil {
@@ -206,7 +206,7 @@ func (d *dictionary) Range(ctx context.Context, opts ...CallOption) (<-chan [][]
 	}
 
 	go func() {
-		m := pb.Name{Name: d.name}
+		m := pb.Entity{EntityName: d.name}
 		stream, err := d.handle.DictionaryRange(ctx, &m, d.callOptions...)
 		if err != nil {
 			if d.failFast {

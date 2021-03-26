@@ -200,12 +200,12 @@ func TestGatewayHTTP(t *testing.T) {
 
 		func() {
 			kv := pb.KeyValue{
-				Name:  dictName,
-				Key:   key,
-				Value: value,
+				EntityName: dictName,
+				Key:        key,
+				Value:      value,
 			}
 
-			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/put", leaderPort)
+			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/put/%s", leaderPort, dictName)
 
 			var buf bytes.Buffer
 			m := jsonpb.Marshaler{}
@@ -244,12 +244,12 @@ func TestGatewayHTTP(t *testing.T) {
 
 		func() {
 			kv := pb.KeyValue{
-				Name:  dictName,
-				Key:   key,
-				Value: value,
+				EntityName: dictName,
+				Key:        key,
+				Value:      value,
 			}
 
-			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/put", followerPort)
+			url := fmt.Sprintf("http://127.0.0.1:%d/v1/dictionary/put/%s", followerPort, dictName)
 
 			var buf bytes.Buffer
 			m := jsonpb.Marshaler{}

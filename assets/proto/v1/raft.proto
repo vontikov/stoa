@@ -24,7 +24,7 @@ message ClusterCommand {
   int64 barrier_millis = 5;
 
   oneof payload {
-    Name     name      = 6;
+    Entity   entity    = 6;
     Value    value     = 7;
     Key      key       = 8;
     KeyValue key_value = 9;

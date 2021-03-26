@@ -109,6 +109,8 @@ func (m *Result) Validate() error {
 
 	// no validation rules for Ok
 
+	// no validation rules for Payload
+
 	return nil
 }
 

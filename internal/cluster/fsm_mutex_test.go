@@ -210,6 +210,6 @@ func TestMutexExpiration(t *testing.T) {
 	assert.Equal(1, len(f.status()))
 
 	s := <-f.status()
-	assert.Equal(muxName, s.GetM().Name)
+	assert.Equal(muxName, s.GetM().EntityName)
 	assert.False(s.GetM().Locked)
 }

@@ -7,48 +7,49 @@ import "common.proto";
 import "google/api/annotations.proto";
 import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
 
-// Name contains an object name.
-message Name {
-  string name = 1 [(validate.rules).string.min_len=1];
+// Entity is a Stoa entity.
+message Entity {
+  string entity_name = 1 [(validate.rules).string.min_len=1];
 }
 
-// ClientId contains a Client ID.
+// ClientId contains Client ID.
 message ClientId {
-  string name = 1 [(validate.rules).string.min_len=0];
-  bytes id    = 2 [(validate.rules).bytes.min_len=1];
+  string entity_name = 1;
+  bytes id           = 2 [(validate.rules).bytes.min_len=1];
+  bytes payload      = 3;
 }
 
 // Value contains an arbitrary data.
 message Value {
-  string name = 1 [(validate.rules).string.min_len=1];
-  bytes value = 2 [(validate.rules).bytes.min_len = 1];
+  string entity_name = 1 [(validate.rules).string.min_len=1];
+  bytes value        = 2 [(validate.rules).bytes.min_len = 1];
 }
 
-// Key contains a Dictionary key.
+// Key contains Dictionary key.
 message Key {
-  string name = 1 [(validate.rules).string.min_len=1];
-  bytes  key  = 2 [(validate.rules).bytes.min_len = 1];
+  string entity_name = 1 [(validate.rules).string.min_len=1];
+  bytes  key         = 2 [(validate.rules).bytes.min_len = 1];
 }
 
-// KeyValue contains a Dictionary key-value pair.
+// KeyValue contains Dictionary key-value pair.
 message KeyValue {
-  string name = 1 [(validate.rules).string.min_len=1];
-  bytes key   = 2 [(validate.rules).bytes.min_len = 1];
-  bytes value = 3 [(validate.rules).bytes.min_len = 1];
+  string entity_name = 1 [(validate.rules).string.min_len=1];
+  bytes key          = 2 [(validate.rules).bytes.min_len = 1];
+  bytes value        = 3 [(validate.rules).bytes.min_len = 1];
 }
 
-// MutexStatus contains a Mutex status returned by Watch call.
+// MutexStatus contains Mutex status returned by Watch call.
 message MutexStatus {
-  string name = 1;
-  bool locked = 2;
+  string entity_name = 1;
+  bool locked        = 2;
 }
 
-// QueueStatus contains a Queue status returned by Watch call.
+// QueueStatus contains Queue status returned by Watch call.
 message QueueStatus {
-  string name   = 1;
+  string entity_name   = 1;
 }
 
-// ClusterStatus contains a Mutex status returned by Watch call.
+// ClusterStatus contains Mutex status returned by Watch call.
 message ClusterStatus {
   Status s = 1;
 
@@ -71,53 +72,53 @@ message Status {
 // Stoa performs the storage operations.
 service Stoa {
 
-  // QueueSize returns size of the Queue specified by the Name.
-  rpc QueueSize (Name) returns (Value) {
+  // QueueSize returns size of the Queue.
+  rpc QueueSize (Entity) returns (Value) {
     option(google.api.http) = {
-      get: "/v1/queue/size",
+      get: "/v1/queue/size/{entity_name}",
     };
   }
 
-  // QueueClear cleares the Queue specified by the Name.
-  rpc QueueClear (Name) returns (Empty) {
+  // QueueClear cleares the Queue.
+  rpc QueueClear (Entity) returns (Empty) {
     option(google.api.http) = {
-      post: "/v1/queue/clear",
+      post: "/v1/queue/clear/{entity_name}",
     };
   }
 
   // QueueOffer offers the Value to the Queue.
   rpc QueueOffer (Value) returns (Result) {
     option(google.api.http) = {
-      post: "/v1/queue/offer",
+      post: "/v1/queue/offer/{entity_name}",
       body: "*",
     };
   }
 
-  // QueuePoll removes and returns the head of the Queue specified by the Name.
-  rpc QueuePoll (Name) returns (Value) {
+  // QueuePoll removes and returns the head of the Queue.
+  rpc QueuePoll (Entity) returns (Value) {
     option(google.api.http) = {
-      get: "/v1/queue/poll",
+      get: "/v1/queue/poll/{entity_name}",
     };
   }
 
-  // QueuePeek returns the head of the Queue specified by the Name.
-  rpc QueuePeek (Name) returns (Value) {
+  // QueuePeek returns the head of the Queue.
+  rpc QueuePeek (Entity) returns (Value) {
     option(google.api.http) = {
-      get: "/v1/queue/peek",
+      get: "/v1/queue/peek/{entity_name}",
     };
   }
 
-  // DictionarySize returns size of the Dictionary specified by the Name.
-  rpc DictionarySize (Name) returns (Value) {
+  // DictionarySize returns size of the Dictionary.
+  rpc DictionarySize (Entity) returns (Value) {
     option(google.api.http) = {
-      get: "/v1/dictionary/size",
+      get: "/v1/dictionary/size/{entity_name}",
     };
   }
 
-  // DictionaryClear clears the Dictionary specified by the Name.
-  rpc DictionaryClear (Name) returns (Empty) {
+  // DictionaryClear clears the Dictionary.
+  rpc DictionaryClear (Entity) returns (Empty) {
     option(google.api.http) = {
-      post: "/v1/dictionary/clear",
+      post: "/v1/dictionary/clear/{entity_name}",
     };
   }
 
@@ -125,7 +126,7 @@ service Stoa {
   // not present.
   rpc DictionaryPutIfAbsent (KeyValue) returns (Result) {
     option(google.api.http) = {
-      post: "/v1/dictionary/putIfAbsent",
+      post: "/v1/dictionary/putIfAbsent/{entity_name}",
       body: "*",
     };
   }
@@ -134,7 +135,7 @@ service Stoa {
   // Value.
   rpc DictionaryPut (KeyValue) returns (Value) {
     option(google.api.http) = {
-      post: "/v1/dictionary/put",
+      post: "/v1/dictionary/put/{entity_name}",
       body: "*",
     };
   }
@@ -142,7 +143,7 @@ service Stoa {
   // DictionaryGet returns from the Dictionary the Value specified by the Key.
   rpc DictionaryGet (Key) returns (Value) {
     option(google.api.http) = {
-      get: "/v1/dictionary/get/{name}/{key}",
+      get: "/v1/dictionary/get/{entity_name}/{key}",
     };
   }
 
@@ -150,42 +151,44 @@ service Stoa {
   // by the Key.
   rpc DictionaryRemove (Key) returns (Result) {
     option(google.api.http) = {
-      post: "/storage/dictionary/delete/{name}/{key}",
+      post: "/storage/dictionary/delete/{entity_name}/{key}",
     };
   }
 
   // DictionaryRange returns from the Dictionary all the key-value pairs.
-  rpc DictionaryRange (Name) returns (stream KeyValue) {
+  rpc DictionaryRange (Entity) returns (stream KeyValue) {
     option(google.api.http) = {
-      get: "/v1/dictionary/range",
+      get: "/v1/dictionary/range/{entity_name}",
     };
   }
 
   // MutexTryLock tries to lock the Mutex.
   rpc MutexTryLock (ClientId) returns (Result) {
     option(google.api.http) = {
-      post: "/v1/mutex/trylock",
+      post: "/v1/mutex/trylock/{entity_name}",
+      body: "*",
     };
   }
 
   // MutexUnlock unlocks the Mutex.
   rpc MutexUnlock (ClientId) returns (Result) {
     option(google.api.http) = {
-      post: "/v1/mutex/unlock",
+      post: "/v1/mutex/unlock/{entity_name}",
+      body: "*",
     };
   }
 
   // Watch watches the Cluster status.
   rpc Watch (ClientId) returns (stream Status) {
     option(google.api.http) = {
-      post: "/v1/service/watch",
+      post: "/v1/service/watch/{entity_name}",
     };
   }
 
   // Ping pings the Cluster.
   rpc Ping (ClientId) returns (Empty) {
     option(google.api.http) = {
-      post: "/v1/service/ping",
+      post: "/v1/service/ping/{entity_name}",
     };
   }
 }

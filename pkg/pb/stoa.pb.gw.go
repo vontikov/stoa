@@ -31,19 +31,25 @@ var _ = runtime.String
 var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
-var (
-	filter_Stoa_QueueSize_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_QueueSize_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueueSize_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.QueueSize(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -52,14 +58,24 @@ func request_Stoa_QueueSize_0(ctx context.Context, marshaler runtime.Marshaler, 
 }
 
 func local_request_Stoa_QueueSize_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueueSize_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.QueueSize(ctx, &protoReq)
@@ -67,19 +83,25 @@ func local_request_Stoa_QueueSize_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-var (
-	filter_Stoa_QueueClear_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_QueueClear_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueueClear_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.QueueClear(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -88,14 +110,24 @@ func request_Stoa_QueueClear_0(ctx context.Context, marshaler runtime.Marshaler,
 }
 
 func local_request_Stoa_QueueClear_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueueClear_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.QueueClear(ctx, &protoReq)
@@ -115,6 +147,23 @@ func request_Stoa_QueueOffer_0(ctx context.Context, marshaler runtime.Marshaler,
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
+
 	msg, err := client.QueueOffer(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -132,24 +181,47 @@ func local_request_Stoa_QueueOffer_0(ctx context.Context, marshaler runtime.Mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
+
 	msg, err := server.QueueOffer(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-var (
-	filter_Stoa_QueuePoll_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_QueuePoll_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueuePoll_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.QueuePoll(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -158,14 +230,24 @@ func request_Stoa_QueuePoll_0(ctx context.Context, marshaler runtime.Marshaler, 
 }
 
 func local_request_Stoa_QueuePoll_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueuePoll_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.QueuePoll(ctx, &protoReq)
@@ -173,19 +255,25 @@ func local_request_Stoa_QueuePoll_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-var (
-	filter_Stoa_QueuePeek_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_QueuePeek_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueuePeek_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.QueuePeek(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -194,14 +282,24 @@ func request_Stoa_QueuePeek_0(ctx context.Context, marshaler runtime.Marshaler, 
 }
 
 func local_request_Stoa_QueuePeek_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_QueuePeek_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.QueuePeek(ctx, &protoReq)
@@ -209,19 +307,25 @@ func local_request_Stoa_QueuePeek_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-var (
-	filter_Stoa_DictionarySize_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_DictionarySize_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionarySize_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.DictionarySize(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -230,14 +334,24 @@ func request_Stoa_DictionarySize_0(ctx context.Context, marshaler runtime.Marsha
 }
 
 func local_request_Stoa_DictionarySize_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionarySize_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.DictionarySize(ctx, &protoReq)
@@ -245,19 +359,25 @@ func local_request_Stoa_DictionarySize_0(ctx context.Context, marshaler runtime.
 
 }
 
-var (
-	filter_Stoa_DictionaryClear_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_DictionaryClear_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionaryClear_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.DictionaryClear(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -266,14 +386,24 @@ func request_Stoa_DictionaryClear_0(ctx context.Context, marshaler runtime.Marsh
 }
 
 func local_request_Stoa_DictionaryClear_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionaryClear_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.DictionaryClear(ctx, &protoReq)
@@ -293,6 +423,23 @@ func request_Stoa_DictionaryPutIfAbsent_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
+
 	msg, err := client.DictionaryPutIfAbsent(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -308,6 +455,23 @@ func local_request_Stoa_DictionaryPutIfAbsent_0(ctx context.Context, marshaler r
 	}
 	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.DictionaryPutIfAbsent(ctx, &protoReq)
@@ -327,6 +491,23 @@ func request_Stoa_DictionaryPut_0(ctx context.Context, marshaler runtime.Marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
+
 	msg, err := client.DictionaryPut(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -342,6 +523,23 @@ func local_request_Stoa_DictionaryPut_0(ctx context.Context, marshaler runtime.M
 	}
 	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.DictionaryPut(ctx, &protoReq)
@@ -360,14 +558,14 @@ func request_Stoa_DictionaryGet_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["name"]
+	val, ok = pathParams["entity_name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
 
-	protoReq.Name, err = runtime.String(val)
+	protoReq.EntityName, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	val, ok = pathParams["key"]
@@ -396,14 +594,14 @@ func local_request_Stoa_DictionaryGet_0(ctx context.Context, marshaler runtime.M
 		_   = err
 	)
 
-	val, ok = pathParams["name"]
+	val, ok = pathParams["entity_name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
 
-	protoReq.Name, err = runtime.String(val)
+	protoReq.EntityName, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	val, ok = pathParams["key"]
@@ -432,14 +630,14 @@ func request_Stoa_DictionaryRemove_0(ctx context.Context, marshaler runtime.Mars
 		_   = err
 	)
 
-	val, ok = pathParams["name"]
+	val, ok = pathParams["entity_name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
 
-	protoReq.Name, err = runtime.String(val)
+	protoReq.EntityName, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	val, ok = pathParams["key"]
@@ -468,14 +666,14 @@ func local_request_Stoa_DictionaryRemove_0(ctx context.Context, marshaler runtim
 		_   = err
 	)
 
-	val, ok = pathParams["name"]
+	val, ok = pathParams["entity_name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
 
-	protoReq.Name, err = runtime.String(val)
+	protoReq.EntityName, err = runtime.String(val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	val, ok = pathParams["key"]
@@ -493,19 +691,25 @@ func local_request_Stoa_DictionaryRemove_0(ctx context.Context, marshaler runtim
 
 }
 
-var (
-	filter_Stoa_DictionaryRange_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_DictionaryRange_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (Stoa_DictionaryRangeClient, runtime.ServerMetadata, error) {
-	var protoReq Name
+	var protoReq Entity
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_DictionaryRange_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	stream, err := client.DictionaryRange(ctx, &protoReq)
@@ -521,19 +725,33 @@ func request_Stoa_DictionaryRange_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
-var (
-	filter_Stoa_MutexTryLock_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_MutexTryLock_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_MutexTryLock_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.MutexTryLock(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -545,11 +763,29 @@ func local_request_Stoa_MutexTryLock_0(ctx context.Context, marshaler runtime.Ma
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_MutexTryLock_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.MutexTryLock(ctx, &protoReq)
@@ -557,19 +793,33 @@ func local_request_Stoa_MutexTryLock_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
-var (
-	filter_Stoa_MutexUnlock_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_MutexUnlock_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := client.MutexUnlock(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -581,11 +831,29 @@ func local_request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Mar
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
 
-	if err := req.ParseForm(); err != nil {
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Stoa_MutexUnlock_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
 	}
 
 	msg, err := server.MutexUnlock(ctx, &protoReq)
@@ -594,12 +862,29 @@ func local_request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Mar
 }
 
 var (
-	filter_Stoa_Watch_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Stoa_Watch_0 = &utilities.DoubleArray{Encoding: map[string]int{"entity_name": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Stoa_Watch_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (Stoa_WatchClient, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -622,12 +907,29 @@ func request_Stoa_Watch_0(ctx context.Context, marshaler runtime.Marshaler, clie
 }
 
 var (
-	filter_Stoa_Ping_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Stoa_Ping_0 = &utilities.DoubleArray{Encoding: map[string]int{"entity_name": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
 func request_Stoa_Ping_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -644,6 +946,23 @@ func request_Stoa_Ping_0(ctx context.Context, marshaler runtime.Marshaler, clien
 func local_request_Stoa_Ping_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
+
+	var (
+		val string
+		ok  bool
+		err error
+		_   = err
+	)
+
+	val, ok = pathParams["entity_name"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
+	}
+
+	protoReq.EntityName, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
+	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -1364,37 +1683,37 @@ func RegisterStoaHandlerClient(ctx context.Context, mux *runtime.ServeMux, clien
 }
 
 var (
-	pattern_Stoa_QueueSize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "queue", "size"}, ""))
+	pattern_Stoa_QueueSize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "queue", "size", "entity_name"}, ""))
 
-	pattern_Stoa_QueueClear_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "queue", "clear"}, ""))
+	pattern_Stoa_QueueClear_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "queue", "clear", "entity_name"}, ""))
 
-	pattern_Stoa_QueueOffer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "queue", "offer"}, ""))
+	pattern_Stoa_QueueOffer_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "queue", "offer", "entity_name"}, ""))
 
-	pattern_Stoa_QueuePoll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "queue", "poll"}, ""))
+	pattern_Stoa_QueuePoll_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "queue", "poll", "entity_name"}, ""))
 
-	pattern_Stoa_QueuePeek_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "queue", "peek"}, ""))
+	pattern_Stoa_QueuePeek_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "queue", "peek", "entity_name"}, ""))
 
-	pattern_Stoa_DictionarySize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "size"}, ""))
+	pattern_Stoa_DictionarySize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "dictionary", "size", "entity_name"}, ""))
 
-	pattern_Stoa_DictionaryClear_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "clear"}, ""))
+	pattern_Stoa_DictionaryClear_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "dictionary", "clear", "entity_name"}, ""))
 
-	pattern_Stoa_DictionaryPutIfAbsent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "putIfAbsent"}, ""))
+	pattern_Stoa_DictionaryPutIfAbsent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "dictionary", "putIfAbsent", "entity_name"}, ""))
 
-	pattern_Stoa_DictionaryPut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "put"}, ""))
+	pattern_Stoa_DictionaryPut_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "dictionary", "put", "entity_name"}, ""))
 
-	pattern_Stoa_DictionaryGet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "dictionary", "get", "name", "key"}, ""))
+	pattern_Stoa_DictionaryGet_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "dictionary", "get", "entity_name", "key"}, ""))
 
-	pattern_Stoa_DictionaryRemove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"storage", "dictionary", "delete", "name", "key"}, ""))
+	pattern_Stoa_DictionaryRemove_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"storage", "dictionary", "delete", "entity_name", "key"}, ""))
 
-	pattern_Stoa_DictionaryRange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "dictionary", "range"}, ""))
+	pattern_Stoa_DictionaryRange_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "dictionary", "range", "entity_name"}, ""))
 
-	pattern_Stoa_MutexTryLock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "mutex", "trylock"}, ""))
+	pattern_Stoa_MutexTryLock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "mutex", "trylock", "entity_name"}, ""))
 
-	pattern_Stoa_MutexUnlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "mutex", "unlock"}, ""))
+	pattern_Stoa_MutexUnlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "mutex", "unlock", "entity_name"}, ""))
 
-	pattern_Stoa_Watch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "service", "watch"}, ""))
+	pattern_Stoa_Watch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "service", "watch", "entity_name"}, ""))
 
-	pattern_Stoa_Ping_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "service", "ping"}, ""))
+	pattern_Stoa_Ping_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "service", "ping", "entity_name"}, ""))
 )
 
 var (

@@ -17,20 +17,20 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StoaClient interface {
-	// QueueSize returns size of the Queue specified by the Name.
-	QueueSize(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
-	// QueueClear cleares the Queue specified by the Name.
-	QueueClear(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Empty, error)
+	// QueueSize returns size of the Queue.
+	QueueSize(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error)
+	// QueueClear cleares the Queue.
+	QueueClear(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Empty, error)
 	// QueueOffer offers the Value to the Queue.
 	QueueOffer(ctx context.Context, in *Value, opts ...grpc.CallOption) (*Result, error)
-	// QueuePoll removes and returns the head of the Queue specified by the Name.
-	QueuePoll(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
-	// QueuePeek returns the head of the Queue specified by the Name.
-	QueuePeek(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
-	// DictionarySize returns size of the Dictionary specified by the Name.
-	DictionarySize(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error)
-	// DictionaryClear clears the Dictionary specified by the Name.
-	DictionaryClear(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Empty, error)
+	// QueuePoll removes and returns the head of the Queue.
+	QueuePoll(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error)
+	// QueuePeek returns the head of the Queue.
+	QueuePeek(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error)
+	// DictionarySize returns size of the Dictionary.
+	DictionarySize(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error)
+	// DictionaryClear clears the Dictionary.
+	DictionaryClear(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Empty, error)
 	// DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is
 	// not present.
 	DictionaryPutIfAbsent(ctx context.Context, in *KeyValue, opts ...grpc.CallOption) (*Result, error)
@@ -43,7 +43,7 @@ type StoaClient interface {
 	// by the Key.
 	DictionaryRemove(ctx context.Context, in *Key, opts ...grpc.CallOption) (*Result, error)
 	// DictionaryRange returns from the Dictionary all the key-value pairs.
-	DictionaryRange(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error)
+	DictionaryRange(ctx context.Context, in *Entity, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error)
 	// MutexTryLock tries to lock the Mutex.
 	MutexTryLock(ctx context.Context, in *ClientId, opts ...grpc.CallOption) (*Result, error)
 	// MutexUnlock unlocks the Mutex.
@@ -62,7 +62,7 @@ func NewStoaClient(cc grpc.ClientConnInterface) StoaClient {
 	return &stoaClient{cc}
 }
 
-func (c *stoaClient) QueueSize(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error) {
+func (c *stoaClient) QueueSize(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error) {
 	out := new(Value)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/QueueSize", in, out, opts...)
 	if err != nil {
@@ -71,7 +71,7 @@ func (c *stoaClient) QueueSize(ctx context.Context, in *Name, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *stoaClient) QueueClear(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Empty, error) {
+func (c *stoaClient) QueueClear(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/QueueClear", in, out, opts...)
 	if err != nil {
@@ -89,7 +89,7 @@ func (c *stoaClient) QueueOffer(ctx context.Context, in *Value, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *stoaClient) QueuePoll(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error) {
+func (c *stoaClient) QueuePoll(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error) {
 	out := new(Value)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/QueuePoll", in, out, opts...)
 	if err != nil {
@@ -98,7 +98,7 @@ func (c *stoaClient) QueuePoll(ctx context.Context, in *Name, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *stoaClient) QueuePeek(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error) {
+func (c *stoaClient) QueuePeek(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error) {
 	out := new(Value)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/QueuePeek", in, out, opts...)
 	if err != nil {
@@ -107,7 +107,7 @@ func (c *stoaClient) QueuePeek(ctx context.Context, in *Name, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *stoaClient) DictionarySize(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Value, error) {
+func (c *stoaClient) DictionarySize(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Value, error) {
 	out := new(Value)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/DictionarySize", in, out, opts...)
 	if err != nil {
@@ -116,7 +116,7 @@ func (c *stoaClient) DictionarySize(ctx context.Context, in *Name, opts ...grpc.
 	return out, nil
 }
 
-func (c *stoaClient) DictionaryClear(ctx context.Context, in *Name, opts ...grpc.CallOption) (*Empty, error) {
+func (c *stoaClient) DictionaryClear(ctx context.Context, in *Entity, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/github.com.vontikov.stoa.v1.Stoa/DictionaryClear", in, out, opts...)
 	if err != nil {
@@ -161,7 +161,7 @@ func (c *stoaClient) DictionaryRemove(ctx context.Context, in *Key, opts ...grpc
 	return out, nil
 }
 
-func (c *stoaClient) DictionaryRange(ctx context.Context, in *Name, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error) {
+func (c *stoaClient) DictionaryRange(ctx context.Context, in *Entity, opts ...grpc.CallOption) (Stoa_DictionaryRangeClient, error) {
 	stream, err := c.cc.NewStream(ctx, &_Stoa_serviceDesc.Streams[0], "/github.com.vontikov.stoa.v1.Stoa/DictionaryRange", opts...)
 	if err != nil {
 		return nil, err
@@ -256,20 +256,20 @@ func (c *stoaClient) Ping(ctx context.Context, in *ClientId, opts ...grpc.CallOp
 // All implementations must embed UnimplementedStoaServer
 // for forward compatibility
 type StoaServer interface {
-	// QueueSize returns size of the Queue specified by the Name.
-	QueueSize(context.Context, *Name) (*Value, error)
-	// QueueClear cleares the Queue specified by the Name.
-	QueueClear(context.Context, *Name) (*Empty, error)
+	// QueueSize returns size of the Queue.
+	QueueSize(context.Context, *Entity) (*Value, error)
+	// QueueClear cleares the Queue.
+	QueueClear(context.Context, *Entity) (*Empty, error)
 	// QueueOffer offers the Value to the Queue.
 	QueueOffer(context.Context, *Value) (*Result, error)
-	// QueuePoll removes and returns the head of the Queue specified by the Name.
-	QueuePoll(context.Context, *Name) (*Value, error)
-	// QueuePeek returns the head of the Queue specified by the Name.
-	QueuePeek(context.Context, *Name) (*Value, error)
-	// DictionarySize returns size of the Dictionary specified by the Name.
-	DictionarySize(context.Context, *Name) (*Value, error)
-	// DictionaryClear clears the Dictionary specified by the Name.
-	DictionaryClear(context.Context, *Name) (*Empty, error)
+	// QueuePoll removes and returns the head of the Queue.
+	QueuePoll(context.Context, *Entity) (*Value, error)
+	// QueuePeek returns the head of the Queue.
+	QueuePeek(context.Context, *Entity) (*Value, error)
+	// DictionarySize returns size of the Dictionary.
+	DictionarySize(context.Context, *Entity) (*Value, error)
+	// DictionaryClear clears the Dictionary.
+	DictionaryClear(context.Context, *Entity) (*Empty, error)
 	// DictionaryPutIfAbsent puts into the Dictionary the KeyValue if the key is
 	// not present.
 	DictionaryPutIfAbsent(context.Context, *KeyValue) (*Result, error)
@@ -282,7 +282,7 @@ type StoaServer interface {
 	// by the Key.
 	DictionaryRemove(context.Context, *Key) (*Result, error)
 	// DictionaryRange returns from the Dictionary all the key-value pairs.
-	DictionaryRange(*Name, Stoa_DictionaryRangeServer) error
+	DictionaryRange(*Entity, Stoa_DictionaryRangeServer) error
 	// MutexTryLock tries to lock the Mutex.
 	MutexTryLock(context.Context, *ClientId) (*Result, error)
 	// MutexUnlock unlocks the Mutex.
@@ -298,25 +298,25 @@ type StoaServer interface {
 type UnimplementedStoaServer struct {
 }
 
-func (UnimplementedStoaServer) QueueSize(context.Context, *Name) (*Value, error) {
+func (UnimplementedStoaServer) QueueSize(context.Context, *Entity) (*Value, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueueSize not implemented")
 }
-func (UnimplementedStoaServer) QueueClear(context.Context, *Name) (*Empty, error) {
+func (UnimplementedStoaServer) QueueClear(context.Context, *Entity) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueueClear not implemented")
 }
 func (UnimplementedStoaServer) QueueOffer(context.Context, *Value) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueueOffer not implemented")
 }
-func (UnimplementedStoaServer) QueuePoll(context.Context, *Name) (*Value, error) {
+func (UnimplementedStoaServer) QueuePoll(context.Context, *Entity) (*Value, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueuePoll not implemented")
 }
-func (UnimplementedStoaServer) QueuePeek(context.Context, *Name) (*Value, error) {
+func (UnimplementedStoaServer) QueuePeek(context.Context, *Entity) (*Value, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueuePeek not implemented")
 }
-func (UnimplementedStoaServer) DictionarySize(context.Context, *Name) (*Value, error) {
+func (UnimplementedStoaServer) DictionarySize(context.Context, *Entity) (*Value, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DictionarySize not implemented")
 }
-func (UnimplementedStoaServer) DictionaryClear(context.Context, *Name) (*Empty, error) {
+func (UnimplementedStoaServer) DictionaryClear(context.Context, *Entity) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DictionaryClear not implemented")
 }
 func (UnimplementedStoaServer) DictionaryPutIfAbsent(context.Context, *KeyValue) (*Result, error) {
@@ -331,7 +331,7 @@ func (UnimplementedStoaServer) DictionaryGet(context.Context, *Key) (*Value, err
 func (UnimplementedStoaServer) DictionaryRemove(context.Context, *Key) (*Result, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DictionaryRemove not implemented")
 }
-func (UnimplementedStoaServer) DictionaryRange(*Name, Stoa_DictionaryRangeServer) error {
+func (UnimplementedStoaServer) DictionaryRange(*Entity, Stoa_DictionaryRangeServer) error {
 	return status.Errorf(codes.Unimplemented, "method DictionaryRange not implemented")
 }
 func (UnimplementedStoaServer) MutexTryLock(context.Context, *ClientId) (*Result, error) {
@@ -360,7 +360,7 @@ func RegisterStoaServer(s *grpc.Server, srv StoaServer) {
 }
 
 func _Stoa_QueueSize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Name)
+	in := new(Entity)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -372,13 +372,13 @@ func _Stoa_QueueSize_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/QueueSize",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).QueueSize(ctx, req.(*Name))
+		return srv.(StoaServer).QueueSize(ctx, req.(*Entity))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Stoa_QueueClear_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Name)
+	in := new(Entity)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -390,7 +390,7 @@ func _Stoa_QueueClear_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/QueueClear",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).QueueClear(ctx, req.(*Name))
+		return srv.(StoaServer).QueueClear(ctx, req.(*Entity))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -414,7 +414,7 @@ func _Stoa_QueueOffer_Handler(srv interface{}, ctx context.Context, dec func(int
 }
 
 func _Stoa_QueuePoll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Name)
+	in := new(Entity)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -426,13 +426,13 @@ func _Stoa_QueuePoll_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/QueuePoll",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).QueuePoll(ctx, req.(*Name))
+		return srv.(StoaServer).QueuePoll(ctx, req.(*Entity))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Stoa_QueuePeek_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Name)
+	in := new(Entity)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -444,13 +444,13 @@ func _Stoa_QueuePeek_Handler(srv interface{}, ctx context.Context, dec func(inte
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/QueuePeek",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).QueuePeek(ctx, req.(*Name))
+		return srv.(StoaServer).QueuePeek(ctx, req.(*Entity))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Stoa_DictionarySize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Name)
+	in := new(Entity)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -462,13 +462,13 @@ func _Stoa_DictionarySize_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/DictionarySize",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).DictionarySize(ctx, req.(*Name))
+		return srv.(StoaServer).DictionarySize(ctx, req.(*Entity))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Stoa_DictionaryClear_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Name)
+	in := new(Entity)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -480,7 +480,7 @@ func _Stoa_DictionaryClear_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/github.com.vontikov.stoa.v1.Stoa/DictionaryClear",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StoaServer).DictionaryClear(ctx, req.(*Name))
+		return srv.(StoaServer).DictionaryClear(ctx, req.(*Entity))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -558,7 +558,7 @@ func _Stoa_DictionaryRemove_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _Stoa_DictionaryRange_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Name)
+	m := new(Entity)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}

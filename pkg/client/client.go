@@ -401,7 +401,7 @@ func (c *client) processStatus(st *pb.Status) error {
 		}
 	case *pb.Status_Q:
 		qs := st.GetQ()
-		if v := c.qs.Get(qs.Name); v != nil {
+		if v := c.qs.Get(qs.EntityName); v != nil {
 			q := v.(*queue)
 			q.mu.RLock()
 			w := q.watch
@@ -410,13 +410,13 @@ func (c *client) processStatus(st *pb.Status) error {
 				select {
 				case w <- qs:
 				default:
-					c.logger.Warn("queue watch channel blocked", "name", qs.Name)
+					c.logger.Warn("queue watch channel blocked", "name", qs.EntityName)
 				}
 			}
 		}
 	case *pb.Status_M:
 		ms := st.GetM()
-		if v := c.ms.Get(ms.Name); v != nil {
+		if v := c.ms.Get(ms.EntityName); v != nil {
 			m := v.(*mutex)
 			m.mu.RLock()
 			w := m.watch
@@ -425,7 +425,7 @@ func (c *client) processStatus(st *pb.Status) error {
 				select {
 				case w <- ms:
 				default:
-					c.logger.Warn("mutex watch channel blocked", "name", ms.Name)
+					c.logger.Warn("mutex watch channel blocked", "name", ms.EntityName)
 				}
 			}
 		}

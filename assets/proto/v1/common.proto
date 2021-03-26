@@ -9,5 +9,6 @@ message Empty {
 
 // Result contains an operation result.
 message Result {
-  bool ok = 1;
+  bool ok       = 1;
+  bytes payload = 2;
 }
