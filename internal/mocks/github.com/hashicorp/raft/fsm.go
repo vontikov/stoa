@@ -5,36 +5,37 @@
 package mock_raft
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	raft "github.com/hashicorp/raft"
 	io "io"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
+	raft "github.com/hashicorp/raft"
 )
 
-// MockFSM is a mock of FSM interface
+// MockFSM is a mock of FSM interface.
 type MockFSM struct {
 	ctrl     *gomock.Controller
 	recorder *MockFSMMockRecorder
 }
 
-// MockFSMMockRecorder is the mock recorder for MockFSM
+// MockFSMMockRecorder is the mock recorder for MockFSM.
 type MockFSMMockRecorder struct {
 	mock *MockFSM
 }
 
-// NewMockFSM creates a new mock instance
+// NewMockFSM creates a new mock instance.
 func NewMockFSM(ctrl *gomock.Controller) *MockFSM {
 	mock := &MockFSM{ctrl: ctrl}
 	mock.recorder = &MockFSMMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockFSM) EXPECT() *MockFSMMockRecorder {
 	return m.recorder
 }
 
-// Apply mocks base method
+// Apply mocks base method.
 func (m *MockFSM) Apply(arg0 *raft.Log) interface{} {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Apply", arg0)
@@ -42,13 +43,27 @@ func (m *MockFSM) Apply(arg0 *raft.Log) interface{} {
 	return ret0
 }
 
-// Apply indicates an expected call of Apply
+// Apply indicates an expected call of Apply.
 func (mr *MockFSMMockRecorder) Apply(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockFSM)(nil).Apply), arg0)
 }
 
-// Snapshot mocks base method
+// Restore mocks base method.
+func (m *MockFSM) Restore(arg0 io.ReadCloser) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Restore", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Restore indicates an expected call of Restore.
+func (mr *MockFSMMockRecorder) Restore(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockFSM)(nil).Restore), arg0)
+}
+
+// Snapshot mocks base method.
 func (m *MockFSM) Snapshot() (raft.FSMSnapshot, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Snapshot")
@@ -57,64 +72,36 @@ func (m *MockFSM) Snapshot() (raft.FSMSnapshot, error) {
 	return ret0, ret1
 }
 
-// Snapshot indicates an expected call of Snapshot
+// Snapshot indicates an expected call of Snapshot.
 func (mr *MockFSMMockRecorder) Snapshot() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Snapshot", reflect.TypeOf((*MockFSM)(nil).Snapshot))
 }
 
-// Restore mocks base method
-func (m *MockFSM) Restore(arg0 io.ReadCloser) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Restore", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Restore indicates an expected call of Restore
-func (mr *MockFSMMockRecorder) Restore(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockFSM)(nil).Restore), arg0)
-}
-
-// MockBatchingFSM is a mock of BatchingFSM interface
+// MockBatchingFSM is a mock of BatchingFSM interface.
 type MockBatchingFSM struct {
 	ctrl     *gomock.Controller
 	recorder *MockBatchingFSMMockRecorder
 }
 
-// MockBatchingFSMMockRecorder is the mock recorder for MockBatchingFSM
+// MockBatchingFSMMockRecorder is the mock recorder for MockBatchingFSM.
 type MockBatchingFSMMockRecorder struct {
 	mock *MockBatchingFSM
 }
 
-// NewMockBatchingFSM creates a new mock instance
+// NewMockBatchingFSM creates a new mock instance.
 func NewMockBatchingFSM(ctrl *gomock.Controller) *MockBatchingFSM {
 	mock := &MockBatchingFSM{ctrl: ctrl}
 	mock.recorder = &MockBatchingFSMMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBatchingFSM) EXPECT() *MockBatchingFSMMockRecorder {
 	return m.recorder
 }
 
-// ApplyBatch mocks base method
-func (m *MockBatchingFSM) ApplyBatch(arg0 []*raft.Log) []interface{} {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyBatch", arg0)
-	ret0, _ := ret[0].([]interface{})
-	return ret0
-}
-
-// ApplyBatch indicates an expected call of ApplyBatch
-func (mr *MockBatchingFSMMockRecorder) ApplyBatch(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyBatch", reflect.TypeOf((*MockBatchingFSM)(nil).ApplyBatch), arg0)
-}
-
-// Apply mocks base method
+// Apply mocks base method.
 func (m *MockBatchingFSM) Apply(arg0 *raft.Log) interface{} {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Apply", arg0)
@@ -122,13 +109,41 @@ func (m *MockBatchingFSM) Apply(arg0 *raft.Log) interface{} {
 	return ret0
 }
 
-// Apply indicates an expected call of Apply
+// Apply indicates an expected call of Apply.
 func (mr *MockBatchingFSMMockRecorder) Apply(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockBatchingFSM)(nil).Apply), arg0)
 }
 
-// Snapshot mocks base method
+// ApplyBatch mocks base method.
+func (m *MockBatchingFSM) ApplyBatch(arg0 []*raft.Log) []interface{} {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyBatch", arg0)
+	ret0, _ := ret[0].([]interface{})
+	return ret0
+}
+
+// ApplyBatch indicates an expected call of ApplyBatch.
+func (mr *MockBatchingFSMMockRecorder) ApplyBatch(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyBatch", reflect.TypeOf((*MockBatchingFSM)(nil).ApplyBatch), arg0)
+}
+
+// Restore mocks base method.
+func (m *MockBatchingFSM) Restore(arg0 io.ReadCloser) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Restore", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Restore indicates an expected call of Restore.
+func (mr *MockBatchingFSMMockRecorder) Restore(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockBatchingFSM)(nil).Restore), arg0)
+}
+
+// Snapshot mocks base method.
 func (m *MockBatchingFSM) Snapshot() (raft.FSMSnapshot, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Snapshot")
@@ -137,50 +152,36 @@ func (m *MockBatchingFSM) Snapshot() (raft.FSMSnapshot, error) {
 	return ret0, ret1
 }
 
-// Snapshot indicates an expected call of Snapshot
+// Snapshot indicates an expected call of Snapshot.
 func (mr *MockBatchingFSMMockRecorder) Snapshot() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Snapshot", reflect.TypeOf((*MockBatchingFSM)(nil).Snapshot))
 }
 
-// Restore mocks base method
-func (m *MockBatchingFSM) Restore(arg0 io.ReadCloser) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Restore", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Restore indicates an expected call of Restore
-func (mr *MockBatchingFSMMockRecorder) Restore(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockBatchingFSM)(nil).Restore), arg0)
-}
-
-// MockFSMSnapshot is a mock of FSMSnapshot interface
+// MockFSMSnapshot is a mock of FSMSnapshot interface.
 type MockFSMSnapshot struct {
 	ctrl     *gomock.Controller
 	recorder *MockFSMSnapshotMockRecorder
 }
 
-// MockFSMSnapshotMockRecorder is the mock recorder for MockFSMSnapshot
+// MockFSMSnapshotMockRecorder is the mock recorder for MockFSMSnapshot.
 type MockFSMSnapshotMockRecorder struct {
 	mock *MockFSMSnapshot
 }
 
-// NewMockFSMSnapshot creates a new mock instance
+// NewMockFSMSnapshot creates a new mock instance.
 func NewMockFSMSnapshot(ctrl *gomock.Controller) *MockFSMSnapshot {
 	mock := &MockFSMSnapshot{ctrl: ctrl}
 	mock.recorder = &MockFSMSnapshotMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockFSMSnapshot) EXPECT() *MockFSMSnapshotMockRecorder {
 	return m.recorder
 }
 
-// Persist mocks base method
+// Persist mocks base method.
 func (m *MockFSMSnapshot) Persist(sink raft.SnapshotSink) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Persist", sink)
@@ -188,19 +189,19 @@ func (m *MockFSMSnapshot) Persist(sink raft.SnapshotSink) error {
 	return ret0
 }
 
-// Persist indicates an expected call of Persist
+// Persist indicates an expected call of Persist.
 func (mr *MockFSMSnapshotMockRecorder) Persist(sink interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Persist", reflect.TypeOf((*MockFSMSnapshot)(nil).Persist), sink)
 }
 
-// Release mocks base method
+// Release mocks base method.
 func (m *MockFSMSnapshot) Release() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Release")
 }
 
-// Release indicates an expected call of Release
+// Release indicates an expected call of Release.
 func (mr *MockFSMSnapshotMockRecorder) Release() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Release", reflect.TypeOf((*MockFSMSnapshot)(nil).Release))

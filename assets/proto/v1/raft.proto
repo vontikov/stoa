@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package github.com.vontikov.stoa.v1;
-option go_package = ".;pb";
+option go_package = "./;pb";
 
 import "stoa.proto";
 
