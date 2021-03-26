@@ -2,9 +2,6 @@ PROJECTNAME = $(shell basename "$(PWD)")
 
 include project.properties
 
-DOCKER_NS  = github.com/vontikov
-APP        = stoa
-
 PB_REL     = https://github.com/protocolbuffers/protobuf/releases
 PB_DIR     = ~/.protoc
 
@@ -20,7 +17,7 @@ PROTOFILES = $(shell find $(ASSET_DIR) -type f -name '*.proto')
 
 GO_PKGS    = $(shell go list ./...)
 GO_FILES   = $(shell find . -type f -name '*.go')
-GO_LDFLAGS = "-s -w -X main.Version=$(VERSION)"
+GO_LDFLAGS = "-s -w -X main.App=$(APP) -X main.Version=$(VERSION)"
 
 MOCKFILES  = \
   $(GOPATH)/src/github.com/hashicorp/raft/fsm.go \

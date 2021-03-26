@@ -17,7 +17,7 @@ import (
 
 var (
 	// App is the app name.
-	App string = "stoa"
+	App string = "N/A"
 	// Version is the app version.
 	Version string = "N/A"
 )
@@ -74,6 +74,7 @@ func main() {
 	metric.Init(App, Version, cluster)
 
 	gateway, err := gateway.New(ctx, cluster,
+		gateway.WithLoggerName(App),
 		gateway.WithListenAddress(*listenAddrFlag),
 		gateway.WithGRPCPort(*grpcPortFlag),
 		gateway.WithHTTPPort(*httpPortFlag),
