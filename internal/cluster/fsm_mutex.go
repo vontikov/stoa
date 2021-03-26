@@ -140,6 +140,7 @@ type mutexRecord struct {
 	locked   bool
 	lockedBy []byte
 	touched  time.Time
+	payload  []byte
 }
 
 type mutexRecordPtr = *mutexRecord
@@ -148,27 +149,30 @@ func newMutexRecord() mutexRecordPtr {
 	return &mutexRecord{}
 }
 
-func (m *mutexRecord) tryLock(id []byte) bool {
+func (m *mutexRecord) tryLock(id []byte, payload []byte) (bool, []byte) {
 	m.Lock()
 	defer m.Unlock()
 	if m.locked {
-		return false
+		return false, m.payload
 	}
 	m.locked = true
 	m.lockedBy = id
 	m.touched = timeNow()
-	return true
+	m.payload = payload
+	return true, payload
 }
 
-func (m *mutexRecord) unlock(id []byte) bool {
+func (m *mutexRecord) unlock(id []byte) (bool, []byte) {
 	m.Lock()
 	defer m.Unlock()
 	if !m.locked || !bytes.Equal(m.lockedBy, id) {
-		return false
+		return false, nil
 	}
+	p := m.payload
 	m.locked = false
 	m.lockedBy = nil
-	return true
+	m.payload = nil
+	return true, p
 }
 
 func (m *mutexRecord) isLocked() bool {
@@ -193,23 +197,39 @@ func mutex(f *FSM, n string) mutexRecordPtr {
 }
 
 func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
-	id := m.GetClientId()
-	n := id.EntityName
+	clientId := m.GetClientId()
+
+	n := clientId.EntityName
 	mx := mutex(f, n)
-	r := mx.tryLock(id.Id)
+
+	id := clientId.Id
+	r, p := mx.tryLock(id, clientId.Payload)
 	if r && f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{EntityName: n, Locked: true}}}
+		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{
+			EntityName: n,
+			Locked:     true,
+			LockedBy:   id,
+			Payload:    p,
+		}}}
 	}
-	return &pb.Result{Ok: r}
+	return &pb.Result{Ok: r, Payload: p}
 }
 
 func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
-	id := m.GetClientId()
-	n := id.EntityName
+	clientId := m.GetClientId()
+
+	n := clientId.EntityName
 	mx := mutex(f, n)
-	r := mx.unlock(id.Id)
+
+	id := clientId.Id
+	r, p := mx.unlock(id)
 	if r && f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{EntityName: n, Locked: false}}}
+		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{
+			EntityName: n,
+			Locked:     false,
+			LockedBy:   id,
+			Payload:    p,
+		}}}
 	}
 	return &pb.Result{Ok: r}
 }

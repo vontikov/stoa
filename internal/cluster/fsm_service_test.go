@@ -25,11 +25,11 @@ func TestFSMPing(t *testing.T) {
 	mx := mutex(f, "name")
 	assert.Equal(t, te, mx.touched)
 
-	r := mx.tryLock(id1)
+	r, _ := mx.tryLock(id1, nil)
 	assert.True(t, r)
 	assert.Equal(t, te.Add(1*time.Second), mx.touched)
 
-	r = mx.tryLock(id1)
+	r, _ = mx.tryLock(id1, nil)
 	assert.False(t, r)
 	assert.Equal(t, te.Add(1*time.Second), mx.touched)
 

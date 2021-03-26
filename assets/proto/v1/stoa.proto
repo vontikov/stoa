@@ -42,6 +42,8 @@ message KeyValue {
 message MutexStatus {
   string entity_name = 1;
   bool locked        = 2;
+  bytes locked_by    = 3;
+  bytes payload      = 4;
 }
 
 // QueueStatus contains Queue status returned by Watch call.

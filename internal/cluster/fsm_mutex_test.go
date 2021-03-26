@@ -192,7 +192,7 @@ func TestMutexExpiration(t *testing.T) {
 	mx := mutex(f, muxName)
 	assert.NotNil(mx)
 
-	r := mx.tryLock(clientId)
+	r, _ := mx.tryLock(clientId, nil)
 	assert.True(r)
 
 	expiration := 300 * time.Millisecond

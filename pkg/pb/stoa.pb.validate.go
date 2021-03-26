@@ -435,6 +435,10 @@ func (m *MutexStatus) Validate() error {
 
 	// no validation rules for Locked
 
+	// no validation rules for LockedBy
+
+	// no validation rules for Payload
+
 	return nil
 }
 

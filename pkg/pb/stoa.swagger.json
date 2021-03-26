@@ -720,6 +720,14 @@
         },
         "locked": {
           "type": "boolean"
+        },
+        "locked_by": {
+          "type": "string",
+          "format": "byte"
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
         }
       },
       "description": "MutexStatus contains Mutex status returned by Watch call."
