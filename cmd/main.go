@@ -40,7 +40,11 @@ func main() {
 	logging.SetLevel(*logLevelFlag)
 	logger := logging.NewLogger(App)
 
-	hostname, _ := os.Hostname()
+	ctx, cancel := context.WithCancel(context.Background())
+
+	hostname, err := os.Hostname()
+	util.PanicOnError(err)
+
 	logger.Info("starting", "name", App, "version", Version, "hostname", hostname)
 	flag.VisitAll(func(f *flag.Flag) { logger.Debug("option", "name", f.Name, "value", f.Value) })
 
@@ -56,14 +60,10 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
-	var err error
 	peers := *bootstrapFlag
 	if peers == "" {
-		peers, err = os.Hostname()
-		util.PanicOnError(err)
+		peers = hostname
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
 
 	cluster, err := cluster.New(ctx,
 		cluster.WithBindAddress(*bindAddrFlag),
@@ -71,7 +71,7 @@ func main() {
 	)
 	util.PanicOnError(err)
 
-	metric.Init(App, Version, cluster)
+	metric.Init(App, Version, util.HostHostname(hostname), cluster)
 
 	gateway, err := gateway.New(ctx, cluster,
 		gateway.WithLoggerName(App),

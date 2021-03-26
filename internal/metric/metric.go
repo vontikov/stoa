@@ -2,13 +2,11 @@ package metric
 
 import (
 	"fmt"
-	"os"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/vontikov/stoa/internal/cluster"
-	"github.com/vontikov/stoa/internal/util"
 )
 
 const namespace string = "github_com_vontikov"
@@ -47,10 +45,8 @@ func (c *leaderCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.d, prometheus.GaugeValue, v)
 }
 
-func Init(app, version string, cluster cluster.Cluster) {
+func Init(app, version, hostname string, cluster cluster.Cluster) {
 	once.Do(func() {
-		hostname, _ := os.Hostname()
-
 		Info = promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: app,
@@ -58,7 +54,7 @@ func Init(app, version string, cluster cluster.Cluster) {
 			Help:      "Application info",
 			ConstLabels: prometheus.Labels{
 				"version":  version,
-				"hostname": util.HostHostname(hostname),
+				"hostname": hostname,
 			},
 		})
 
