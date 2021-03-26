@@ -1,6 +1,6 @@
-FROM golang:1.14 as builder
+FROM golang:1.16 as builder
 
-ENV GRPC_HEALTH_PROBE_VERSION=v0.3.3
+ENV GRPC_HEALTH_PROBE_VERSION=v0.3.6
 
 RUN \
   wget -qO/bin/grpc_health_probe \
