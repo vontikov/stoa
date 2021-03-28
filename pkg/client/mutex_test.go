@@ -27,11 +27,11 @@ func TestMutex(t *testing.T) {
 	assert.Nil(err)
 
 	mx0 := client0.Mutex(muxName)
-	ok, err := mx0.TryLock(ctx)
+	ok, _, err := mx0.TryLock(ctx, nil)
 	assert.Nil(err)
 	assert.True(ok)
 
-	ok, err = mx0.TryLock(ctx)
+	ok, _, err = mx0.TryLock(ctx, nil)
 	assert.Nil(err)
 	assert.False(ok)
 
@@ -39,18 +39,18 @@ func TestMutex(t *testing.T) {
 	assert.Nil(err)
 
 	mx1 := client1.Mutex(muxName)
-	ok, err = mx1.TryLock(ctx)
+	ok, _, err = mx1.TryLock(ctx, nil)
 	assert.Nil(err)
 	assert.False(ok)
 
-	ok, err = mx0.Unlock(ctx)
+	ok, _, err = mx0.Unlock(ctx)
 	assert.Nil(err)
 	assert.True(ok)
-	ok, err = mx0.Unlock(ctx)
+	ok, _, err = mx0.Unlock(ctx)
 	assert.Nil(err)
 	assert.False(ok)
 
-	ok, err = mx1.Unlock(ctx)
+	ok, _, err = mx1.Unlock(ctx)
 	assert.Nil(err)
 	assert.False(ok)
 }

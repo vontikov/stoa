@@ -159,7 +159,7 @@ func (m *mutexRecord) tryLock(id []byte, payload []byte) (bool, []byte) {
 	m.lockedBy = id
 	m.touched = timeNow()
 	m.payload = payload
-	return true, payload
+	return true, nil
 }
 
 func (m *mutexRecord) unlock(id []byte) (bool, []byte) {

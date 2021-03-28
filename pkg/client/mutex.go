@@ -25,19 +25,21 @@ func (c *client) newMutex(name string) *mutex {
 }
 
 // TTryLock implements Mutex.TryLock.
-func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err error) {
+func (m *mutex) TryLock(ctx context.Context, payload []byte, opts ...CallOption) (r bool, p []byte, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
 	msg := pb.ClientId{
 		EntityName: m.name,
-		Id:   m.clientID,
+		Id:         m.clientID,
+		Payload:    payload,
 	}
 
 	o, err := m.handle.MutexTryLock(ctx, &msg, m.callOptions...)
 	if err == nil {
 		r = o.Ok
+		p = o.Payload
 		return
 	}
 	if m.failFast {
@@ -49,6 +51,7 @@ func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err er
 			o, err := m.handle.MutexTryLock(ctx, &msg, m.callOptions...)
 			if err == nil {
 				r = o.Ok
+				p = o.Payload
 				return nil
 			}
 			return err
@@ -59,19 +62,20 @@ func (m *mutex) TryLock(ctx context.Context, opts ...CallOption) (r bool, err er
 }
 
 // Unlock implements Mutex.Unlock.
-func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err error) {
+func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, payload []byte, err error) {
 	if len(opts) > 0 {
 		ctx = metadata.NewOutgoingContext(ctx, MetadataFromCallOptions(opts...))
 	}
 
 	msg := pb.ClientId{
 		EntityName: m.name,
-		Id:   m.clientID,
+		Id:         m.clientID,
 	}
 
 	o, err := m.handle.MutexUnlock(ctx, &msg, m.callOptions...)
 	if err == nil {
 		r = o.Ok
+		payload = o.Payload
 		return
 	}
 	if m.failFast {
@@ -83,6 +87,7 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, err err
 			o, err := m.handle.MutexUnlock(ctx, &msg, m.callOptions...)
 			if err == nil {
 				r = o.Ok
+				payload = o.Payload
 				return nil
 			}
 			return err

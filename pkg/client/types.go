@@ -72,11 +72,11 @@ type Dictionary interface {
 type Mutex interface {
 	// TryLock tries to lock the Mutex. Returns true on success, otherwise
 	// returns false.
-	TryLock(ctx context.Context, opts ...CallOption) (bool, error)
+	TryLock(ctx context.Context, payload []byte, opts ...CallOption) (bool, []byte, error)
 
 	// Unlock tries to unlock the Mutex. Returns true if the locked Mutex was
 	// unlocked, otherwise returns false.
-	Unlock(ctx context.Context, opts ...CallOption) (bool, error)
+	Unlock(ctx context.Context, opts ...CallOption) (bool, []byte, error)
 
 	// Watch returns the Mutex notification channel.
 	Watch() <-chan *pb.MutexStatus

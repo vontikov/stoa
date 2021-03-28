@@ -206,6 +206,7 @@ func TestMutexExpiration(t *testing.T) {
 
 	g, ctx := errgroup.WithContext(ctx)
 	runChan := make(chan bool)
+	payload := []byte("some payload")
 
 	g.Go(func() error {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -219,11 +220,12 @@ func TestMutexExpiration(t *testing.T) {
 		watchChan := mx.Watch()
 
 		<-runChan
-		r, err := mx.TryLock(ctx)
+		r, p, err := mx.TryLock(ctx, nil)
 		if err != nil {
 			return err
 		}
 		assert.False(r, "should be locked by another client")
+		assert.Equal(payload, p, "the payload should be provided by the holder")
 
 		st := <-watchChan
 		assert.True(st.Locked, "should be locked by another client")
@@ -248,11 +250,12 @@ func TestMutexExpiration(t *testing.T) {
 		}
 		mx := client.Mutex(mutexName)
 
-		r, err := mx.TryLock(ctx)
+		r, p, err := mx.TryLock(ctx, payload)
 		if err != nil {
 			return err
 		}
 		assert.True(r)
+		assert.Equal([]byte(nil), p, "the payload should be empty")
 		runChan <- true
 		return nil
 	})
