@@ -1,20 +1,16 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/status"
 
 	cc "github.com/vontikov/go-concurrent"
 
@@ -28,9 +24,6 @@ import (
 // ErrNotReady is the error returned by client.Ready when the client is not
 // ready.
 var ErrNotReady = errors.New("client not ready")
-
-// ErrWatchHandshake is the error returned if the watcher handshake failed.
-var ErrWatchHandshake = errors.New("watch handshake")
 
 // client is the Client implementation.
 type client struct {
@@ -87,10 +80,6 @@ func New(ctx context.Context, opts ...Option) (Client, error) {
 	c.logger = logging.NewLogger(c.loggerName)
 
 	if err := c.dial(); err != nil {
-		return nil, err
-	}
-
-	if err := c.watch(); err != nil {
 		return nil, err
 	}
 
@@ -230,7 +219,7 @@ func (c *client) ping() {
 			}
 			_, err := c.handle.Ping(ctx, &m, c.callOptions...)
 			if err != nil {
-				c.logger.Warn("ping error", "message", err)
+				c.logger.Debug("ping error", "message", err)
 			}
 		}
 	}
@@ -246,189 +235,8 @@ func (c *client) cleanup() {
 	}
 	c.stateMutex.Unlock()
 
-	c.qs.Range(func(k, v interface{}) bool {
-		q := v.(*queue)
-		q.mu.RLock()
-		if q.watch != nil {
-			close(q.watch)
-		}
-		q.watch = nil
-		q.mu.RUnlock()
-		c.logger.Debug("watch channel closed", "queue", q.name)
-		return true
-	})
-
 	c.mu.Lock()
 	_ = c.conn.Close()
 	c.logger.Debug("connection closed")
 	c.mu.Unlock()
-}
-
-func (c *client) watch() (err error) {
-	ctx := c.ctx
-	connChan := make(chan bool, 10)
-	streamChan := make(chan pb.Stoa_WatchClient)
-
-	var once sync.Once
-	errChan := make(chan error)
-
-	go func() {
-		id := &pb.ClientId{Id: c.id}
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-connChan:
-				c.reportState(Connecting)
-				err := retry(
-					ctx,
-					func() error {
-						stream, err := c.handle.Watch(ctx, id)
-						if err != nil {
-							return err
-						}
-						if err := c.handshake(stream); err != nil {
-							return err
-						}
-						streamChan <- stream
-						return nil
-					},
-					c.retryTimeout,
-					c.idleStrategy,
-					func() { c.logger.Debug("watch connection retry") },
-				)
-
-				once.Do(func() { errChan <- err })
-				if err != nil {
-					return
-				}
-			}
-		}
-	}()
-
-	go func() {
-		for {
-			connChan <- true
-			select {
-			case <-ctx.Done():
-				return
-			case stream := <-streamChan:
-				c.reportState(Connected)
-				if err := c.watchLoop(ctx, stream); err == nil {
-					return
-				}
-				c.logger.Debug("force watcher reconnection")
-			}
-		}
-	}()
-
-	return <-errChan
-}
-
-func (c *client) handshake(stream pb.Stoa_WatchClient) error {
-	st, err := stream.Recv()
-	if err != nil {
-		if s, ok := status.FromError(err); ok && s.Code() == codes.FailedPrecondition {
-			c.logger.Debug("watch handshake failed", "message", err)
-			return ErrWatchHandshake
-		}
-
-		c.logger.Error("watch handshake error", "message", err)
-		return err
-	}
-
-	id := st.GetId()
-	if id == nil {
-		c.logger.Error("watch handshake unexpected type")
-		return ErrWatchHandshake
-	}
-	if !bytes.Equal(id.Id, c.id) {
-		c.logger.Error("watch handshake unexpected Client ID", "actual", id.Id)
-		return ErrWatchHandshake
-	}
-
-	c.logger.Debug("watch handshake success")
-	return nil
-}
-
-func (c *client) watchLoop(ctx context.Context, stream pb.Stoa_WatchClient) error {
-	c.logger.Debug("watch loop started")
-	defer c.logger.Debug("watch loop completed")
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			st, err := stream.Recv()
-			if err == nil {
-				if err := c.processStatus(st); err != nil {
-					return err
-				}
-				break
-			}
-
-			if err == io.EOF {
-				return nil
-			}
-			if s, ok := status.FromError(err); ok {
-				switch s.Code() {
-				case codes.Unavailable, codes.Canceled:
-					return nil
-				case codes.FailedPrecondition:
-					return err
-				default:
-					c.logger.Debug("status error", "message", err)
-					return err
-				}
-			}
-			c.logger.Warn("status error", "message", err)
-			return err
-		}
-	}
-}
-
-func (c *client) processStatus(st *pb.Status) error {
-	if c.logger.IsTrace() {
-		c.logger.Trace("status received", "data", st)
-	}
-
-	switch st.U.(type) {
-	case *pb.Status_C:
-		if st.GetC().S == pb.ClusterStatus_LEADERSHIP_LOST {
-			return errors.New("leadership lost")
-		}
-	case *pb.Status_Q:
-		qs := st.GetQ()
-		if v := c.qs.Get(qs.EntityName); v != nil {
-			q := v.(*queue)
-			q.mu.RLock()
-			w := q.watch
-			q.mu.RUnlock()
-			if w != nil {
-				select {
-				case w <- qs:
-				default:
-					c.logger.Warn("queue watch channel blocked", "name", qs.EntityName)
-				}
-			}
-		}
-	case *pb.Status_M:
-		ms := st.GetM()
-		if v := c.ms.Get(ms.EntityName); v != nil {
-			m := v.(*mutex)
-			m.mu.RLock()
-			w := m.watch
-			m.mu.RUnlock()
-			if w != nil {
-				select {
-				case w <- ms:
-				default:
-					c.logger.Warn("mutex watch channel blocked", "name", ms.EntityName)
-				}
-			}
-		}
-	}
-	return nil
 }

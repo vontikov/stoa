@@ -53,9 +53,6 @@ type Cluster interface {
 
 	// Done returns a channel that's closed when the Cluster is shutdown.
 	Done() <-chan error
-
-	// Status returns a channel with the Cluster's status messages.
-	Status() <-chan *pb.Status
 }
 
 // ErrDeadlineExceeded is the error returned if a timeout is specified.
@@ -392,11 +389,6 @@ func (c *cluster) Done() <-chan error {
 		c.doneChan = make(chan error, 1)
 	}
 	return c.doneChan
-}
-
-// Status implements Cluster.Status.
-func (c *cluster) Status() <-chan *pb.Status {
-	return c.f.status()
 }
 
 func peerID(bindAddr string, bindPort int) string {

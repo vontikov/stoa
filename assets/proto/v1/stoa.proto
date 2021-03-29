@@ -38,39 +38,6 @@ message KeyValue {
   bytes value        = 3 [(validate.rules).bytes.min_len = 1];
 }
 
-// MutexStatus contains Mutex status returned by Watch call.
-message MutexStatus {
-  string entity_name = 1;
-  bool locked        = 2;
-  bytes locked_by    = 3;
-  bytes payload      = 4;
-}
-
-// QueueStatus contains Queue status returned by Watch call.
-message QueueStatus {
-  string entity_name   = 1;
-}
-
-// ClusterStatus contains Mutex status returned by Watch call.
-message ClusterStatus {
-  Status s = 1;
-
-  enum Status {
-    RESERVED        = 0;
-    LEADERSHIP_LOST = 1;
-  }
-}
-
-// Status contains one of status messages.
-message Status {
-  oneof u {
-    ClusterStatus c  = 1;
-    ClientId      id = 2;
-    MutexStatus   m  = 3;
-    QueueStatus   q  = 4;
-  }
-}
-
 // Stoa performs the storage operations.
 service Stoa {
 
@@ -180,17 +147,10 @@ service Stoa {
     };
   }
 
-  // Watch watches the Cluster status.
-  rpc Watch (ClientId) returns (stream Status) {
-    option(google.api.http) = {
-      post: "/v1/service/watch/{entity_name}",
-    };
-  }
-
   // Ping pings the Cluster.
   rpc Ping (ClientId) returns (Empty) {
     option(google.api.http) = {
-      post: "/v1/service/ping/{entity_name}",
+      post: "/v1/service/ping",
     };
   }
 }

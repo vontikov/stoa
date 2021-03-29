@@ -158,9 +158,6 @@ func queueOffer(f *FSM, m *pb.ClusterCommand) interface{} {
 	n := v.EntityName
 	q := queue(f, n)
 	q.Offer(&entry{v.Value, m.TtlMillis})
-	if f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_Q{Q: &pb.QueueStatus{EntityName: n}}}
-	}
 	return nil
 }
 

@@ -201,15 +201,9 @@ func TestMutexExpiration(t *testing.T) {
 	n := mutexUnlockExpired(f, expiration)
 	assert.Equal(0, n, "should not unlock yet")
 	assert.True(mx.isLocked())
-	assert.Equal(0, len(f.status()))
 
 	time.Sleep(expiration)
 	n = mutexUnlockExpired(f, expiration)
 	assert.Equal(1, n, "should unlock")
 	assert.False(mx.isLocked())
-	assert.Equal(1, len(f.status()))
-
-	s := <-f.status()
-	assert.Equal(muxName, s.GetM().EntityName)
-	assert.False(s.GetM().Locked)
 }

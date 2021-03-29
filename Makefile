@@ -22,7 +22,7 @@ GO_LDFLAGS = "-s -w -X main.App=$(APP) -X main.Version=$(VERSION)"
 MOCKFILES  = \
   $(GOPATH)/src/github.com/hashicorp/raft/fsm.go \
 
-TEST_OPTS  = -timeout 300s -cover -coverprofile=$(COVERAGE_FILE) -failfast
+TEST_OPTS  = -timeout 300s -cover -coverprofile=$(COVERAGE_FILE) -failfast -v
 
 TEST_PKGS  = \
   ./internal/cluster         \

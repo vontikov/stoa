@@ -36,9 +36,6 @@ type Queue interface {
 
 	// Peek retrieves, but does not remove, the head of the queue; returns nil if the queue is empty
 	Peek(ctx context.Context, opts ...CallOption) ([]byte, error)
-
-	// Watch returns the Queue notification channel.
-	Watch() <-chan *pb.QueueStatus
 }
 
 // Dictionary represents a collection of key-value pairs.
@@ -77,9 +74,6 @@ type Mutex interface {
 	// Unlock tries to unlock the Mutex. Returns true if the locked Mutex was
 	// unlocked, otherwise returns false.
 	Unlock(ctx context.Context, opts ...CallOption) (bool, []byte, error)
-
-	// Watch returns the Mutex notification channel.
-	Watch() <-chan *pb.MutexStatus
 }
 
 const (

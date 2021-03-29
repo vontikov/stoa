@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"sync"
 
 	"google.golang.org/grpc/metadata"
 
@@ -12,9 +11,6 @@ import (
 type mutex struct {
 	base
 	clientID []byte
-
-	mu    sync.RWMutex // protects following fields
-	watch chan *pb.MutexStatus
 }
 
 func (c *client) newMutex(name string) *mutex {
@@ -95,14 +91,4 @@ func (m *mutex) Unlock(ctx context.Context, opts ...CallOption) (r bool, payload
 		m.retryTimeout, m.idleStrategy,
 	)
 	return
-}
-
-// Watch implements Mutex.Watch.
-func (m *mutex) Watch() <-chan *pb.MutexStatus {
-	m.mu.Lock()
-	if m.watch == nil {
-		m.watch = make(chan *pb.MutexStatus, watchChanSize)
-	}
-	m.mu.Unlock()
-	return m.watch
 }

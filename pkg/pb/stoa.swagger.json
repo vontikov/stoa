@@ -538,46 +538,6 @@
           "Stoa"
         ]
       }
-    },
-    "/v1/service/watch/{entity_name}": {
-      "post": {
-        "summary": "Watch watches the Cluster status.",
-        "operationId": "Stoa_Watch",
-        "responses": {
-          "200": {
-            "description": "A successful response.(streaming responses)",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "result": {
-                  "$ref": "#/definitions/stoav1Status"
-                },
-                "error": {
-                  "$ref": "#/definitions/runtimeStreamError"
-                }
-              },
-              "title": "Stream result of stoav1Status"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "entity_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Stoa"
-        ]
-      }
     }
   },
   "definitions": {
@@ -639,24 +599,6 @@
         }
       }
     },
-    "stoav1Status": {
-      "type": "object",
-      "properties": {
-        "c": {
-          "$ref": "#/definitions/v1ClusterStatus"
-        },
-        "id": {
-          "$ref": "#/definitions/v1ClientId"
-        },
-        "m": {
-          "$ref": "#/definitions/v1MutexStatus"
-        },
-        "q": {
-          "$ref": "#/definitions/v1QueueStatus"
-        }
-      },
-      "description": "Status contains one of status messages."
-    },
     "v1ClientId": {
       "type": "object",
       "properties": {
@@ -673,23 +615,6 @@
         }
       },
       "description": "ClientId contains Client ID."
-    },
-    "v1ClusterStatus": {
-      "type": "object",
-      "properties": {
-        "s": {
-          "$ref": "#/definitions/v1ClusterStatusStatus"
-        }
-      },
-      "description": "ClusterStatus contains Mutex status returned by Watch call."
-    },
-    "v1ClusterStatusStatus": {
-      "type": "string",
-      "enum": [
-        "RESERVED",
-        "LEADERSHIP_LOST"
-      ],
-      "default": "RESERVED"
     },
     "v1Empty": {
       "type": "object",
@@ -711,35 +636,6 @@
         }
       },
       "description": "KeyValue contains Dictionary key-value pair."
-    },
-    "v1MutexStatus": {
-      "type": "object",
-      "properties": {
-        "entity_name": {
-          "type": "string"
-        },
-        "locked": {
-          "type": "boolean"
-        },
-        "locked_by": {
-          "type": "string",
-          "format": "byte"
-        },
-        "payload": {
-          "type": "string",
-          "format": "byte"
-        }
-      },
-      "description": "MutexStatus contains Mutex status returned by Watch call."
-    },
-    "v1QueueStatus": {
-      "type": "object",
-      "properties": {
-        "entity_name": {
-          "type": "string"
-        }
-      },
-      "description": "QueueStatus contains Queue status returned by Watch call."
     },
     "v1Result": {
       "type": "object",

@@ -204,14 +204,6 @@ func mutexTryLock(f *FSM, m *pb.ClusterCommand) interface{} {
 
 	id := clientId.Id
 	r, p := mx.tryLock(id, clientId.Payload)
-	if r && f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{
-			EntityName: n,
-			Locked:     true,
-			LockedBy:   id,
-			Payload:    p,
-		}}}
-	}
 	return &pb.Result{Ok: r, Payload: p}
 }
 
@@ -223,21 +215,12 @@ func mutexUnlock(f *FSM, m *pb.ClusterCommand) interface{} {
 
 	id := clientId.Id
 	r, p := mx.unlock(id)
-	if r && f.isLeader() {
-		f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{
-			EntityName: n,
-			Locked:     false,
-			LockedBy:   id,
-			Payload:    p,
-		}}}
-	}
-	return &pb.Result{Ok: r}
+	return &pb.Result{Ok: r, Payload: p}
 }
 
 func mutexUnlockExpired(f *FSM, expiration time.Duration) int {
-	deadline := timeNow().Add(-expiration)
-
 	n := 0
+	deadline := timeNow().Add(-expiration)
 	f.ms.Range(func(k, v interface{}) bool {
 		m := v.(mutexRecordPtr)
 		m.Lock()
@@ -246,9 +229,6 @@ func mutexUnlockExpired(f *FSM, expiration time.Duration) int {
 		if m.locked && m.touched.Before(deadline) {
 			m.locked = false
 			m.lockedBy = nil
-			if f.isLeader() {
-				f.status() <- &pb.Status{U: &pb.Status_M{M: &pb.MutexStatus{EntityName: k.(string), Locked: false}}}
-			}
 			n++
 			f.logger.Debug("expired mutex unlocked", "name", k)
 		}

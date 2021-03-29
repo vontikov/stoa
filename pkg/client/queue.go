@@ -3,20 +3,14 @@ package client
 import (
 	"context"
 	"encoding/binary"
-	"sync"
 
 	"google.golang.org/grpc/metadata"
 
 	"github.com/vontikov/stoa/pkg/pb"
 )
 
-const watchChanSize = 1024
-
 type queue struct {
 	base
-
-	mu    sync.RWMutex // protects following fields
-	watch chan *pb.QueueStatus
 }
 
 func (c *client) newQueue(name string) *queue {
@@ -83,8 +77,8 @@ func (q *queue) Offer(ctx context.Context, e []byte, opts ...CallOption) (err er
 	}
 
 	m := pb.Value{
-		EntityName:  q.name,
-		Value: e,
+		EntityName: q.name,
+		Value:      e,
 	}
 	_, err = q.handle.QueueOffer(ctx, &m, q.callOptions...)
 	if err == nil || q.failFast {
@@ -161,12 +155,3 @@ func (q *queue) Peek(ctx context.Context, opts ...CallOption) (r []byte, err err
 	return
 }
 
-// Watch implements Queue.Watch.
-func (q *queue) Watch() <-chan *pb.QueueStatus {
-	q.mu.Lock()
-	if q.watch == nil {
-		q.watch = make(chan *pb.QueueStatus, watchChanSize)
-	}
-	q.mu.Unlock()
-	return q.watch
-}

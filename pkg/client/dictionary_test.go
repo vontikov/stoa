@@ -195,7 +195,6 @@ func TestDictionaryRange(t *testing.T) {
 			case err := <-errChan:
 				// happens while the new leader is being elected
 				assert.True(errors.Is(err, gateway.ErrNotLeader))
-				t.Logf("warn: %s", err)
 				atomic.AddInt32(&neg, 1)
 				return
 			case kv := <-kvChan:

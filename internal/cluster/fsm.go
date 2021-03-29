@@ -20,8 +20,6 @@ import (
 
 var timeNow = time.Now
 
-var statusChanSize = 1024
-
 // ErrUnknownCommand is the error returned by fsm.Apply if the command is
 // unknown.
 var ErrUnknownCommand = errors.New("unknown command")
@@ -35,9 +33,6 @@ type FSM struct {
 	qs queueMapPtr
 	ds dictMapPtr
 	ms mutexMapPtr
-
-	statusMutex sync.Mutex // protects following fields
-	statusChan  chan *pb.Status
 
 	leadership int32 // must not be accessed directly
 }
@@ -83,19 +78,6 @@ func (f *FSM) leader(v bool) {
 
 func (f *FSM) isLeader() bool {
 	return atomic.LoadInt32(&f.leadership) == 1
-}
-
-func (f *FSM) status() chan *pb.Status {
-	if ch := f.statusChan; ch != nil {
-		return ch
-	}
-
-	f.statusMutex.Lock()
-	if f.statusChan == nil {
-		f.statusChan = make(chan *pb.Status, statusChanSize)
-	}
-	f.statusMutex.Unlock()
-	return f.statusChan
 }
 
 // Apply log is invoked once a log entry is committed.
