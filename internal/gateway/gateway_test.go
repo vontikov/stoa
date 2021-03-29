@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vontikov/stoa/internal/cluster"
-	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
 

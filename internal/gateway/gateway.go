@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/vontikov/stoa/internal/cluster"
-	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
 

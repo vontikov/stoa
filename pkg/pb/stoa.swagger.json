@@ -508,7 +508,7 @@
         ]
       }
     },
-    "/v1/service/ping/{entity_name}": {
+    "/v1/service/ping": {
       "post": {
         "summary": "Ping pings the Cluster.",
         "operationId": "Stoa_Ping",
@@ -526,14 +526,6 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "entity_name",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
         "tags": [
           "Stoa"
         ]

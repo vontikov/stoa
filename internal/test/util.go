@@ -13,7 +13,7 @@ import (
 
 	"github.com/vontikov/stoa/internal/cluster"
 	"github.com/vontikov/stoa/internal/gateway"
-	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/logging"
 )
 
 const (

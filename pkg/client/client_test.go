@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vontikov/stoa/internal/logging"
 	"github.com/vontikov/stoa/internal/test"
+	"github.com/vontikov/stoa/pkg/logging"
 	"golang.org/x/sync/errgroup"
 )
 

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/raft"
-	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
 

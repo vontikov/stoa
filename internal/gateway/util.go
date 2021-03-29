@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/raft"
 
-	"github.com/vontikov/stoa/internal/common"
+	"github.com/vontikov/stoa/pkg/common"
 	"github.com/vontikov/stoa/pkg/pb"
 )
 

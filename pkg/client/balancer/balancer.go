@@ -7,8 +7,6 @@ import (
 	"google.golang.org/grpc/balancer/base"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/vontikov/stoa/internal/logging"
 )
 
 // Name is the balancer name.
@@ -33,18 +31,16 @@ func (*builder) Build(info base.PickerBuildInfo) balancer.Picker {
 		scs = append(scs, sc)
 	}
 	return &picker{
-		logger: logging.NewLogger("picker"),
-		scs:    scs,
-		rcs:    info.ReadySCs,
+		scs: scs,
+		rcs: info.ReadySCs,
 	}
 }
 
 type picker struct {
 	sync.Mutex
-	logger logging.Logger
-	scs    []balancer.SubConn
-	rcs    map[balancer.SubConn]base.SubConnInfo
-	idx    int
+	scs []balancer.SubConn
+	rcs map[balancer.SubConn]base.SubConnInfo
+	idx int
 }
 
 func (p *picker) Pick(balancer.PickInfo) (balancer.PickResult, error) {
@@ -63,9 +59,6 @@ func (p *picker) Pick(balancer.PickInfo) (balancer.PickResult, error) {
 				p.Lock()
 				defer p.Unlock()
 				p.idx = (p.idx + 1) % len(p.scs)
-				if p.logger.IsTrace() {
-					p.logger.Trace("switched to", "address", p.rcs[p.scs[p.idx]].Address.Addr)
-				}
 			}
 		},
 	}, nil

@@ -862,29 +862,12 @@ func local_request_Stoa_MutexUnlock_0(ctx context.Context, marshaler runtime.Mar
 }
 
 var (
-	filter_Stoa_Ping_0 = &utilities.DoubleArray{Encoding: map[string]int{"entity_name": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Stoa_Ping_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
 func request_Stoa_Ping_0(ctx context.Context, marshaler runtime.Marshaler, client StoaClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["entity_name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
-	}
-
-	protoReq.EntityName, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -901,23 +884,6 @@ func request_Stoa_Ping_0(ctx context.Context, marshaler runtime.Marshaler, clien
 func local_request_Stoa_Ping_0(ctx context.Context, marshaler runtime.Marshaler, server StoaServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ClientId
 	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["entity_name"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_name")
-	}
-
-	protoReq.EntityName, err = runtime.String(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_name", err)
-	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -1639,7 +1605,7 @@ var (
 
 	pattern_Stoa_MutexUnlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "mutex", "unlock", "entity_name"}, ""))
 
-	pattern_Stoa_Ping_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "service", "ping", "entity_name"}, ""))
+	pattern_Stoa_Ping_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "service", "ping"}, ""))
 )
 
 var (

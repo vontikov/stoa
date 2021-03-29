@@ -14,10 +14,10 @@ import (
 
 	cc "github.com/vontikov/go-concurrent"
 
-	"github.com/vontikov/stoa/internal/client/balancer"
-	"github.com/vontikov/stoa/internal/client/resolver"
-	"github.com/vontikov/stoa/internal/common"
-	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/client/balancer"
+	"github.com/vontikov/stoa/pkg/client/resolver"
+	"github.com/vontikov/stoa/pkg/common"
+	"github.com/vontikov/stoa/pkg/logging"
 	"github.com/vontikov/stoa/pkg/pb"
 )
 

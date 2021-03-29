@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"google.golang.org/grpc/resolver"
-
-	"github.com/vontikov/stoa/internal/logging"
 )
 
 const (
@@ -91,7 +89,6 @@ type StaticBuilder struct {
 // staticResolver implements
 // Resolver(https://godoc.org/google.golang.org/grpc/resolver#Resolver).
 type staticResolver struct {
-	logger logging.Logger
 	cc     resolver.ClientConn
 	target resolver.Target
 	peers  []*peer
@@ -109,7 +106,6 @@ func New(peers string) (resolver.Builder, error) {
 // Build implements resolver.Builder.Build.
 func (b *StaticBuilder) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	r := staticResolver{
-		logger: logging.NewLogger("static-resolver"),
 		cc:     cc,
 		target: target,
 		peers:  b.peers,
@@ -137,8 +133,5 @@ func (r *staticResolver) resolve() {
 	}
 
 	r.cc.UpdateState(resolver.State{Addresses: addresses})
-	if r.logger.IsTrace() {
-		r.logger.Trace("updated with", "addresses", addresses)
-	}
 	return
 }

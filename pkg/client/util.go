@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	concurrent "github.com/vontikov/go-concurrent"
-	"github.com/vontikov/stoa/internal/common"
+	"github.com/vontikov/stoa/pkg/common"
 )
 
 // TimeNowInMillis returns current time in milliseconds.

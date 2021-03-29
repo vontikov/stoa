@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	concurrent "github.com/vontikov/go-concurrent"
-	"github.com/vontikov/stoa/internal/common"
+	"github.com/vontikov/stoa/pkg/common"
 )
 
 func TestRetryFunc(t *testing.T) {
