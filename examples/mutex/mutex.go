@@ -15,12 +15,14 @@ import (
 )
 
 const (
+	bootstrap = "localhost:3001,localhost:3002,localhost:3003"
 	mutexName = "mutex"
 )
 
 func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for i := 0; i < 10; i++ {
@@ -32,16 +34,14 @@ func main() {
 }
 
 func f(ctx context.Context, id string) {
-	bootstrap := "localhost:3001,localhost:3002,localhost:3003"
-	logLevel := "debug"
 	client, err := stoa.New(ctx,
 		stoa.WithID([]byte(id)),
 		stoa.WithBootstrap(bootstrap),
-		stoa.WithLoggingLevel(logLevel),
 	)
 	if err != nil {
 		log.Fatal("client error: ", err)
 	}
+
 	m := client.Mutex(mutexName)
 
 	for {
@@ -51,25 +51,23 @@ func f(ctx context.Context, id string) {
 		default:
 			r, p, err := m.TryLock(ctx, []byte(id))
 			if err != nil {
-				log.Fatal("Error: ", err)
-				return
+				log.Fatal("Lock: ", err)
 			}
 			if r {
-				time.Sleep(time.Duration(5000) * time.Millisecond)
+				log.Printf("%s aquired the lock", id)
+
+				time.Sleep(2000 * time.Millisecond)
 				_, _, err = m.Unlock(ctx)
 				if err != nil {
-					log.Printf("Error: %v", err)
-					return
+					log.Fatal("Unlock: ", err)
 				}
-				continue
+				log.Printf("%s released the lock", id)
+			} else {
+				log.Printf("%s received payload from %s", id, string(p))
 			}
 
 			b, _ := rand.Int(rand.Reader, big.NewInt(1000))
 			time.Sleep(time.Duration(b.Int64()) * time.Millisecond)
-
-			log.Printf("%s received payload from: %s", id, string(p))
-			break
-
 		}
 	}
 }

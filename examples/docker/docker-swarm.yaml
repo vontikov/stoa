@@ -11,12 +11,14 @@ services:
     networks:
       - stoa
     ports:
-      - target: 3501
-        published: 3501
+      # client
+      - published: 3001
+        target: 3500
         protocol: tcp
         mode: host
-      - target: 3500
-        published: 3001
+      # management
+      - published: 3501
+        target: 3501
         protocol: tcp
         mode: host
     deploy:
@@ -28,12 +30,14 @@ services:
     networks:
       - stoa
     ports:
-      - target: 3501
-        published: 3502
+      # client
+      - published: 3002
+        target: 3500
         protocol: tcp
         mode: host
-      - target: 3500
-        published: 3002
+      # management
+      - published: 3502
+        target: 3501
         protocol: tcp
         mode: host
     deploy:
@@ -45,24 +49,15 @@ services:
     networks:
       - stoa
     ports:
-      - target: 3501
-        published: 3503
+      # client
+      - published: 3003
+        target: 3500
         protocol: tcp
         mode: host
-      - target: 3500
-        published: 3003
+      # management
+      - published: 3503
+        target: 3501
         protocol: tcp
         mode: host
     deploy:
       endpoint_mode: dnsrr
-
-# client0:
-#   image: github.com/vontikov/stoa-example:0.0.1
-#   command: stoa-example -log-level trace -bootstrap stoa0,stoa1,stoa2 -queue-out=true
-#   networks:
-#     - stoa
-# client1:
-#   image: github.com/vontikov/stoa-example:0.0.1
-#   command: stoa-example -log-level trace -bootstrap stoa0,stoa1,stoa2 -queue-in=true
-#   networks:
-#     - stoa
