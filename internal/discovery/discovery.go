@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/vontikov/stoa/internal/common"
-	"github.com/vontikov/stoa/internal/logging"
+	"github.com/vontikov/stoa/pkg/logging"
 )
 
 // MessageSupplier produces discovery message on demand
